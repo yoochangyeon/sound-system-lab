@@ -35,10 +35,11 @@
 | `src/audio/` | 오디오 엔진(프레임워크 무관 TS). UI 코드를 넣지 않는다 |
 | `src/audio/dsp/` | 샘플 단위 처리 순수 함수(검출기, 게인 계산 등). Web Audio에 의존하지 않아 Vitest로 바로 검사한다 |
 | `src/audio/worklets/` | `dsp/` 함수를 감싼 `AudioWorkletProcessor` |
+| `src/audio/fx/` | 이펙트(리버브·딜레이·코러스). FX 버스(Send/Return)와 채널 인서트가 같이 쓴다 |
 | `src/stores/` | Zustand 저장소 |
 | `src/components/lesson/` | 레슨 카드용 그림 컴포넌트(Astro)와 O/X 퀴즈·클리핑 체험(React) |
 | `src/components/sim/` | 처리기 하나씩 만지는 React 위젯(PEQ, GEQ, Comp, Gate…). MDX에서 `client:only="react"`로 불러 쓴다 |
-| `src/mixer/` | 실습실 쉬운 믹서(8채널, 모니터 2, 메인)와 미션 카드. `audio/` 엔진과 `stores/` 저장소를 쓴다 |
+| `src/mixer/` | 실습실 쉬운 믹서와 미션 카드. 기본 보기(8채널, 모니터 2, 메인)와 전체 보기(그룹·FX·매트릭스, DCA·뮤트 그룹·솔로·씬·오실레이터). 버스 배치는 `mixer-state.ts`. `audio/` 엔진과 `stores/` 저장소를 쓴다 |
 | `src/missions/` | 미션 데이터(시작 상태, 판정, 힌트, 해설) |
 | `src/quizzes/` | 레슨별 실전 시나리오 퀴즈 데이터(쉬움·보통·어려움 방탈출형). 원고에서 `<CaseQuiz client:load id="..." />`로 부른다. 레슨 원고의 사실·수치를 벗어나지 않는다 |
 | `public/audio/songs/<곡 id>/` | 실습 곡의 소스(역할별 m4a)와 정답 믹스(`reference.m4a`) |
@@ -52,7 +53,9 @@
 - AudioContext는 `src/audio/context.ts`의 `getAudioContext()` 하나만 쓰고, 사용자 클릭 뒤에 처음 만든다(자동재생 정책).
 - 파라미터 변경은 `setTargetAtTime` 등으로 램프해 지퍼 노이즈를 막는다.
 - PEQ·GEQ는 `BiquadFilterNode`(GEQ는 31밴드 peaking)로 만든다.
-- 다이내믹스(컴프레서·게이트·익스팬더·리미터·디에서)는 `DynamicsCompressorNode`를 쓰지 않고 AudioWorklet으로 직접 만든다. 내장 노드로는 사이드체인, Peak/RMS 검출, 홀드 같은 콘솔 기본 기능을 보여줄 수 없다.
+- 다이내믹스(컴프레서·게이트·익스팬더·리미터·디에서)는 `DynamicsCompressorNode`를 쓰지 않고 AudioWorklet으로 직접 만든다. 내장 노드로는 사이드체인, Peak/RMS 검출, 홀드 같은 콘솔 기본 기능을 보여줄 수 없다. 워클릿 입력 1이 키(사이드체인)다.
+- 리버브 잔향(IR)은 파일 없이 `dsp/reverb.ts`가 코드로 만든다. 외부 IR 파일을 넣지 않는다.
+- DCA·뮤트 그룹은 엔진에 소리 경로가 없다. `stores/derived.ts`의 `effectiveChannel`이 실효 페이더·뮤트를 계산하고 엔진과 미션 판정이 같이 쓴다.
 - 그래프(주파수 응답, GR 미터)는 엔진이 숫자를 내주고 UI가 그린다.
 
 ## 실제 기기 표기 규칙
@@ -77,7 +80,9 @@ npm run test:unit     # Node 테스트만(*.test.ts)
 npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts). 처음 한 번 npx playwright install chromium webkit
 ```
 
-개발 서버는 `npx astro dev --background`로 띄우고 `npx astro dev stop`으로 끈다. 화면 확인은 Aside에서 `http://localhost:4321`을 바로 연다.
+개발 서버는 `npx astro dev --background`로 띄우고 `npx astro dev stop`으로 끈다. 화면 확인은 Aside에서 `http://localhost:4321`을 바로 연다. Aside는 창 크기를 바꾸지 못하므로 휴대폰 폭 확인만 내장 브라우저(모바일 에뮬레이션)로 한다.
+
+레슨 파일을 새로 만들었는데 퀴즈 테스트가 레슨 수를 하나 적게 세면 Vitest 변환 캐시(`node_modules/.vitest-cache`)를 지우고 다시 돌린다.
 
 - Astro 문서: https://docs.astro.build
 

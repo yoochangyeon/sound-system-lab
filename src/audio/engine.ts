@@ -10,12 +10,13 @@ import { ChannelStrip } from './channel-strip';
 import { FxUnit } from './fx/fx-unit';
 import { loadSample } from './context';
 import { HOWL_FLOOR_DB, howlStep } from './dsp/feedback';
+import { pinkNoise } from './dsp/noise';
 import { binsToThirdOctave, peakDb } from './dsp/rta';
 import { dbToGain } from './dsp/units';
 import { RAMP } from './peq';
 import { stemById } from './stems';
 import { ensureWorklets } from './worklets';
-import { howlLoopGainDb } from '../stores/derived';
+import { effectiveChannel, howlLoopGainDb } from '../stores/derived';
 import type { MixerState } from '../stores/mixer-model';
 import type { BusRef, MixerStore, MixerStoreApi } from '../stores/mixer';
 
@@ -44,6 +45,12 @@ export class MixerEngine {
   readonly listenMain: GainNode;
   readonly listenAux: GainNode[];
   readonly listenMix: GainNode;
+  /** 솔로 버스: 솔로 켠 채널(PFL/AFL)만 모은다. 솔로가 하나라도 켜지면 듣기가 이쪽으로 바뀐다 */
+  readonly soloBus: GainNode;
+  readonly listenSolo: GainNode;
+  readonly oscGain: GainNode;
+  private oscSource: AudioScheduledSourceNode | null = null;
+  private oscTarget: AudioNode | null = null;
   readonly limiter: AudioWorkletNode;
   readonly howlOsc: OscillatorNode;
   readonly howlGain: GainNode;
@@ -81,6 +88,9 @@ export class MixerEngine {
     this.matrix = s.matrix.map(() => new MatrixBus(ctx, this.main.output, this.auxes.map((b) => b.output)));
     this.listenMatrix = this.matrix.map(() => new GainNode(ctx, { gain: 0 }));
     this.listenMix = new GainNode(ctx, { channelCount: 2, channelCountMode: 'explicit' });
+    this.soloBus = new GainNode(ctx, { channelCount: 2, channelCountMode: 'explicit' });
+    this.listenSolo = new GainNode(ctx, { gain: 0 });
+    this.oscGain = new GainNode(ctx, { gain: 0 });
     this.listenMain = new GainNode(ctx, { gain: 1 });
     this.listenAux = this.auxes.map(() => new GainNode(ctx, { gain: 0 }));
     this.limiter = new AudioWorkletNode(ctx, 'dynamics', {
@@ -99,7 +109,10 @@ export class MixerEngine {
       st.sendsPre.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsPost.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsGroup.forEach((g, a) => g.connect(this.auxes[a].input));
+      st.soloPfl.connect(this.soloBus);
+      st.soloAfl.connect(this.soloBus);
     });
+    this.soloBus.connect(this.listenSolo).connect(this.listenMix);
     this.auxes.forEach((b, a) => {
       b.output.connect(this.busMain[a]).connect(this.main.input);
       const fx = this.fxUnits[a];
@@ -242,6 +255,7 @@ export class MixerEngine {
     this.unsubscribe();
     if (this.howlTimer) clearInterval(this.howlTimer);
     this.howlOsc.stop();
+    this.oscSource?.stop();
     this.strips.forEach((s) => s.disconnect());
     [this.main, ...this.auxes].forEach((b) => b.disconnect());
     this.fxUnits.forEach((f) => f?.dispose());
@@ -252,7 +266,9 @@ export class MixerEngine {
   // ---- 상태 → 그래프 ----
 
   private applyAll(s: MixerState): void {
-    s.channels.forEach((c, i) => this.strips[i]?.apply(c, this.strips));
+    s.channels.forEach((_, i) => this.strips[i]?.apply(effectiveChannel(s, i), this.strips));
+    this.applySolo(s);
+    this.applyOsc(s);
     this.main.apply(s.main);
     s.auxes.forEach((b, i) => this.applyBus(b, i));
     this.applyMatrix(s);
@@ -261,11 +277,17 @@ export class MixerEngine {
   }
 
   private onChange(next: MixerStore, prev: MixerStore): void {
-    if (next.channels !== prev.channels) {
+    const groupsChanged = next.dca !== prev.dca || next.muteGroups !== prev.muteGroups;
+    if (next.channels !== prev.channels || groupsChanged) {
       next.channels.forEach((c, i) => {
-        if (c !== prev.channels[i]) this.strips[i]?.apply(c, this.strips);
+        if (groupsChanged || c !== prev.channels[i]) this.strips[i]?.apply(effectiveChannel(next, i), this.strips);
       });
     }
+    if (next.channels !== prev.channels || next.soloMode !== prev.soloMode) {
+      this.applySolo(next);
+      this.applyListen(next);
+    }
+    if (next.osc !== prev.osc) this.applyOsc(next);
     if (next.main !== prev.main) this.main.apply(next.main);
     if (next.auxes !== prev.auxes) next.auxes.forEach((b, i) => b !== prev.auxes[i] && this.applyBus(b, i));
     if (next.matrix !== prev.matrix) this.applyMatrix(next);
@@ -311,10 +333,57 @@ export class MixerEngine {
 
   private applyListen(s: MixerState): void {
     const t = this.ctx.currentTime;
-    this.listenMain.gain.setTargetAtTime(s.listen === 'main' ? 1 : 0, t, RAMP);
-    this.listenAux.forEach((g, a) => g.gain.setTargetAtTime(s.listen === a ? 1 : 0, t, RAMP));
-    this.listenMatrix.forEach((g, i) => g.gain.setTargetAtTime(s.listen === `matrix-${i}` ? 1 : 0, t, RAMP));
-    this.refGain.gain.setTargetAtTime(s.listen === 'reference' && this.refBuffer ? dbToGain(this.refTrimDb) : 0, t, RAMP);
+    // 솔로가 켜지면 고른 듣기 대신 솔로 버스를 듣는다(콘솔의 모니터·이어폰이 그렇다).
+    const solo = s.channels.some((c) => c.solo);
+    const listen = solo ? null : s.listen;
+    this.listenSolo.gain.setTargetAtTime(solo ? 1 : 0, t, RAMP);
+    this.listenMain.gain.setTargetAtTime(listen === 'main' ? 1 : 0, t, RAMP);
+    this.listenAux.forEach((g, a) => g.gain.setTargetAtTime(listen === a ? 1 : 0, t, RAMP));
+    this.listenMatrix.forEach((g, i) => g.gain.setTargetAtTime(listen === `matrix-${i}` ? 1 : 0, t, RAMP));
+    this.refGain.gain.setTargetAtTime(listen === 'reference' && this.refBuffer ? dbToGain(this.refTrimDb) : 0, t, RAMP);
+  }
+
+  private applySolo(s: MixerState): void {
+    const t = this.ctx.currentTime;
+    s.channels.forEach((c, i) => {
+      const st = this.strips[i];
+      if (!st) return;
+      st.soloPfl.gain.setTargetAtTime(c.solo && s.soloMode === 'pfl' ? 1 : 0, t, RAMP);
+      st.soloAfl.gain.setTargetAtTime(c.solo && s.soloMode === 'afl' ? 1 : 0, t, RAMP);
+    });
+  }
+
+  /** 오실레이터: 켤 때 소스를 만들고, 끌 때 멈춰 버린다(꺼진 동안 돌지 않게). 목표 버스 입력으로 보낸다. */
+  private applyOsc(s: MixerState): void {
+    const t = this.ctx.currentTime;
+    const o = s.osc;
+    const target = o.target === 'main' ? this.main.input : this.auxes[o.target]?.input ?? null;
+    if (target !== this.oscTarget) {
+      if (this.oscTarget) this.oscGain.disconnect(this.oscTarget);
+      if (target) this.oscGain.connect(target);
+      this.oscTarget = target;
+    }
+    const kind = this.oscSource instanceof OscillatorNode ? 'sine' : this.oscSource ? 'pink' : null;
+    if (!o.on || kind !== o.type) {
+      this.oscSource?.stop();
+      this.oscSource?.disconnect();
+      this.oscSource = null;
+    }
+    if (o.on && !this.oscSource) {
+      if (o.type === 'sine') {
+        this.oscSource = new OscillatorNode(this.ctx, { type: 'sine', frequency: o.freq });
+      } else {
+        const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 2, this.ctx.sampleRate);
+        buf.copyToChannel(pinkNoise(buf.length), 0);
+        this.oscSource = new AudioBufferSourceNode(this.ctx, { buffer: buf, loop: true });
+      }
+      this.oscSource.connect(this.oscGain);
+      this.oscSource.start();
+    }
+    if (this.oscSource instanceof OscillatorNode) this.oscSource.frequency.setTargetAtTime(o.freq, t, RAMP);
+    // 사인은 피크가 RMS보다 3 dB 크다. 레벨은 RMS 기준(핑크 노이즈 RMS 1과 맞춘다).
+    const rms = o.type === 'sine' ? Math.SQRT2 : 1;
+    this.oscGain.gain.setTargetAtTime(o.on ? dbToGain(o.levelDb) * rms : 0, t, RAMP);
   }
 
   private applyHowlTone(s: MixerState): void {

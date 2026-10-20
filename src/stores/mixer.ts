@@ -21,6 +21,9 @@ import {
   type InsertState,
   type MatrixState,
   type PeqState,
+  type OscState,
+  type SceneSnapshot,
+  type SoloMode,
 } from './mixer-model';
 
 export type BusRef = 'main' | number;
@@ -56,6 +59,19 @@ export interface MixerActions {
   setFxReturn(bus: number, p: { returnDb?: number; returnMute?: boolean }): void;
   /** 채널 인서트 */
   setInsert(ch: number, p: Partial<Omit<InsertState, 'fx'>> & { fx?: Partial<FxState> }): void;
+  setSolo(ch: number, on: boolean): void;
+  clearSolo(): void;
+  setSoloMode(mode: SoloMode): void;
+  setDca(i: number, p: { faderDb?: number; mute?: boolean; name?: string }): void;
+  setDcaMember(i: number, ch: number, on: boolean): void;
+  setMuteGroup(i: number, on: boolean): void;
+  setMuteGroupMember(i: number, ch: number, on: boolean): void;
+  /** 지금 상태를 씬 i에 저장한다 */
+  saveScene(i: number, name?: string): void;
+  /** 씬 i를 불러온다. 리콜 세이프 채널과 솔로는 그대로 둔다 */
+  recallScene(i: number): void;
+  setSafe(ch: number, on: boolean): void;
+  setOsc(p: Partial<OscState>): void;
   setMatrix(i: number, p: { faderDb?: number; mute?: boolean; fromMainDb?: number; fromBus?: { bus: number; db: number } }): void;
   setPatch(ch: number, input: number | null): void;
   setListen(target: ListenTarget): void;
@@ -291,6 +307,83 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
         })),
       setInsert: (ch, { fx, ...p }) =>
         updateChannel(ch, (x) => ({ ...x, insert: clampInsert({ ...x.insert, ...p, fx: { ...x.insert.fx, ...fx } }, c) })),
+      setSolo: (ch, on) => updateChannel(ch, (x) => ({ ...x, solo: on }), false),
+      clearSolo: () => set((s) => (s.channels.some((x) => x.solo) ? { channels: s.channels.map((x) => (x.solo ? { ...x, solo: false } : x)) } : s)),
+      setSoloMode: (soloMode) => set({ soloMode }),
+      setDca: (i, p) =>
+        set((s) => {
+          if (!s.dca[i]) return s;
+          const dca = s.dca.slice();
+          dca[i] = { ...dca[i], ...p, ...(p.faderDb !== undefined && { faderDb: c('fader', p.faderDb) }) };
+          return { dca };
+        }),
+      setDcaMember: (i, ch, on) =>
+        set((s) => {
+          if (!s.dca[i] || ch >= s.channels.length) return s;
+          const dca = s.dca.slice();
+          const members = dca[i].members.slice();
+          members[ch] = on;
+          dca[i] = { ...dca[i], members };
+          return { dca };
+        }),
+      setMuteGroup: (i, on) =>
+        set((s) => {
+          if (!s.muteGroups[i]) return s;
+          const muteGroups = s.muteGroups.slice();
+          muteGroups[i] = { ...muteGroups[i], on };
+          return { muteGroups };
+        }),
+      setMuteGroupMember: (i, ch, on) =>
+        set((s) => {
+          if (!s.muteGroups[i] || ch >= s.channels.length) return s;
+          const muteGroups = s.muteGroups.slice();
+          const members = muteGroups[i].members.slice();
+          members[ch] = on;
+          muteGroups[i] = { ...muteGroups[i], members };
+          return { muteGroups };
+        }),
+      saveScene: (i, name) =>
+        set((s) => {
+          if (!s.scenes[i]) return s;
+          const snapshot: SceneSnapshot = structuredClone({
+            channels: s.channels,
+            main: s.main,
+            auxes: s.auxes,
+            matrix: s.matrix,
+            dca: s.dca,
+            muteGroups: s.muteGroups,
+            links: s.links,
+          });
+          const scenes = s.scenes.slice();
+          scenes[i] = { name: name ?? scenes[i].name, snapshot };
+          return { scenes };
+        }),
+      recallScene: (i) =>
+        set((s) => {
+          const snap = s.scenes[i]?.snapshot;
+          if (!snap) return s;
+          const next = structuredClone(snap);
+          next.channels = next.channels.map((x, ch) =>
+            s.safes[ch] && s.channels[ch] ? s.channels[ch] : { ...x, solo: s.channels[ch]?.solo ?? false },
+          );
+          return clampState({ ...s, ...next }, get().profile);
+        }),
+      setSafe: (ch, on) =>
+        set((s) => {
+          if (ch >= s.safes.length) return s;
+          const safes = s.safes.slice();
+          safes[ch] = on;
+          return { safes };
+        }),
+      setOsc: (p) =>
+        set((s) => ({
+          osc: {
+            ...s.osc,
+            ...p,
+            ...(p.freq !== undefined && { freq: c('eqFreq', p.freq) }),
+            ...(p.levelDb !== undefined && { levelDb: c('fader', p.levelDb) }),
+          },
+        })),
       setMatrix: (i, { fromBus, ...p }) =>
         set((s) => {
           const m = s.matrix[i];

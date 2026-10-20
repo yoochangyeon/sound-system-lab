@@ -94,6 +94,9 @@ export class ChannelStrip {
   readonly faderMeter: AnalyserNode;
   readonly panner: StereoPannerNode;
   readonly mainSend: GainNode;
+  /** 솔로 버스로 가는 길: PFL은 페이더 앞(인서트 뒤, 뮤트와 상관없이), AFL은 팬 뒤 */
+  readonly soloPfl: GainNode;
+  readonly soloAfl: GainNode;
   readonly sendsPreEq: GainNode[];
   readonly sendsPre: GainNode[];
   readonly sendsPost: GainNode[];
@@ -135,6 +138,8 @@ export class ChannelStrip {
       outputChannelCount: [1],
       processorOptions: { kind: 'comp' },
     });
+    this.soloPfl = new GainNode(ctx, { ...mono, gain: 0 });
+    this.soloAfl = new GainNode(ctx, { gain: 0 });
     this.insertDry = new GainNode(ctx, { ...mono, gain: 1 });
     this.insertWet = new GainNode(ctx, { ...mono, gain: 0 });
     this.insertOut = new GainNode(ctx, mono);
@@ -157,6 +162,8 @@ export class ChannelStrip {
     this.peq.output.connect(this.comp).connect(this.insertDry).connect(this.insertOut);
     this.insertWet.connect(this.insertOut);
     this.insertOut.connect(this.fader).connect(this.panner).connect(this.mainSend);
+    this.insertOut.connect(this.soloPfl);
+    this.panner.connect(this.soloAfl);
     this.fader.connect(this.faderMeter);
     this.sendsPreEq.forEach((g) => this.gate.connect(g));
     this.sendsPre.forEach((g) => this.insertOut.connect(g));
@@ -254,7 +261,7 @@ export class ChannelStrip {
   }
 
   disconnect(): void {
-    for (const n of [this.input, this.mainSend, ...this.sendsPreEq, ...this.sendsPre, ...this.sendsPost, ...this.sendsGroup]) n.disconnect();
+    for (const n of [this.input, this.mainSend, this.soloPfl, this.soloAfl, ...this.sendsPreEq, ...this.sendsPre, ...this.sendsPost, ...this.sendsGroup]) n.disconnect();
     this.gate.port.onmessage = null;
     this.comp.port.onmessage = null;
     this.insertFx?.dispose();

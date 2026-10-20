@@ -4,6 +4,7 @@ import { createMixerStore, snapshot } from './mixer';
 import { defaultMixerState } from './mixer-model';
 import {
   channelReachesMain,
+  effectiveChannel,
   howlLoopGainDb,
   inputPeakDb,
   mainPathProblems,
@@ -270,5 +271,73 @@ describe('그룹과 매트릭스', () => {
     a.setBusPeqBand(1, 0, { gainDb: 40 });
     expect(st.getState().main.comp.ratio).toBe(20);
     expect(st.getState().auxes[1].peq.bands[0].gainDb).toBe(15);
+  });
+});
+
+describe('DCA·뮤트 그룹·씬', () => {
+  function opsStore() {
+    return createMixerStore(
+      defaultMixerState({ channels: 4, auxes: 1, inputs, dcaCount: 2, muteGroupCount: 2, sceneCount: 2 }),
+      GENERIC_PROFILE,
+    );
+  }
+
+  it('DCA를 내리면 묶인 채널만 그만큼 내려가고 채널 페이더 값은 그대로다', () => {
+    const st = opsStore();
+    const a = st.getState().actions;
+    a.setFader(0, -3);
+    a.setFader(1, -8);
+    a.setDcaMember(0, 0, true);
+    a.setDcaMember(0, 1, true);
+    a.setDca(0, { faderDb: -10 });
+    const s = snapshot(st);
+    expect([effectiveChannel(s, 0).faderDb, effectiveChannel(s, 1).faderDb, effectiveChannel(s, 2).faderDb]).toEqual([-13, -18, 0]);
+    expect(s.channels[0].faderDb).toBe(-3);
+  });
+
+  it('DCA 뮤트·뮤트 그룹은 묶인 채널의 메인 경로를 끊고 이유를 알려 준다', () => {
+    const st = opsStore();
+    const a = st.getState().actions;
+    a.setDcaMember(1, 0, true);
+    a.setDca(1, { mute: true });
+    expect(channelReachesMain(snapshot(st), 0)).toBe(false);
+    expect(mainPathProblems(snapshot(st), 0)).toContain('dca-mute');
+    a.setDca(1, { mute: false });
+    a.setMuteGroupMember(0, 0, true);
+    a.setMuteGroup(0, true);
+    expect(channelReachesMain(snapshot(st), 0)).toBe(false);
+    expect(mainPathProblems(snapshot(st), 0)).toContain('mute-group');
+    a.setMuteGroup(0, false);
+    expect(channelReachesMain(snapshot(st), 0)).toBe(true);
+  });
+
+  it('씬을 불러오면 저장할 때로 돌아가고, 세이프 채널과 솔로는 그대로다', () => {
+    const st = opsStore();
+    const a = st.getState().actions;
+    a.setFader(0, -5);
+    a.setFader(1, -5);
+    a.saveScene(0, '설교');
+    a.setFader(0, 3);
+    a.setFader(1, 3);
+    a.setSolo(1, true);
+    a.setSafe(0, true);
+    a.recallScene(0);
+    const ch = st.getState().channels;
+    expect(ch[0].faderDb).toBe(3); // 세이프
+    expect(ch[1].faderDb).toBe(-5);
+    expect(ch[1].solo).toBe(true);
+    expect(st.getState().scenes[0].name).toBe('설교');
+  });
+
+  it('빈 씬은 불러와도 아무 일도 없고, 솔로는 한 번에 모두 끈다', () => {
+    const st = opsStore();
+    const a = st.getState().actions;
+    a.setFader(0, -4);
+    a.recallScene(1);
+    expect(st.getState().channels[0].faderDb).toBe(-4);
+    a.setSolo(0, true);
+    a.setSolo(2, true);
+    a.clearSolo();
+    expect(st.getState().channels.some((x) => x.solo)).toBe(false);
   });
 });

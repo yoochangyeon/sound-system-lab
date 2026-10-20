@@ -471,3 +471,80 @@ describe('엔진: 이펙트(Insert와 Send/Return)', () => {
     expect(diff).toBeGreaterThan(0.05);
   });
 });
+
+describe('엔진: DCA·뮤트 그룹·솔로·오실레이터', () => {
+  const ops = { shape: { channels: 2, dcaCount: 1, muteGroupCount: 1 }, initial: (s: Parameters<NonNullable<Parameters<typeof renderMixer>[0]['initial']>>[0]) => ({ ...s, patch: [0, 0] }) };
+
+  it('DCA를 6 dB 내리면 묶인 채널만 6 dB 내려간다', async () => {
+    const run = (dcaDb: number) =>
+      renderMixer({
+        freq: 1000,
+        db: -20,
+        ...ops,
+        prepare: ({ store }) => {
+          const a = store.getState().actions;
+          a.setMute(1, true);
+          a.setDcaMember(0, 0, true);
+          a.setDca(0, { faderDb: dcaDb });
+        },
+      });
+    expect(tailRmsDb(await run(0)) - tailRmsDb(await run(-6))).toBeCloseTo(6, 0);
+  });
+
+  it('뮤트 그룹을 켜면 묶인 채널이 모두 꺼진다', async () => {
+    const out = await renderMixer({
+      freq: 1000,
+      db: -20,
+      ...ops,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setMuteGroupMember(0, 0, true);
+        a.setMuteGroupMember(0, 1, true);
+        a.setMuteGroup(0, true);
+      },
+    });
+    expect(tailRmsDb(out)).toBeLessThan(-90);
+  });
+
+  it('PFL 솔로는 뮤트된 채널도 페이더와 상관없이 들려주고, 메인은 듣지 않는다', async () => {
+    const out = await renderMixer({
+      freq: 1000,
+      db: -20,
+      shape: { channels: 2 },
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setPatch(1, null);
+        a.setMute(0, true);
+        a.setFader(0, -20);
+        a.setSolo(0, true);
+      },
+    });
+    // PFL은 모노 그대로 양쪽에 −20 dBFS 사인(RMS −23)
+    expect(tailRmsDb(out)).toBeCloseTo(-23, 0);
+  });
+
+  it('AFL 솔로는 페이더를 따른다', async () => {
+    const run = (faderDb: number) =>
+      renderMixer({
+        freq: 1000,
+        db: -20,
+        prepare: ({ store }) => {
+          const a = store.getState().actions;
+          a.setSoloMode('afl');
+          a.setFader(0, faderDb);
+          a.setSolo(0, true);
+        },
+      });
+    expect(tailRmsDb(await run(0)) - tailRmsDb(await run(-10))).toBeCloseTo(10, 0);
+  });
+
+  it('오실레이터: 핑크 노이즈를 메인에 정한 크기(RMS)로 넣는다', async () => {
+    const out = await renderMixer({
+      freq: 1000,
+      db: -20,
+      shape: { channels: 1, inputs: [{ label: 'IN 1', stemId: null }] },
+      prepare: ({ store }) => store.getState().actions.setOsc({ on: true, type: 'pink', levelDb: -20, target: 'main' }),
+    });
+    expect(tailRmsDb(out)).toBeCloseTo(-20, 0);
+  });
+});

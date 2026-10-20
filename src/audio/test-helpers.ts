@@ -24,6 +24,24 @@ export function tailRmsDb(buf: AudioBuffer, channel = 0, fromFraction = 0.5): nu
   return r > 0 ? 20 * Math.log10(r) : -Infinity;
 }
 
+/** 처음 burstS초만 사인이고 나머지는 무음인 버퍼(잔향·메아리 재기) */
+export function burstBuffer(ctx: BaseAudioContext, seconds: number, burstS = 0.02, freq = 1000, db = -6): AudioBuffer {
+  const buf = sineBuffer(ctx, freq, db, seconds);
+  buf.getChannelData(0).fill(0, Math.round(burstS * ctx.sampleRate));
+  return buf;
+}
+
+/** 구간 [from, to)초의 RMS(dBFS) */
+export function windowRmsDb(buf: AudioBuffer, from: number, to: number, channel = 0): number {
+  const d = buf.getChannelData(channel);
+  const a = Math.floor(from * buf.sampleRate);
+  const b = Math.min(d.length, Math.floor(to * buf.sampleRate));
+  let s = 0;
+  for (let i = a; i < b; i++) s += d[i] * d[i];
+  const r = Math.sqrt(s / Math.max(1, b - a));
+  return r > 0 ? 20 * Math.log10(r) : -Infinity;
+}
+
 export function maxAbs(buf: AudioBuffer): number {
   let p = 0;
   for (let c = 0; c < buf.numberOfChannels; c++) for (const v of buf.getChannelData(c)) p = Math.max(p, Math.abs(v));
@@ -47,6 +65,8 @@ export async function renderMixer(opts: {
   shape?: Partial<MixerShape>;
   initial?: (s: MixerState) => MixerState;
   prepare?: (r: RenderedMixer) => void;
+  /** 사인 대신 쓸 소스(예: 짧은 버스트) */
+  source?: (ctx: BaseAudioContext, seconds: number) => AudioBuffer;
 }): Promise<AudioBuffer> {
   const seconds = opts.seconds ?? 0.6;
   const ctx = new OfflineAudioContext({ numberOfChannels: 2, length: Math.round(seconds * SR), sampleRate: SR });
@@ -58,7 +78,7 @@ export async function renderMixer(opts: {
   });
   if (opts.initial) state = opts.initial(state);
   const store = createMixerStore(state);
-  const buffers = new Map([['test', sineBuffer(ctx, opts.freq, opts.db, seconds)]]);
+  const buffers = new Map([['test', opts.source?.(ctx, seconds) ?? sineBuffer(ctx, opts.freq, opts.db, seconds)]]);
   const engine = await MixerEngine.create(ctx, store, { buffers, howlTickMs: 0 });
   opts.prepare?.({ store, engine, ctx });
   engine.play(0);

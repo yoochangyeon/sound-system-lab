@@ -17,6 +17,8 @@ import {
   type PreampState,
   type SendTap,
   type HowlState,
+  type FxState,
+  type InsertState,
   type MatrixState,
   type PeqState,
 } from './mixer-model';
@@ -48,6 +50,12 @@ export interface MixerActions {
   setBusPeqOn(bus: BusRef, on: boolean): void;
   setBusPeqBand(bus: BusRef, band: number, p: Partial<PeqBandState>): void;
   setBusComp(bus: BusRef, p: DynPatch<CompState>): void;
+  /** fx 버스의 이펙트 설정 */
+  setFx(bus: number, p: Partial<FxState>): void;
+  /** FX 리턴 크기·뮤트 */
+  setFxReturn(bus: number, p: { returnDb?: number; returnMute?: boolean }): void;
+  /** 채널 인서트 */
+  setInsert(ch: number, p: Partial<Omit<InsertState, 'fx'>> & { fx?: Partial<FxState> }): void;
   setMatrix(i: number, p: { faderDb?: number; mute?: boolean; fromMainDb?: number; fromBus?: { bus: number; db: number } }): void;
   setPatch(ch: number, input: number | null): void;
   setListen(target: ListenTarget): void;
@@ -98,6 +106,24 @@ function clampComp(x: CompState, c: Clamp): CompState {
   };
 }
 
+function clampFx(f: FxState, c: Clamp): FxState {
+  return {
+    ...f,
+    decayS: c('fxDecay', f.decayS),
+    preDelayMs: c('fxPreDelay', f.preDelayMs),
+    timeMs: c('fxTime', f.timeMs),
+    feedbackPct: c('fxFeedback', f.feedbackPct),
+    rateHz: c('fxRate', f.rateHz),
+    depthPct: c('fxDepth', f.depthPct),
+    hiCutHz: c('fxHiCut', f.hiCutHz),
+    loCutHz: c('fxLoCut', f.loCutHz),
+  };
+}
+
+function clampInsert(x: InsertState, c: Clamp): InsertState {
+  return { ...x, mixPct: c('mix', x.mixPct), fx: clampFx(x.fx, c) };
+}
+
 function clampPeq(x: PeqState, c: Clamp): PeqState {
   return { ...x, bands: x.bands.map((b) => ({ ...b, freq: c('eqFreq', b.freq), gainDb: c('eqGain', b.gainDb), q: c('eqQ', b.q) })) };
 }
@@ -109,6 +135,8 @@ function clampBus(b: BusState, c: Clamp): BusState {
     geq: b.geq.map((g) => c('geqGain', g)),
     peq: clampPeq(b.peq, c),
     comp: clampComp(b.comp, c),
+    fx: clampFx(b.fx, c),
+    returnDb: c('fader', b.returnDb),
   };
 }
 
@@ -138,6 +166,7 @@ export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
       gate: clampGate(x.gate, c),
       peq: clampPeq(x.peq, c),
       comp: clampComp(x.comp, c),
+      insert: clampInsert(x.insert, c),
       faderDb: c('fader', x.faderDb),
       sends: x.sends.map((sd) => ({ ...sd, levelDb: c('send', sd.levelDb) })),
     })),
@@ -253,6 +282,15 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
         }),
       setBusComp: (bus, { key, ...p }) =>
         updateBus(bus, (x) => ({ ...x, comp: clampComp({ ...x.comp, ...p, key: { ...x.comp.key, ...key } }, c) })),
+      setFx: (bus, p) => updateBus(bus, (x) => ({ ...x, fx: clampFx({ ...x.fx, ...p }, c) })),
+      setFxReturn: (bus, p) =>
+        updateBus(bus, (x) => ({
+          ...x,
+          ...(p.returnMute !== undefined && { returnMute: p.returnMute }),
+          ...(p.returnDb !== undefined && { returnDb: c('fader', p.returnDb) }),
+        })),
+      setInsert: (ch, { fx, ...p }) =>
+        updateChannel(ch, (x) => ({ ...x, insert: clampInsert({ ...x.insert, ...p, fx: { ...x.insert.fx, ...fx } }, c) })),
       setMatrix: (i, { fromBus, ...p }) =>
         set((s) => {
           const m = s.matrix[i];

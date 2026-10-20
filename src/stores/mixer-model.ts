@@ -81,12 +81,42 @@ export interface SendState {
   tap: SendTap;
 }
 
+export type FxType = 'reverb' | 'delay' | 'chorus';
+
+/** 이펙트 하나의 설정. 종류마다 쓰는 값만 쓴다(리버브: 잔향·프리딜레이, 딜레이: 시간·피드백, 코러스: 속도·깊이). */
+export interface FxState {
+  type: FxType;
+  /** 리버브 잔향 길이(RT60, 초) */
+  decayS: number;
+  /** 리버브가 시작되기 전 틈(ms) */
+  preDelayMs: number;
+  /** 딜레이 시간(ms) */
+  timeMs: number;
+  /** 딜레이 반복 양(%) */
+  feedbackPct: number;
+  /** 코러스 흔들림 속도(Hz) */
+  rateHz: number;
+  /** 코러스 흔들림 깊이(%) */
+  depthPct: number;
+  /** 이펙트 소리의 고역·저역 자르기 */
+  hiCutHz: number;
+  loCutHz: number;
+}
+
+/** 채널 인서트: 페이더 앞(컴프 뒤)에 이펙트를 직접 끼운다. mixPct는 이펙트 소리의 비율 */
+export interface InsertState {
+  on: boolean;
+  mixPct: number;
+  fx: FxState;
+}
+
 export interface ChannelState {
   name: string;
   preamp: PreampState;
   gate: GateState;
   peq: PeqState;
   comp: CompState;
+  insert: InsertState;
   faderDb: number;
   mute: boolean;
   pan: number; // -1(왼쪽) ~ 1(오른쪽)
@@ -96,9 +126,10 @@ export interface ChannelState {
 
 /**
  * 버스 종류. monitor: 무대 모니터(모노, 메인으로 안 간다), group: 서브그룹(스테레오, 채널 팬 뒤에서 받아 메인으로),
- * main: 메인 L/R. 실제 콘솔의 믹스 버스처럼 같은 틀에 종류만 다르다.
+ * fx: 이펙트 센드(모노로 모아 이펙트에 넣고, 이펙트 출력은 FX 리턴으로 메인에 돌아온다), main: 메인 L/R.
+ * 실제 콘솔의 믹스 버스처럼 같은 틀에 종류만 다르다.
  */
-export type BusKind = 'monitor' | 'group' | 'main';
+export type BusKind = 'monitor' | 'group' | 'fx' | 'main';
 
 export interface BusState {
   name: string;
@@ -109,8 +140,12 @@ export interface BusState {
   /** 버스 처리: PEQ → 컴프 → GEQ 순서 */
   peq: PeqState;
   comp: CompState;
-  /** 그룹을 메인으로 보낼지(모니터·메인은 쓰지 않는다) */
+  /** 그룹·FX 리턴을 메인으로 보낼지(모니터·메인은 쓰지 않는다) */
   mainAssign: boolean;
+  /** kind가 fx일 때: 이펙트 설정과 리턴(돌아오는 소리) */
+  fx: FxState;
+  returnDb: number;
+  returnMute: boolean;
 }
 
 /** 매트릭스: 메인과 그룹을 다시 섞어 따로 내보낸다(로비 스피커, 방송 송출). 입력 채널은 직접 보낼 수 없다. */
@@ -204,6 +239,7 @@ export function defaultChannel(name: string, auxCount: number): ChannelState {
     },
     peq: defaultPeq(),
     comp: defaultComp(),
+    insert: { on: false, mixPct: 30, fx: defaultFx('reverb') },
     faderDb: 0,
     mute: false,
     pan: 0,
@@ -216,8 +252,34 @@ export function defaultBus(name: string): BusState {
   return defaultBusOf(name, 'monitor');
 }
 
-export function defaultBusOf(name: string, kind: BusKind): BusState {
-  return { name, kind, faderDb: 0, mute: false, geq: flatGeq(), peq: defaultPeq(), comp: defaultComp(), mainAssign: kind === 'group' };
+export function defaultFx(type: FxType = 'reverb'): FxState {
+  return {
+    type,
+    decayS: 1.8,
+    preDelayMs: 20,
+    timeMs: 375,
+    feedbackPct: 30,
+    rateHz: 0.8,
+    depthPct: 40,
+    hiCutHz: 6000,
+    loCutHz: 200,
+  };
+}
+
+export function defaultBusOf(name: string, kind: BusKind, fxType: FxType = 'reverb'): BusState {
+  return {
+    name,
+    kind,
+    faderDb: 0,
+    mute: false,
+    geq: flatGeq(),
+    peq: defaultPeq(),
+    comp: defaultComp(),
+    mainAssign: kind === 'group' || kind === 'fx',
+    fx: defaultFx(fxType),
+    returnDb: 0,
+    returnMute: false,
+  };
 }
 
 export function defaultMatrix(name: string, busCount: number): MatrixState {
@@ -231,6 +293,8 @@ export interface MixerShape {
   auxNames?: string[];
   /** 버스 종류(기본 모두 monitor) */
   auxKinds?: BusKind[];
+  /** fx 버스의 이펙트 종류(버스 번호 순서) */
+  auxFx?: (FxType | undefined)[];
   /** 매트릭스 이름들(기본 없음) */
   matrixNames?: string[];
 }
@@ -245,7 +309,7 @@ export function defaultMixerState(shape: MixerShape): MixerState {
       defaultChannel(shape.inputs[i]?.label ?? `CH ${i + 1}`, shape.auxes),
     ),
     main: defaultBusOf('Main', 'main'),
-    auxes: auxNames.map((n, i) => defaultBusOf(n, shape.auxKinds?.[i] ?? 'monitor')),
+    auxes: auxNames.map((n, i) => defaultBusOf(n, shape.auxKinds?.[i] ?? 'monitor', shape.auxFx?.[i])),
     matrix: (shape.matrixNames ?? []).map((n) => defaultMatrix(n, shape.auxes)),
     listen: 'main',
     howl: { active: false, channel: 0, aux: 0, freq: 2500 },

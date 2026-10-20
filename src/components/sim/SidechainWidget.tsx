@@ -49,10 +49,10 @@ export default function SidechainWidget() {
               <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={110} label="반주" />
             </div>
           </div>
-          <div className="sim-group-title">
+          <label className="sim-group-title">
             <span>목소리도 메인으로 듣기</span>
             <Switch on={voiceOn} onChange={(on) => a.setMute(1, !on)} color={COLOR} />
-          </div>
+          </label>
           <Slider label="스레숄드" hint="목소리가 이보다 크면 반주를 줄인다" value={g.thresholdDb} range={r.gateThreshold} onChange={(v) => set({ thresholdDb: v })} color={COLOR} defaultValue={-36} />
           <Slider label="줄이는 양(레인지)" hint="목소리가 나올 때 반주를 몇 dB 내릴지" value={g.rangeDb} range={r.gateRange} onChange={(v) => set({ rangeDb: v })} color={COLOR} defaultValue={10} format={(v) => `${Math.round(v)} dB`} />
           <More label="더 자세히: 어택·홀드·릴리스">

@@ -4,8 +4,8 @@ export type Lesson = CollectionEntry<'lessons'>;
 
 export const CHAPTERS = [
   { key: 'basics', no: 1, label: '1장. 음향 기초', short: '1장', name: '음향 기초', blurb: '소리가 지나가는 길과 dB, 주파수, 마이크, 스피커' },
-  { key: 'processing', no: 2, label: '2장. 처리기 다루기', short: '2장', name: '처리기 다루기', blurb: '게인, EQ, 하울링, 컴프레서, 게이트를 직접 만져 본다' },
-  { key: 'consoles', no: 3, label: '3장. 믹서 실습', short: '3장', name: '믹서 실습', blurb: '쉬운 믹서에서 주일 예배 문제 4가지를 풀어 본다' },
+  { key: 'processing', no: 2, label: '2장. 처리기 다루기', short: '2장', name: '처리기 다루기', blurb: '게인, EQ, 하울링, 다이내믹스, 이펙트를 직접 만져 본다' },
+  { key: 'consoles', no: 3, label: '3장. 믹서 실습', short: '3장', name: '믹서 실습', blurb: '쉬운 믹서로 버스·솔로·씬을 익히고 주일 예배 문제를 풀어 본다' },
 ] as const;
 
 export function chapterOf(lesson: Lesson) {

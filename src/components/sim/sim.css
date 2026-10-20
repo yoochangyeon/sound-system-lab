@@ -87,6 +87,10 @@
   font-size: 15px;
   font-weight: 700;
 }
+/* 스위치 하나를 이름과 묶은 제목: 글자를 눌러도 켜고 끈다 */
+label.sim-group-title {
+  cursor: pointer;
+}
 .sim-stat {
   font-size: 13px;
   color: var(--faint);
@@ -549,6 +553,13 @@
 }
 .sim-lamp.is-on::before {
   background: var(--green);
+}
+.sim-lamp.is-caution {
+  background: var(--yellow-soft);
+  color: #8a5d00;
+}
+.sim-lamp.is-caution::before {
+  background: var(--yellow);
 }
 .sim-lamp.is-warn {
   background: var(--red-soft);

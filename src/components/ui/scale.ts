@@ -92,3 +92,11 @@ export function fmtRange(v: number, r: Pick<Range, 'unit' | 'offset'>): string {
   if (r.unit === 'dBu') return fmtDb(shown).replace(' dB', ' dBu');
   return fmtUnit(shown, r.unit);
 }
+
+/** 입력 피크(dBFS) 판정. 레슨·LevelZones·게인 미션과 같은 구간: −18 ~ −6 알맞다, −6 ~ 0 아슬아슬. */
+export function inputVerdict(peakDb: number): { cls: string; text: string; short: string } {
+  if (peakDb >= 0) return { cls: 'is-warn', text: '클리핑: 소리가 깨진다', short: '클리핑' };
+  if (peakDb > -6) return { cls: 'is-caution', text: '아슬아슬: 여유가 거의 없다', short: '아슬아슬' };
+  if (peakDb < -18) return { cls: '', text: '너무 작다: 잡음에 묻힌다', short: '너무 작다' };
+  return { cls: 'is-on', text: '알맞다: 여유가 있다', short: '알맞다' };
+}

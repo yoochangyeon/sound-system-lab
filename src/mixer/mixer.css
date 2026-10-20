@@ -288,12 +288,14 @@
   font-size: 14px;
 }
 
-/* 출력 */
+/* 출력: 열 폭을 화면에 묶어 GEQ 31밴드가 페이지를 넓히지 않고 .sim-geq 안에서만 가로로 밀리게 한다 */
 .mx-outs {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 .mx-out {
+  min-width: 0;
   padding: 10px;
   border-radius: var(--radius);
   background: var(--bg-grey);

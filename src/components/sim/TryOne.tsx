@@ -12,7 +12,7 @@ import type { StemRole } from '../../audio/library';
 import { Slider } from '../ui/controls';
 import { ResponseGraph, TransferGraph } from '../ui/CurveGraph';
 import { Meter } from '../ui/Meter';
-import { fmtDb } from '../ui/scale';
+import { fmtDb, inputVerdict } from '../ui/scale';
 import { WidgetShell } from './WidgetShell';
 import { createWidgetStore } from './widget-store';
 
@@ -254,12 +254,12 @@ function Visual({ graph, c, engine, playing, accent }: { graph: Graph; c: Channe
 }
 
 function InputVisual({ engine, playing, est }: { engine: MixerEngine | null; playing: boolean; est: number }) {
-  const v = est >= 0 ? { cls: 'is-warn', t: '클리핑' } : est < -18 ? { cls: '', t: '너무 작다' } : { cls: 'is-on', t: '알맞다' };
+  const v = inputVerdict(est);
   return (
     <div className="sim-visual" style={{ alignItems: 'center' }}>
       <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={playing} height={110} width={16} label="입력" />
       <div className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-        <span className={`sim-lamp ${v.cls}`}>{v.t}</span>
+        <span className={`sim-lamp ${v.cls}`}>{v.short}</span>
         <span className="sim-stat">
           가장 큰 순간 <strong>{Number.isFinite(est) ? fmtDb(est).replace(' dB', ' dBFS') : '—'}</strong>
         </span>

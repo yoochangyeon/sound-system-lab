@@ -2,16 +2,18 @@ import type { Stem } from './stems';
 
 // 밴드: ccMixter tmray "Forget It - Demo"(CC BY 3.0)의 60~108초 구간(80 BPM, 16마디)을 모노 AAC 96 kbps로 자른 것.
 // 피크·RMS는 자르고 페이드한 원본 PCM에서 계산했다(RMS는 −60 dBFS 이상인 50 ms 구간들의 평균). 2026-10-20.
-// 설교: 운영자 녹음(#5)이 들어올 때까지 보컬 음원을 임시로 쓴다(placeholder). 녹음이 오면 #19에서 바꾼다.
+// 설교: LibriVox "Sermons on Several Occasions, First Series" 01 Salvation by Faith(John Wesley, 낭독 Robert G. Smith, 퍼블릭 도메인)의
+//       120~168초 구간을 모노 AAC 96 kbps로 자른 것. 피크·RMS는 같은 방식으로 계산했다(2026-10-20).
+//       영어 낭독이다. 한국어 설교 녹음(#5)이 들어오면 바꾼다.
 export const STEMS: Stem[] = [
   { id: 'vocals', file: '/audio/band/vocals.m4a', label: '보컬', input: 'IN 1', peakDb: -10.7, rmsDb: -21.8, defaultChannel: 0 },
   {
     id: 'sermon',
-    file: '/audio/band/vocals.m4a',
-    label: '설교(임시 음원)',
+    file: '/audio/sermon.m4a',
+    label: '설교',
     input: 'IN 2',
-    peakDb: -10.7,
-    rmsDb: -21.8,
+    peakDb: -5.5,
+    rmsDb: -26.9,
     defaultChannel: 1,
     speech: true,
   },

@@ -42,5 +42,33 @@ const band = STEMS.filter((s) => !s.speech);
       <p>사이트에서 쓰는 악기 트랙: {band.map((s) => s.label).join(', ')}</p>
 
       <h2>설교 음원</h2>
-      <p>운영자가 직접 녹음한 낭독을 준비하고 있습니다. 그때까지 설교 채널에는 위 곡의 보컬 트랙을 임시로 씁니다.</p>
+      <table>
+        <tbody>
+          <tr>
+            <th>내용</th>
+            <td>John Wesley, "Salvation by Faith" (Sermons on Several Occasions, First Series 1편)</td>
+          </tr>
+          <tr>
+            <th>낭독</th>
+            <td>Robert G. Smith (LibriVox)</td>
+          </tr>
+          <tr>
+            <th>출처</th>
+            <td>
+              <a href="https://librivox.org/sermons-on-several-occasions-first-series-by-john-wesley/">librivox.org</a> ·{' '}
+              <a href="https://archive.org/details/sermonsfirstseries_1307_librivox">archive.org</a>
+            </td>
+          </tr>
+          <tr>
+            <th>라이선스</th>
+            <td>
+              <a href="https://librivox.org/pages/public-domain/">퍼블릭 도메인(LibriVox 녹음)</a>
+            </td>
+          </tr>
+          <tr>
+            <th>바꾼 점</th>
+            <td>2:00~2:48 구간을 잘라 모노로 합치고 웹용(AAC)으로 변환했습니다. 영어 낭독이며, 한국어 설교 녹음으로 바꿀 예정입니다.</td>
+          </tr>
+        </tbody>
+      </table>
     </BaseLayout>

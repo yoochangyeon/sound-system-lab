@@ -32,4 +32,14 @@
 
 ## 설교
 
-운영자가 직접 녹음한 한국어 설교 낭독이 들어올 예정이다(#5). 그때까지 설교 채널은 보컬 음원을 임시로 쓴다.
+| 항목 | 내용 |
+|---|---|
+| 파일 | `sermon.m4a` |
+| 내용 | John Wesley, "Salvation by Faith" (Sermons on Several Occasions, First Series 01) |
+| 낭독 | Robert G. Smith (LibriVox) |
+| 출처 | https://librivox.org/sermons-on-several-occasions-first-series-by-john-wesley/ , 원본 https://www.archive.org/download/sermonsfirstseries_1307_librivox/sermonsfirstseries_01_wesley_64kb.mp3 |
+| 라이선스 | 퍼블릭 도메인. LibriVox 저작권 안내: "you may do whatever you like with our recordings" (https://librivox.org/pages/public-domain/). LibriVox는 미국 기준이며 다른 나라는 각국 저작권을 확인하라고 권한다 |
+| 확인 | 2026-10-20 |
+| 바꾼 점 | 120~168초(48초)를 잘라 모노로 합치고, 양 끝 10 ms 페이드, AAC 96 kbps(m4a) |
+
+영어 낭독이다(기획서는 한국어 설교). 운영자의 한국어 녹음(#5)이 들어오면 이 파일을 바꾼다.

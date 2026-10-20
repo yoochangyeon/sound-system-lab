@@ -112,8 +112,8 @@ export function sendPathGainDb(s: MixerState, ch: number, aux: number): number {
   return g;
 }
 
-/** 하울링 결합 계수: 무대 모니터에서 마이크로 돌아오는 양(dB). 기본 믹스에서 루프 게인이 임계값 아래에 오도록 정했다. */
-export const FEEDBACK_COUPLING_DB = -12;
+/** 하울링 결합 계수: 무대 모니터에서 마이크로 돌아오는 양(dB). 방 공진(+9 dB)이 더해지면, 게인·센드·Aux를 모두 0 dB로 둔 보컬 모니터가 하울링 직전(+9 dB)이 되도록 정했다. 그래서 하울링 대역을 9 dB 넘게 깎아야 멈춘다. */
+export const FEEDBACK_COUPLING_DB = 0;
 
 /**
  * 방·모니터 공진: 하울링 주파수(howl.freq) 근처만 좁게 튀어나온 응답.

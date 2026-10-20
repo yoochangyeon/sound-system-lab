@@ -127,7 +127,6 @@ describe('센드 경로와 하울링', () => {
   it('하울링 대역만 깎으면 루프 게인은 크게 내려가고 모니터 레벨은 거의 그대로다', () => {
     const st = makeStore();
     const a = st.getState().actions;
-    a.setPreamp(0, { gainDb: 12 });
     a.setSend(0, 0, { levelDb: 0 });
     a.setHowl({ active: true, channel: 0, aux: 0, freq: 2500 });
     const before = snapshot(st);

@@ -4,11 +4,11 @@
 /** 루프 게인이 이 값을 넘으면 하울링이 커진다. */
 export const HOWL_THRESHOLD_DB = 0;
 /** 하울링 톤의 최대 크기(dBFS). */
-export const HOWL_CAP_DB = -14;
+export const HOWL_CAP_DB = -10;
 /** 들리지 않는 바닥(dBFS). */
 export const HOWL_FLOOR_DB = -90;
 /** 루프 게인 1 dB 초과당 하울링이 커지는 속도(dB/초). */
-export const HOWL_GROWTH_DB_PER_S = 8;
+export const HOWL_GROWTH_DB_PER_S = 4;
 /** 임계값 아래로 내려갔을 때 최소로 줄어드는 속도(dB/초). */
 export const HOWL_MIN_DECAY_DB_PER_S = 30;
 

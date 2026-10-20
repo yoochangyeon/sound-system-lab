@@ -4,6 +4,8 @@
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { chapterOf, lessonHref, sortedLessons, type Lesson } from '../../lib/lessons';
+import { SITE_NAME } from '../../lib/release';
+import { breadcrumbJsonLd, lessonJsonLd } from '../../lib/seo';
 import '../../components/lesson/lesson.css';
 
 export async function getStaticPaths() {
@@ -24,9 +26,25 @@ const { Content } = await render(lesson);
 const chapter = chapterOf(lesson);
 const nextHref = next ? lessonHref(next) : '/lab/';
 const nextTitle = next ? next.data.title : '실습실에서 미션 풀기';
+
+const site = Astro.site!;
+const url = new URL(lessonHref(lesson), site).href;
+const jsonLd = [
+  lessonJsonLd(site, {
+    title: lesson.data.title,
+    summary: lesson.data.summary,
+    url,
+    topics: lesson.data.topics,
+  }),
+  breadcrumbJsonLd([
+    { name: SITE_NAME, url: new URL('/', site).href },
+    { name: chapter.label, url: new URL(`/#${chapter.key}`, site).href },
+    { name: lesson.data.title, url },
+  ]),
+];
 ---
 
-<BaseLayout title={lesson.data.title} description={lesson.data.summary} bare>
+<BaseLayout title={lesson.data.title} description={lesson.data.summary} ogType="article" jsonLd={jsonLd} bare>
   <div class="lesson-top">
     <div class="lesson-top-in">
       <a class="lesson-back" href="/" aria-label="코스 목록으로">

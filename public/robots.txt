@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://unmute-please.vercel.app/sitemap-index.xml

@@ -1,16 +1,36 @@
 ---
 import '../styles/tokens.css';
 import { SITE_NAME } from '../lib/release';
+import { DEFAULT_OG_IMAGE, OG_IMAGE_ALT, SITE_DESCRIPTION, jsonLdGraph } from '../lib/seo';
 
 interface Props {
   title: string;
+  /** 탭 제목을 통째로 정할 때(홈). 없으면 "{title} · 사이트 이름" */
+  fullTitle?: string;
   description?: string;
   /** 레슨처럼 자기 상단 바를 쓰는 화면은 사이트 머리·꼬리를 숨긴다 */
   bare?: boolean;
   /** 본문 최대 폭 */
   width?: 'narrow' | 'wide';
+  /** 공유 미리보기 이미지(사이트 루트 기준 경로, 1200×630). 없으면 기본 이미지 */
+  image?: string;
+  ogType?: 'website' | 'article';
+  /** 구조화 데이터 노드. @context는 레이아웃이 붙인다 */
+  jsonLd?: Record<string, unknown>[];
 }
-const { title, description, bare = false, width = 'narrow' } = Astro.props;
+const {
+  title,
+  fullTitle,
+  description = SITE_DESCRIPTION,
+  bare = false,
+  width = 'narrow',
+  image = DEFAULT_OG_IMAGE,
+  ogType = 'website',
+  jsonLd = [],
+} = Astro.props;
+const pageTitle = fullTitle ?? `${title} · ${SITE_NAME}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const imageUrl = new URL(image, Astro.site);
 ---
 
 <html lang="ko">
@@ -18,9 +38,29 @@ const { title, description, bare = false, width = 'narrow' } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    {description && <meta name="description" content={description} />}
-    <title>{title} · {SITE_NAME}</title>
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={OG_IMAGE_ALT} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    {jsonLd.length > 0 && <script type="application/ld+json" set:html={jsonLdGraph(jsonLd)} />}
   </head>
   <body>
     {

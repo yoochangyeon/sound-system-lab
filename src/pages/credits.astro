@@ -1,0 +1,54 @@
+---
+// 음원 출처(기획서 S09). public/audio/SOURCES.md와 같은 내용을 유지한다.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComingSoon from '../components/ComingSoon.astro';
+import { COMING_SOON } from '../lib/release';
+import { STEMS } from '../audio/stems';
+
+const band = STEMS.filter((s) => !s.speech);
+---
+
+{
+  COMING_SOON ? (
+    <ComingSoon />
+  ) : (
+    <BaseLayout title="음원 출처">
+      <h1>음원 출처</h1>
+      <p>이 사이트의 실습 음원은 저작권이 확인된 것만 씁니다.</p>
+
+      <h2>밴드 음원</h2>
+      <table>
+        <tbody>
+          <tr>
+            <th>곡명</th>
+            <td>Forget It - Demo</td>
+          </tr>
+          <tr>
+            <th>만든 사람</th>
+            <td>Tom Ray (ccMixter: tmray)</td>
+          </tr>
+          <tr>
+            <th>출처</th>
+            <td>
+              <a href="https://ccmixter.org/files/tmray/40208">ccmixter.org/files/tmray/40208</a>
+            </td>
+          </tr>
+          <tr>
+            <th>라이선스</th>
+            <td>
+              <a href="https://creativecommons.org/licenses/by/3.0/">Creative Commons 저작자표시 3.0 (CC BY 3.0)</a>
+            </td>
+          </tr>
+          <tr>
+            <th>바꾼 점</th>
+            <td>60~108초 구간을 잘라 모노로 합치고 웹용(AAC)으로 변환했습니다.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>사이트에서 쓰는 악기 트랙: {band.map((s) => s.label).join(', ')}</p>
+
+      <h2>설교 음원</h2>
+      <p>운영자가 직접 녹음한 낭독을 준비하고 있습니다. 그때까지 설교 채널에는 위 곡의 보컬 트랙을 임시로 씁니다.</p>
+    </BaseLayout>
+  )
+}

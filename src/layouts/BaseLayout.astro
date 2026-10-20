@@ -1,8 +1,12 @@
 ---
+import '../styles/tokens.css';
+import { SITE_NAME } from '../lib/release';
+
 interface Props {
   title: string;
+  description?: string;
 }
-const { title } = Astro.props;
+const { title, description } = Astro.props;
 ---
 
 <html lang="ko">
@@ -10,22 +14,110 @@ const { title } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title} · 음향 시스템 랩</title>
+    {description && <meta name="description" content={description} />}
+    <title>{title} · {SITE_NAME}</title>
   </head>
   <body>
-    <header><a href="/">음향 시스템 랩</a></header>
+    <header class="site-header">
+      <a class="brand" href="/">{SITE_NAME}</a>
+      <nav>
+        <a href="/">커리큘럼</a>
+        <a href="/lab/">실습실</a>
+      </nav>
+    </header>
     <main><slot /></main>
+    <footer class="site-footer">
+      <a href="/credits/">음원 출처</a>
+      <span>무료 학습 사이트 · 로그인 없음</span>
+    </footer>
   </body>
 </html>
 
 <style is:global>
-  :root {
-    color-scheme: light dark;
-    font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    max-width: 960px;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  main {
+    max-width: 760px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 8px 16px 48px;
+  }
+  a {
+    color: var(--accent);
+  }
+  h1,
+  h2,
+  h3 {
+    line-height: 1.35;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+    font-size: 0.95em;
+  }
+  th,
+  td {
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f3f1ec;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+  }
+  img,
+  svg {
+    max-width: 100%;
+  }
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .site-header nav {
+    display: flex;
+    gap: 14px;
+  }
+  .site-header nav a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.9rem;
   }
 </style>

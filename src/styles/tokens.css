@@ -1,0 +1,37 @@
+/* 공용 디자인 토큰 (기획서 10장).
+   레슨 본문은 시스템 테마와 상관없이 밝은 바탕, 장비 패널(위젯·콘솔)은 항상 어두운 바탕이다. */
+:root {
+  color-scheme: light;
+
+  /* 레슨 */
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --muted: #5d5d63;
+  --line: #e4e2dc;
+  --accent: #2563eb;
+  --accent-soft: #e8efff;
+
+  /* 장비 패널 */
+  --panel-bg: #15171b;
+  --panel-surface: #1f2228;
+  --panel-raised: #2a2e36;
+  --panel-line: #3a3f49;
+  --panel-text: #e9eaee;
+  --panel-muted: #9a9ea8;
+
+  /* 기능별 색 */
+  --fn-eq: #3b82f6; /* EQ 파랑 */
+  --fn-dyn: #f59e0b; /* 다이내믹스(컴프·게이트) 주황 */
+  --fn-preamp: #a1a7b3; /* 프리엠프 회색 */
+  --fn-bus: #22c55e; /* 버스·Aux 초록 */
+
+  /* 미터: 초록 → 노랑 → 빨강 */
+  --meter-green: #22c55e;
+  --meter-yellow: #eab308;
+  --meter-red: #ef4444;
+
+  --radius: 10px;
+  --font: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}

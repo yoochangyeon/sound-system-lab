@@ -1,0 +1,328 @@
+/* 장비 패널 공통 스타일. 시스템 테마와 상관없이 항상 어두운 바탕이다(기획서 10장). */
+.sim-panel {
+  --accent-fn: var(--fn-eq);
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  line-height: 1.4;
+  color-scheme: dark;
+}
+.sim-panel * {
+  box-sizing: border-box;
+}
+
+/* ---- 위젯 ---- */
+.sim-widget {
+  margin: 1.5em 0;
+  padding: 14px;
+  border: 1px solid var(--panel-line);
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.sim-widget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sim-widget-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sim-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-fn);
+  display: inline-block;
+}
+.sim-widget-transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.sim-widget-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sim-widget-foot {
+  margin-top: 10px;
+  color: var(--panel-muted);
+  font-size: 0.85rem;
+}
+.sim-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+  align-items: flex-start;
+}
+.sim-row.is-center {
+  align-items: center;
+}
+.sim-group {
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 0;
+}
+.sim-group-title {
+  font-size: 0.75rem;
+  color: var(--panel-muted);
+  margin: 0 0 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+.sim-stat {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--panel-muted);
+}
+.sim-stat strong {
+  color: var(--panel-text);
+}
+
+/* ---- 버튼·선택 ---- */
+.sim-btn {
+  appearance: none;
+  border: 1px solid var(--panel-line);
+  background: var(--panel-raised);
+  color: var(--panel-text);
+  border-radius: 7px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  min-height: 36px;
+  touch-action: manipulation;
+}
+.sim-btn:hover {
+  border-color: var(--panel-muted);
+}
+.sim-btn.is-primary {
+  background: var(--accent-fn);
+  border-color: var(--accent-fn);
+  color: #0c0d10;
+  font-weight: 700;
+}
+.sim-btn.is-on {
+  background: #3a2a10;
+  border-color: var(--fn-dyn);
+  color: #ffd38a;
+}
+.sim-btn.is-small {
+  padding: 3px 8px;
+  min-height: 28px;
+  font-size: 0.78rem;
+}
+.sim-btn.is-active {
+  background: var(--panel-text);
+  color: var(--panel-bg);
+}
+.sim-btn.is-mute.is-active {
+  background: var(--meter-red);
+  border-color: var(--meter-red);
+  color: #fff;
+}
+.sim-btn:focus-visible,
+.sim-panel [role='slider']:focus-visible,
+.sim-select select:focus-visible {
+  outline: 2px solid var(--accent-fn);
+  outline-offset: 2px;
+}
+.sim-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--panel-muted);
+}
+.sim-select select {
+  background: var(--panel-raised);
+  color: var(--panel-text);
+  border: 1px solid var(--panel-line);
+  border-radius: 7px;
+  padding: 6px 8px;
+  font: inherit;
+  min-height: 36px;
+}
+.sim-error {
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+/* ---- 노브·페이더·미터 ---- */
+.sim-knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sim-knob svg {
+  touch-action: none;
+  cursor: ns-resize;
+}
+.sim-knob.is-disabled {
+  opacity: 0.4;
+}
+.sim-knob-label {
+  font-size: 0.72rem;
+  color: var(--panel-muted);
+  margin-top: 2px;
+}
+.sim-knob-value {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.sim-fader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sim-fader svg {
+  touch-action: none;
+  cursor: ns-resize;
+}
+.sim-fader-value {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.sim-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sim-meter canvas {
+  border-radius: 3px;
+  display: block;
+}
+.sim-meter-label {
+  font-size: 0.68rem;
+  color: var(--panel-muted);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+.sim-graph {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 6px;
+}
+.sim-graph-square {
+  width: 140px;
+  max-width: 100%;
+}
+.sim-rta {
+  width: 100%;
+}
+.sim-rta canvas {
+  display: block;
+  border-radius: 6px;
+}
+.sim-lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+.sim-lamp::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3a3f49;
+}
+.sim-lamp.is-on::before {
+  background: var(--meter-green);
+  box-shadow: 0 0 8px var(--meter-green);
+}
+.sim-lamp.is-warn::before {
+  background: var(--meter-red);
+  box-shadow: 0 0 8px var(--meter-red);
+}
+
+/* ---- GEQ 슬라이더 묶음: 휴대폰에서는 패널 안에서만 가로 스크롤 ---- */
+.sim-geq {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.sim-geq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 26px;
+  flex: 1 0 26px;
+}
+.sim-geq-band input[type='range'] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 22px;
+  height: 120px;
+  accent-color: var(--accent-fn);
+  touch-action: none;
+}
+.sim-geq-band span {
+  font-size: 0.6rem;
+  color: var(--panel-muted);
+  white-space: nowrap;
+}
+.sim-geq-band.is-cut span {
+  color: #93c5fd;
+}
+
+/* ---- 볼륨 안내 ---- */
+.sim-notice {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 16px;
+}
+.sim-notice-box {
+  background: var(--panel-surface);
+  color: var(--panel-text);
+  border: 1px solid var(--panel-line);
+  border-radius: 12px;
+  padding: 18px;
+  max-width: 380px;
+}
+.sim-notice-box h3 {
+  margin: 0 0 8px;
+}
+.sim-notice-box p {
+  margin: 0 0 14px;
+  color: var(--panel-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.sim-notice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sim-notice .sim-btn.is-primary {
+  background: var(--fn-bus);
+  border-color: var(--fn-bus);
+}

@@ -10,7 +10,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:browser": "vitest run --project browser"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.4",
@@ -25,6 +27,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.11",
+    "@vitest/browser-playwright": "5.0.5",
+    "playwright": "1.63.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   }

@@ -44,7 +44,7 @@ export const GENERIC_PROFILE: DeviceProfile = {
   id: 'generic',
   name: '기본',
   ranges: {
-    gain: { min: -12, max: 60, step: 0.5, unit: 'dB' },
+    gain: { min: -24, max: 60, step: 0.5, unit: 'dB' },
     hpfFreq: { min: 20, max: 400, step: 1, unit: 'Hz', log: true },
     lpfFreq: { min: 1000, max: 20000, step: 10, unit: 'Hz', log: true },
     gateThreshold: { min: -80, max: 0, step: 0.5, unit: 'dB' },

@@ -29,19 +29,18 @@ function HowlStatus({ engine, active }: { engine: MixerEngine | null; active: bo
   return <span className={`sim-lamp ${loud ? 'is-warn' : 'is-on'}`}>{loud ? '하울링이 울리는 중' : '조용함'}</span>;
 }
 
-export default function GeqWidget({ defaultStem = 'vocals' }: { defaultStem?: string }) {
+export default function GeqWidget() {
   const store = useMemo(
     () =>
       createWidgetStore({
-        stems: ['vocals', 'sermon', 'guitar-main', 'drums'],
-        defaultStem,
+        roles: ['lead-vocal', 'backing-vocal', 'guitar'],
         auxes: 1,
         initial: {
           listen: 0,
           channels: { 0: { preamp: { gainDb: 0 }, sends: [{ levelDb: 0, pre: true }] } },
         },
       }),
-    [defaultStem],
+    [],
   );
   const geq = useStore(store, (s) => s.auxes[0].geq);
   const howl = useStore(store, (s) => s.howl);

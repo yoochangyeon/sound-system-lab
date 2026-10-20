@@ -11,10 +11,11 @@ import {
   sendPathGainDb,
 } from './derived';
 import { nearestGeqBand } from '../audio/dsp/geq';
+import { DEFAULT_SONG, stemById, stemId } from '../audio/library';
 
 const inputs = [
-  { label: 'IN 1', stemId: 'vocals' },
-  { label: 'IN 2', stemId: 'drums' },
+  { label: 'IN 1', stemId: stemId(DEFAULT_SONG, 'lead-vocal') },
+  { label: 'IN 2', stemId: stemId(DEFAULT_SONG, 'snare') },
   { label: 'IN 3', stemId: null },
 ];
 
@@ -96,7 +97,7 @@ describe('신호 경로', () => {
   it('입력 피크 추정 = 스템 피크 + 프리엠프 게인', () => {
     const st = makeStore();
     st.getState().actions.setPreamp(0, { gainDb: 6 });
-    expect(inputPeakDb(snapshot(st), 0)).toBeCloseTo(-10.7 + 6, 9);
+    expect(inputPeakDb(snapshot(st), 0)).toBeCloseTo(stemById(inputs[0].stemId!)!.peakDb + 6, 9);
   });
 });
 

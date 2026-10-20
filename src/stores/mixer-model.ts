@@ -86,7 +86,8 @@ export interface HowlState {
   freq: number;
 }
 
-export type ListenTarget = 'main' | number; // number = Aux 번호(0부터)
+/** 'main' 메인, number 모니터(Aux) 번호(0부터), 'reference' 정답 믹스(원곡 믹스) */
+export type ListenTarget = 'main' | number | 'reference';
 
 export interface MixerState {
   inputs: InputState[];

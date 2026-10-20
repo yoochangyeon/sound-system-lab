@@ -18,4 +18,5 @@ npm run build
 | [docs/prd.md](docs/prd.md) | 서비스 기획서(대상, 범위, 화면, 미션, 디자인) |
 | [CLAUDE.md](CLAUDE.md) | 구조와 작업 규칙, 배포 |
 | [docs/research/console-params.md](docs/research/console-params.md) | X32·dLive 파라미터 조사 기록(1차 콘솔 시뮬레이터 근거, 3장 레슨 주석에서 인용) |
-| [public/audio/SOURCES.md](public/audio/SOURCES.md) | 음원 출처와 라이선스 |
+| [public/audio/SOURCES.md](public/audio/SOURCES.md) | 음원 출처와 이용 조건 |
+| [docs/audio-pipeline.md](docs/audio-pipeline.md) | 실습 곡 추가하는 방법(음원 라이브러리) |

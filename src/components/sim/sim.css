@@ -200,7 +200,35 @@
   font-size: 14px;
 }
 
-/* ---- 칩(음원 고르기)·탭 ---- */
+/* ---- 곡·소스 고르기 ---- */
+.sim-source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sim-source-song {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--faint);
+}
+.sim-source-song strong {
+  color: var(--muted);
+  font-weight: 700;
+}
+.sim-source-song select {
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---- 칩(소스 고르기)·탭 ---- */
 .sim-chips {
   display: flex;
   gap: 6px;

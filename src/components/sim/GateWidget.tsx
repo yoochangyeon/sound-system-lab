@@ -1,5 +1,5 @@
-// 게이트 위젯(#11, 2차 개편 #35). 드럼 킷 트랙(킥·스네어가 나뉘지 않은 한 트랙)에 게이트를 걸어
-// 타격 사이의 잔향·잡음이 줄어드는 것을 듣는다. 스레숄드만 보이고 나머지는 '더 자세히'.
+// 게이트 위젯(#11, 2차 개편 #35, 음원 #45). 탐 마이크에 게이트를 걸어
+// 치지 않는 사이에 새어 든 다른 드럼 소리(블리드)가 줄어드는 것을 듣는다. 스레숄드만 보이고 나머지는 '더 자세히'.
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import { More, Slider } from '../ui/controls';
@@ -22,15 +22,14 @@ function GateLamp({ engine, active }: { engine: MixerEngine | null; active: bool
   return <span className={`sim-lamp ${active && open ? 'is-on' : ''}`}>{active ? (open ? '열림: 소리 통과' : '닫힘: 줄이는 중') : '재생하면 문 상태가 보인다'}</span>;
 }
 
-export default function GateWidget({ defaultStem = 'drums' }: { defaultStem?: string }) {
+export default function GateWidget() {
   const store = useMemo(
     () =>
       createWidgetStore({
-        stems: ['drums', 'percussion', 'guitar-main', 'vocals'],
-        defaultStem,
-        initial: { channels: { 0: { gate: { on: true, thresholdDb: -24, rangeDb: 30, attackMs: 1, holdMs: 60, releaseMs: 120 } } } },
+        roles: ['toms', 'snare', 'kick', 'overheads'],
+        initial: { channels: { 0: { gate: { on: true, thresholdDb: -18, rangeDb: 30, attackMs: 1, holdMs: 60, releaseMs: 120 } } } },
       }),
-    [defaultStem],
+    [],
   );
   const g = useStore(store, (s) => s.channels[0].gate);
   const ranges = useStore(store, (s) => s.profile.ranges);

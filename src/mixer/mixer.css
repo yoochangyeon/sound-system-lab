@@ -21,6 +21,34 @@
   flex: 1 1 160px;
   width: auto;
 }
+.mx-song {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 14px;
+}
+.mx-song strong {
+  font-weight: 800;
+}
+.mx-song select {
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+}
+.mx-ref-note {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: #b07a00;
+  font-size: 13px;
+  font-weight: 700;
+}
 .mx-listen {
   flex: 1 1 260px;
   display: flex;

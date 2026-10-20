@@ -8,8 +8,8 @@ import { fmtDb } from '../ui/scale';
 import { WidgetShell } from './WidgetShell';
 import { createWidgetStore } from './widget-store';
 
-export default function PreampWidget({ defaultStem = 'drums' }: { defaultStem?: string }) {
-  const store = useMemo(() => createWidgetStore({ stems: ['drums', 'vocals', 'guitar-main', 'keys', 'shaker'], defaultStem }), [defaultStem]);
+export default function PreampWidget() {
+  const store = useMemo(() => createWidgetStore({ roles: ['snare', 'lead-vocal', 'guitar', 'bass', 'kick'], initial: { channels: { 0: { preamp: { gainDb: -20 } } } } }), []);
   const ch = useStore(store, (s) => s.channels[0]);
   const ranges = useStore(store, (s) => s.profile.ranges);
   const a = useStore(store, (s) => s.actions);
@@ -48,7 +48,7 @@ export default function PreampWidget({ defaultStem = 'drums' }: { defaultStem?: 
             range={ranges.gain}
             onChange={(v) => a.setPreamp(0, { gainDb: v })}
             color="var(--fn-preamp)"
-            defaultValue={0}
+            defaultValue={-20}
           />
         </>
       )}

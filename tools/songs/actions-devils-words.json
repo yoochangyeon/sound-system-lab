@@ -1,0 +1,21 @@
+{
+  "id": "actions-devils-words",
+  "bpm": 190,
+  "beatPhaseSec": 0.211,
+  "startBeat": 324,
+  "beats": 128,
+  "referenceOffsetSec": -0.146,
+  "reference": "DevilsWords_Full_Preview.mp3",
+  "groups": {
+    "kick": ["01_KickTrigger"],
+    "snare": ["02_Snare"],
+    "toms": ["04_Tom1", "05_Tom2"],
+    "overheads": ["03_Overheads"],
+    "tambourine": ["06_Tambourine"],
+    "bass": ["10_Bass"],
+    "guitar": ["13_ElecGtr3", "14_ElecGtr4", "15_ElecGtr5", "16_ElecGtr6", "17_ElecGtr6"],
+    "lead-vocal": ["18_LeadVox"],
+    "lead-double": ["19_LeadVoxDT"],
+    "backing-vocals": ["20_BackingVox1", "21_BackingVox2", "22_BackingVox3", "23_BackingVox4", "24_BackingVox5", "25_BackingVox6", "26_BackingVox7", "27_BackingVox8"]
+  }
+}

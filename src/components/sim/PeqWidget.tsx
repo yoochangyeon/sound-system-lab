@@ -12,14 +12,10 @@ const BAND_NAMES = ['저음', '중저음', '중고음', '고음'];
 const BAND_HINTS = ['이 주파수 아래 전체(셸프)', '종 모양으로 한 대역만', '종 모양으로 한 대역만', '이 주파수 위 전체(셸프)'];
 const BAND_DEFAULT_FREQ = [120, 500, 2500, 8000];
 
-export interface PeqWidgetProps {
-  defaultStem?: string;
-}
-
-export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
+export default function PeqWidget() {
   const store = useMemo(
-    () => createWidgetStore({ stems: ['sermon', 'vocals', 'guitar-main', 'bass', 'drums'], defaultStem }),
-    [defaultStem],
+    () => createWidgetStore({ roles: ['lead-vocal', 'guitar', 'bass', 'overheads', 'backing-vocal'] }),
+    [],
   );
   const ch = useStore(store, (s) => s.channels[0]);
   const ranges = useStore(store, (s) => s.profile.ranges);

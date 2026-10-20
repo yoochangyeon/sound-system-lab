@@ -128,18 +128,18 @@ function BusProcessing({ store, engine, playing, bus }: Ctx & { bus: BusRef }) {
   const setComp = (p: Parameters<typeof a.setBusComp>[1]) => a.setBusComp(bus, p);
   return (
     <div className="mx-geq">
-      <div className="sim-group-title">
+      <label className="sim-group-title">
         <span>버스 EQ</span>
         <Switch on={b.peq.on} onChange={(on) => a.setBusPeqOn(bus, on)} />
-      </div>
+      </label>
       <ResponseGraph response={eq} height={64} />
       <Tabs label="밴드" items={BAND_NAMES.map((n, i) => ({ id: i, label: n }))} value={band} onChange={setBand} />
       <Slider label="주파수" value={bd.freq} range={r.eqFreq} onChange={(v) => a.setBusPeqBand(bus, band, { freq: v })} disabled={!b.peq.on} />
       <Slider label="올리기·내리기" value={bd.gainDb} range={r.eqGain} onChange={(v) => a.setBusPeqBand(bus, band, { gainDb: v })} defaultValue={0} disabled={!b.peq.on} />
-      <div className="sim-group-title" style={{ ['--accent-fn' as string]: DYN_COLOR }}>
+      <label className="sim-group-title" style={{ ['--accent-fn' as string]: DYN_COLOR }}>
         <span>버스 컴프 · 버스 전체를 같이 누르기</span>
         <Switch on={b.comp.on} onChange={(on) => setComp({ on })} color={DYN_COLOR} />
-      </div>
+      </label>
       <div className="sim-visual" style={{ justifyContent: 'center' }}>
         <TransferGraph transfer={transfer} thresholdDb={b.comp.thresholdDb} />
         <Meter read={() => engine?.busCompGrDb(bus) ?? 0} active={playing && b.comp.on} height={110} min={-24} reduction label="GR" />

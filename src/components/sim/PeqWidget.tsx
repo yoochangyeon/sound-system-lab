@@ -50,10 +50,10 @@ export default function PeqWidget() {
           </div>
 
           <div className="sim-group">
-            <div className="sim-group-title">
+            <label className="sim-group-title">
               <span>HPF · 저음 자르기</span>
               <Switch on={ch.preamp.hpfOn} onChange={(on) => a.setPreamp(0, { hpfOn: on })} />
-            </div>
+            </label>
             <Slider
               label="차단 주파수"
               hint="이 주파수 아래를 깎는다"
@@ -66,10 +66,10 @@ export default function PeqWidget() {
           </div>
 
           <div className="sim-group">
-            <div className="sim-group-title">
+            <label className="sim-group-title">
               <span>LPF · 고음 자르기</span>
               <Switch on={ch.preamp.lpfOn} onChange={(on) => a.setPreamp(0, { lpfOn: on })} />
-            </div>
+            </label>
             <Slider
               label="차단 주파수"
               hint="이 주파수 위를 깎는다"

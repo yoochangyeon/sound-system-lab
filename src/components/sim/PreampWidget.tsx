@@ -4,7 +4,7 @@ import { useStore } from 'zustand';
 import { inputPeakDb } from '../../stores/derived';
 import { Slider } from '../ui/controls';
 import { Meter } from '../ui/Meter';
-import { fmtDb } from '../ui/scale';
+import { fmtDb, inputVerdict } from '../ui/scale';
 import { WidgetShell } from './WidgetShell';
 import { createWidgetStore } from './widget-store';
 
@@ -15,12 +15,7 @@ export default function PreampWidget() {
   const a = useStore(store, (s) => s.actions);
   const estPeak = useStore(store, (s) => inputPeakDb(s, 0));
 
-  const verdict =
-    estPeak >= 0
-      ? { cls: 'is-warn', text: '클리핑: 소리가 깨진다' }
-      : estPeak < -18
-        ? { cls: '', text: '너무 작다: 잡음에 묻힌다' }
-        : { cls: 'is-on', text: '알맞다: 여유가 있다' };
+  const verdict = inputVerdict(estPeak);
 
   return (
     <WidgetShell

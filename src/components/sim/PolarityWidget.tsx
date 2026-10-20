@@ -50,10 +50,10 @@ export default function PolarityWidget() {
       {() => (
         <>
           <ResponseGraph response={response} color={COLOR} range={24} height={110} />
-          <div className="sim-group-title">
+          <label className="sim-group-title">
             <span>두 번째 마이크 섞기</span>
             <Switch on={on} onChange={(v) => a.setMute(1, !v)} color={COLOR} />
-          </div>
+          </label>
           <Slider
             label="두 번째 마이크가 늦게 도착하는 시간"
             hint={`마이크 거리 차이 약 ${Math.round(lateMs * CM_PER_MS)} cm`}
@@ -63,10 +63,10 @@ export default function PolarityWidget() {
             color={COLOR}
             disabled={!on}
           />
-          <div className="sim-group-title">
+          <label className="sim-group-title">
             <span>두 번째 마이크 극성 반전</span>
             <Switch on={second.preamp.invert} onChange={(invert) => a.setPreamp(1, { invert })} color={COLOR} />
-          </div>
+          </label>
         </>
       )}
     </WidgetShell>

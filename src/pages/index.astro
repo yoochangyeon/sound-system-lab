@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CHAPTERS, lessonHref, sortedLessons } from '../lib/lessons';
 import { QUIZZES } from '../quizzes';
+import { MISSIONS } from '../missions';
 import { SITE_NAME } from '../lib/release';
 import { SITE_DESCRIPTION, SITE_TAGLINE, courseJsonLd, websiteJsonLd } from '../lib/seo';
 
@@ -25,7 +26,7 @@ const jsonLd = [
     <div class="hero-stats">
       <div><strong>{lessons.length}</strong><span>레슨</span></div>
       <div><strong>{QUIZZES.length}</strong><span>실전 퀴즈</span></div>
-      <div><strong>4</strong><span>실전 미션</span></div>
+      <div><strong>{MISSIONS.length}</strong><span>실전 미션</span></div>
     </div>
     <a class="btn hero-cta" href={lessonHref(first)}>1장부터 시작하기</a>
   </section>
@@ -70,7 +71,7 @@ const jsonLd = [
     <div>
       <p class="eyebrow is-light">실습실</p>
       <h2>쉬운 믹서로 미션 풀기</h2>
-      <p>하울링 잡기, 설교 또렷하게, 게인 맞추기, 소리 안 나는 채널</p>
+      <p>{MISSIONS.slice(0, 3).map((m) => m.title).join(', ')} 등 미션 {MISSIONS.length}개</p>
     </div>
     <svg class="lab-art" viewBox="0 0 120 80" aria-hidden="true">
       {

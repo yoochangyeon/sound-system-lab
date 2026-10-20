@@ -44,10 +44,10 @@ export default function DeEsserWidget() {
               <Meter read={() => engine?.compGrDb(0) ?? 0} active={status === 'playing' && c.on} height={110} min={-24} reduction label="GR" />
             </div>
           </div>
-          <div className="sim-group-title">
+          <label className="sim-group-title">
             <span>키 듣기 · 컴프가 듣는 소리만</span>
             <Switch on={c.key.listen} onChange={(listen) => set({ key: { listen } })} color={COLOR} />
-          </div>
+          </label>
           <Slider label="주파수" hint="치찰음이 가장 거슬리는 곳. 6~9 kHz 근처, 목소리마다 다르다" value={c.key.freq} range={r.keyFreq} onChange={(v) => set({ key: { freq: v } })} color={COLOR} defaultValue={6500} />
           <Slider label="스레숄드" hint="치찰음이 이보다 크면 누른다" value={c.thresholdDb} range={r.compThreshold} onChange={(v) => set({ thresholdDb: v })} color={COLOR} defaultValue={-40} />
           <More label="더 자세히: 레이시오·릴리스">

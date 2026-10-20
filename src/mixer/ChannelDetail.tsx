@@ -6,7 +6,7 @@ import { compTransferDb } from '../audio/dsp/dynamics';
 import { More, Slider, Switch, Tabs } from '../components/ui/controls';
 import { ResponseGraph, TransferGraph } from '../components/ui/CurveGraph';
 import { Meter } from '../components/ui/Meter';
-import { fmtDb } from '../components/ui/scale';
+import { fmtDb, inputVerdict } from '../components/ui/scale';
 import { channelEqResponseDb, inputPeakDb } from '../stores/derived';
 import type { CompState, GateState, KeyFilter, KeyState, SendTap } from '../stores/mixer-model';
 import type { Range } from '../stores/profile';
@@ -70,11 +70,7 @@ function InputTab({ store, engine, playing, ch }: Ctx & { ch: number }) {
   const verdict =
     patch === null
       ? { cls: 'is-warn', text: '입력이 연결되어 있지 않다' }
-      : est >= 0
-        ? { cls: 'is-warn', text: '클리핑: 소리가 깨진다' }
-        : est < -18
-          ? { cls: '', text: '너무 작다: 잡음에 묻힌다' }
-          : { cls: 'is-on', text: '알맞다: 여유가 있다' };
+      : inputVerdict(est);
   return (
     <>
       <label className="mx-field">
@@ -120,24 +116,24 @@ function EqTab({ store, engine, playing, ch }: Ctx & { ch: number }) {
         <Meter read={() => engine?.faderPeakDb(ch) ?? -Infinity} active={playing} height={100} label="출력" />
       </div>
       <div className="sim-group">
-        <div className="sim-group-title">
+        <label className="sim-group-title">
           <span>HPF · 저음 자르기</span>
           <Switch on={c.preamp.hpfOn} onChange={(on) => a.setPreamp(ch, { hpfOn: on })} />
-        </div>
+        </label>
         <Slider label="차단 주파수" value={c.preamp.hpfFreq} range={r.hpfFreq} onChange={(v) => a.setPreamp(ch, { hpfFreq: v })} disabled={!c.preamp.hpfOn} />
       </div>
       <div className="sim-group">
-        <div className="sim-group-title">
+        <label className="sim-group-title">
           <span>LPF · 고음 자르기</span>
           <Switch on={c.preamp.lpfOn} onChange={(on) => a.setPreamp(ch, { lpfOn: on })} />
-        </div>
+        </label>
         <Slider label="차단 주파수" value={c.preamp.lpfFreq} range={r.lpfFreq} onChange={(v) => a.setPreamp(ch, { lpfFreq: v })} disabled={!c.preamp.lpfOn} />
       </div>
       <div className="sim-group">
-        <div className="sim-group-title">
+        <label className="sim-group-title">
           <span>PEQ · 대역 다듬기</span>
           <Switch on={c.peq.on} onChange={(on) => a.setPeqOn(ch, on)} />
-        </div>
+        </label>
         <Tabs label="밴드" items={BAND_NAMES.map((n, i) => ({ id: i, label: n }))} value={band} onChange={setBand} />
         <div className="sim-sliders" style={{ marginTop: 8 }}>
           <Slider label="주파수" value={b.freq} range={r.eqFreq} onChange={(v) => a.setPeqBand(ch, band, { freq: v })} disabled={!c.peq.on} />
@@ -193,10 +189,10 @@ function KeySection({
       </label>
       <Tabs label="키 필터" items={FILTERS} value={k.filter} onChange={(filter) => onChange({ filter })} />
       <Slider label="키 필터 주파수" value={k.freq} range={ranges.keyFreq} onChange={(freq) => onChange({ freq })} color={DYN_COLOR} disabled={!on || k.filter === 'off'} />
-      <div className="sim-group-title">
+      <label className="sim-group-title">
         <span>키 듣기 · 필터를 지난 소리만 들어 보기</span>
         <Switch on={k.listen} onChange={(listen) => onChange({ listen })} color={DYN_COLOR} />
-      </div>
+      </label>
     </More>
   );
 }
@@ -318,7 +314,7 @@ function MonitorTab({ store, ch }: Ctx & { ch: number }) {
   const a = useStore(store, (s) => s.actions);
   return (
     <>
-      <p className="mx-note">무대 모니터로 보내는 양이다. 메인 페이더와 상관없이 보낸다(pre).</p>
+      <p className="mx-note">무대 모니터로 보내는 양이다. 채널 페이더 앞에서 떼어 보낸다(pre).</p>
       {auxes.map((bus, i) =>
         bus.kind !== 'monitor' ? null : (
           <Slider key={i} label={`${bus.name}로 보내기`} value={c.sends[i].levelDb} range={r.send} scale="fader" onChange={(v) => a.setSend(ch, i, { levelDb: v })} color={BUS_COLOR} format={fmtDb} />
@@ -368,7 +364,7 @@ function SendsTab({ store, ch }: Ctx & { ch: number }) {
   );
   return (
     <>
-      {section('monitor', '모니터', '무대 모니터는 보통 페이더 앞(pre)에서 보낸다. 메인 페이더를 만져도 연주자 모니터가 바뀌지 않는다.')}
+      {section('monitor', '모니터', '무대 모니터는 보통 채널 페이더 앞(pre)에서 보낸다. 회중석 소리를 맞추려고 채널 페이더를 움직여도 연주자 모니터는 바뀌지 않는다.')}
       {section('fx', 'FX(이펙트)', '리버브·딜레이는 보통 페이더 뒤(post)에서 보낸다. 페이더를 내리면 잔향도 같이 줄어든다.')}
       {section('group', '그룹', '그룹으로 보내면 그룹 페이더 하나로 여러 채널을 같이 줄인다. 그룹으로만 보내려면 채널의 메인을 끈다.')}
     </>
@@ -391,24 +387,24 @@ function ConfigTab({ store, ch }: Ctx & { ch: number }) {
   return (
     <>
       <Slider label="팬" hint="메인·그룹에서 왼쪽·오른쪽 어디에 둘지" value={c.pan} range={PAN_RANGE} onChange={(v) => a.setPan(ch, v)} format={fmtPan} defaultValue={0} />
-      <div className="sim-group-title">
+      <label className="sim-group-title">
         <span>극성 반전 · 파형을 위아래로 뒤집기</span>
         <Switch on={c.preamp.invert} onChange={(invert) => a.setPreamp(ch, { invert })} />
-      </div>
+      </label>
       <div className="sim-group">
-        <div className="sim-group-title">
+        <label className="sim-group-title">
           <span>채널 딜레이 · 소리를 늦추기(에코가 아니다)</span>
           <Switch on={c.preamp.delayOn} onChange={(delayOn) => a.setPreamp(ch, { delayOn })} />
-        </div>
+        </label>
         <Slider label="늦추는 시간" hint="1 ms는 소리가 약 34 cm 가는 시간" value={c.preamp.delayMs} range={r.delay} onChange={(v) => a.setPreamp(ch, { delayMs: v })} disabled={!c.preamp.delayOn} />
       </div>
       {mate && (
-        <div className="sim-group-title">
+        <label className="sim-group-title">
           <span>
             스테레오 링크 · {pair * 2 + 1}·{pair * 2 + 2}번을 같이 움직이기
           </span>
           <Switch on={linked} onChange={(on) => a.setLink(pair, on)} />
-        </div>
+        </label>
       )}
       <div className="sim-group">
         <div className="sim-group-title">
@@ -434,10 +430,10 @@ function ConfigTab({ store, ch }: Ctx & { ch: number }) {
           ))}
         </div>
       </div>
-      <div className="sim-group-title">
+      <label className="sim-group-title">
         <span>리콜 세이프 · 씬을 불러와도 이 채널은 그대로</span>
         <Switch on={safe} onChange={(on) => a.setSafe(ch, on)} />
-      </div>
+      </label>
     </>
   );
 }

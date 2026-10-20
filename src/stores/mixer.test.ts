@@ -146,3 +146,18 @@ describe('센드 경로와 하울링', () => {
     expect(before - monitorLevelDb(snapshot(st), 0, 0)).toBeGreaterThan(10);
   });
 });
+
+describe('dLive 스타일 프로필', () => {
+  it('저장소를 만들 때와 미션 상태를 적용할 때 프로필 범위로 자른다', async () => {
+    const { DLIVE_PROFILE } = await import('../consoles/dlive/profile');
+    const st = createMixerStore(defaultMixerState({ channels: 2, auxes: 1, inputs }), DLIVE_PROFILE);
+    // 기본 게이트 스레숄드 −40 dBFS는 범위 안, GEQ는 ±12 dB
+    st.getState().actions.apply({ channels: { 0: { preamp: { gainDb: -30, hpfFreq: 3000 } } }, auxes: { 0: { geq: { 3: -15 } } } });
+    const s = st.getState();
+    expect(s.channels[0].preamp.gainDb).toBe(-15);
+    expect(s.channels[0].preamp.hpfFreq).toBe(2000);
+    expect(s.auxes[0].geq[3]).toBe(-12);
+    st.getState().actions.setComp(0, { thresholdDb: 10 });
+    expect(st.getState().channels[0].comp.thresholdDb).toBe(0);
+  });
+});

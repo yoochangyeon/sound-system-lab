@@ -1,0 +1,16 @@
+---
+import LabLayout from '../../layouts/LabLayout.astro';
+import ComingSoon from '../../components/ComingSoon.astro';
+import DLiveConsole from '../../consoles/dlive/DLiveConsole';
+import { COMING_SOON } from '../../lib/release';
+---
+
+{
+  COMING_SOON ? (
+    <ComingSoon />
+  ) : (
+    <LabLayout title="dLive 스타일 콘솔">
+      <DLiveConsole client:only="react" />
+    </LabLayout>
+  )
+}

@@ -77,8 +77,12 @@ npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts).
 
 - 공개 주소: https://sound-system-lab.vercel.app
 - Vercel 프로젝트: https://vercel.com/changyeon1/sound-system-lab (팀 changyeon1). Git 연동 없이 CLI로 직접 배포한다. 빌드 설정은 `vercel.json`(Astro, `dist`)이 정한다.
-- 배포 명령(저장소 루트에서):
-  `/Users/a-/Repository/claude-course/tools/env/node_modules/.bin/vercel deploy --prod --yes --scope changyeon1`
+- **공개 전(#2~#23)**: 프로덕션 빌드는 모든 페이지를 '준비 중'으로 낸다(`astro.config.mjs`의 `VERCEL_ENV === 'production'` 조건). 작업 확인은 프리뷰 배포로만 한다.
+  - 프리뷰: `/Users/a-/Repository/claude-course/tools/env/node_modules/.bin/vercel deploy --yes --scope changyeon1`
+  - 프로덕션('준비 중' 갱신이 필요할 때만, 사용자가 직접): 위 명령에 `--prod`
+  - 로컬에서 '준비 중' 빌드 확인: `FORCE_COMING_SOON=1 npx astro build`
+  - 프리뷰 배포의 Vercel 인증 보호 여부: 확인 필요(첫 프리뷰 배포 때 확인해 여기에 적는다)
+- **공개(#23) 때 되돌린다**: `astro.config.mjs`의 '준비 중' 조건을 지우고, 배포 명령을 다시 `--prod`로 쓴다.
 - `vercel link`가 만드는 `.env.local`(단기 토큰)은 지운다. 로그인이 풀렸으면 사용자에게 `cd /Users/a-/Repository/claude-course/tools/env && npx vercel login`을 부탁한다.
 - 배포 뒤 공개 주소에서 페이지가 200으로 열리는지, `/.env.local`·`/CLAUDE.md`가 404인지 확인한다.
 

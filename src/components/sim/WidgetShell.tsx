@@ -1,8 +1,9 @@
-// 처리기 위젯 공통 틀(기획서 S03): 제목, 바이패스, 음원 선택, 재생/정지, 볼륨 안내.
+// 처리기 위젯 공통 틀(기획서 S03): 제목, 처리 켜기/끄기, 재생/정지, 음원 칩, 볼륨 안내.
 import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
 import type { MixerEngine } from '../../audio/engine';
 import type { MixerStoreApi } from '../../stores/mixer';
+import { Switch } from '../ui/controls';
 import { usePlayback, type PlayStatus } from '../ui/usePlayback';
 import { VolumeNotice } from '../ui/VolumeNotice';
 import './sim.css';
@@ -29,32 +30,26 @@ export function WidgetShell({ title, accent, store, bypassed, onBypass, children
         <h3>
           <span className="sim-dot" /> {title}
         </h3>
-        {onBypass && (
-          <button
-            type="button"
-            className={`sim-btn sim-bypass${bypassed ? ' is-on' : ''}`}
-            aria-pressed={bypassed}
-            onClick={onBypass}
-            title="처리를 끄고 원래 소리를 듣는다"
-          >
-            {bypassed ? '바이패스 중 (처리 꺼짐)' : '바이패스'}
-          </button>
-        )}
+        {onBypass && <Switch on={!bypassed} onChange={onBypass} label={bypassed ? '처리 꺼짐' : '처리 켜짐'} color={accent} />}
       </header>
       <div className="sim-widget-transport">
         <button type="button" className={`sim-btn sim-play is-primary${status === 'playing' ? ' is-playing' : ''}`} onClick={toggle}>
-          {status === 'playing' ? '■ 정지' : status === 'loading' ? '불러오는 중…' : '▶ 재생'}
+          {status === 'playing' ? '■ 정지' : status === 'loading' ? '불러오는 중…' : '▶ 들어 보기'}
         </button>
-        <label className="sim-select">
-          <span>음원</span>
-          <select value={patch ?? 0} onChange={(e) => setPatch(0, Number(e.target.value))}>
-            {inputs.map((input, i) => (
-              <option key={input.stemId ?? i} value={i}>
-                {input.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="sim-chips" role="radiogroup" aria-label="음원">
+          {inputs.map((input, i) => (
+            <button
+              key={input.stemId ?? i}
+              type="button"
+              role="radio"
+              aria-checked={(patch ?? 0) === i}
+              className={`sim-chip${(patch ?? 0) === i ? ' is-active' : ''}`}
+              onClick={() => setPatch(0, i)}
+            >
+              {input.label}
+            </button>
+          ))}
+        </div>
         {status === 'error' && <span className="sim-error">소리를 불러오지 못했습니다. 새로고침해 주세요.</span>}
       </div>
       <div className="sim-widget-body">{children({ engine, status })}</div>

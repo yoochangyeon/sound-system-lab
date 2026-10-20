@@ -43,31 +43,29 @@ export function Meter({ read, active = true, height = 140, width = 14, min = -60
     const y = (d: number) => clipBox + (1 - (Math.min(max, Math.max(min, d)) - min) / (max - min)) * h;
 
     g.clearRect(0, 0, width, height);
-    g.fillStyle = '#0c0d10';
-    g.fillRect(0, 0, width, height);
 
     if (reduction) {
       // GR: 0 dB(위)에서 아래로 찬다. min~0 범위.
       const gr = Math.max(min, Math.min(0, db));
       const yy = (gr / min) * height;
-      g.fillStyle = color ?? '#f59e0b';
+      g.fillStyle = color ?? '#fe8c00';
       g.fillRect(1, 0, width - 2, yy);
     } else {
       const top = y(s.level);
       const grad = g.createLinearGradient(0, height, 0, clipBox);
-      grad.addColorStop(0, '#22c55e');
-      grad.addColorStop((-18 - min) / (max - min), '#22c55e');
-      grad.addColorStop((-6 - min) / (max - min), '#eab308');
-      grad.addColorStop((0 - min) / (max - min), '#ef4444');
-      grad.addColorStop(1, '#ef4444');
+      grad.addColorStop(0, '#1bc47d');
+      grad.addColorStop((-18 - min) / (max - min), '#1bc47d');
+      grad.addColorStop((-6 - min) / (max - min), '#ffc342');
+      grad.addColorStop((0 - min) / (max - min), '#f04452');
+      grad.addColorStop(1, '#f04452');
       g.fillStyle = grad;
       g.fillRect(1, top, width - 2, height - top);
-      g.fillStyle = '#e9eaee';
+      g.fillStyle = '#191f28';
       g.fillRect(1, y(s.peak) - 1, width - 2, 2);
-      g.fillStyle = t - s.clipT < CLIP_HOLD_MS ? '#ef4444' : '#3a1515';
+      g.fillStyle = t - s.clipT < CLIP_HOLD_MS ? '#f04452' : '#f6d5d8';
       g.fillRect(1, 0, width - 2, clipBox - 1);
       // 0 dBFS, −18 dBFS 눈금
-      g.fillStyle = 'rgba(255,255,255,0.35)';
+      g.fillStyle = 'rgba(0,0,0,0.18)';
       g.fillRect(0, y(0), width, 1);
       g.fillRect(0, y(-18), width, 1);
     }

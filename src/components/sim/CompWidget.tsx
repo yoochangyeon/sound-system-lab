@@ -1,9 +1,9 @@
-// 컴프레서 위젯(#10). 스레숄드·레이시오·니·어택·릴리스·메이크업·검출 방식을 바꾸며
-// 입력·출력 미터, GR 미터, 전달 곡선을 본다.
+// 컴프레서 위젯(#10, 2차 개편 #35). 스레숄드·레이시오만 보이고, 나머지는 '더 자세히'.
+// 입력·GR·출력 미터와 전달 곡선을 본다.
 import { useMemo } from 'react';
 import { useStore } from 'zustand';
 import { compTransferDb } from '../../audio/dsp/dynamics';
-import { Knob } from '../ui/Knob';
+import { More, Slider, Tabs } from '../ui/controls';
 import { TransferGraph } from '../ui/CurveGraph';
 import { Meter } from '../ui/Meter';
 import { WidgetShell } from './WidgetShell';
@@ -37,41 +37,36 @@ export default function CompWidget({ defaultStem = 'vocals' }: { defaultStem?: s
     >
       {({ engine, status }) => (
         <>
-          <div className="sim-row is-center" style={{ gap: 12 }}>
+          <div className="sim-visual" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
             <TransferGraph transfer={transfer} thresholdDb={c.thresholdDb} />
-            <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={status === 'playing'} height={140} label="입력" />
-            <Meter
-              read={() => engine?.compGrDb(0) ?? 0}
-              active={status === 'playing'}
-              height={140}
-              min={-24}
-              reduction
-              label="GR"
-            />
-            <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={140} label="출력" />
+            <div className="sim-meters">
+              <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={status === 'playing'} height={130} label="입력" />
+              <Meter read={() => engine?.compGrDb(0) ?? 0} active={status === 'playing'} height={130} min={-24} reduction label="GR" />
+              <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={130} label="출력" />
+            </div>
           </div>
-          <div className="sim-row">
-            <Knob label="스레숄드" value={c.thresholdDb} range={ranges.compThreshold} onChange={(v) => set({ thresholdDb: v })} color={color} defaultValue={-20} />
-            <Knob label="레이시오" value={c.ratio} range={ranges.ratio} onChange={(v) => set({ ratio: v })} color={color} defaultValue={3} />
-            <Knob label="니" value={c.kneeDb} range={ranges.knee} onChange={(v) => set({ kneeDb: v })} color={color} defaultValue={2} />
-            <Knob label="어택" value={c.attackMs} range={ranges.compAttack} onChange={(v) => set({ attackMs: v })} color={color} defaultValue={10} />
-            <Knob label="릴리스" value={c.releaseMs} range={ranges.compRelease} onChange={(v) => set({ releaseMs: v })} color={color} defaultValue={150} />
-            <Knob label="메이크업" value={c.makeupDb} range={ranges.makeup} onChange={(v) => set({ makeupDb: v })} color={color} defaultValue={0} />
+          <div className="sim-sliders is-2">
+            <Slider label="스레숄드" hint="이 크기를 넘는 소리부터 누른다" value={c.thresholdDb} range={ranges.compThreshold} onChange={(v) => set({ thresholdDb: v })} color={color} defaultValue={-20} />
+            <Slider label="레이시오" hint="넘친 만큼을 몇 분의 1로 줄일지" value={c.ratio} range={ranges.ratio} onChange={(v) => set({ ratio: v })} color={color} defaultValue={3} />
           </div>
-          <div className="sim-row is-center">
-            <span className="sim-stat">검출 방식</span>
-            {(['peak', 'rms'] as const).map((d) => (
-              <button
-                key={d}
-                type="button"
-                className={`sim-btn is-small${c.detector === d ? ' is-active' : ''}`}
-                aria-pressed={c.detector === d}
-                onClick={() => set({ detector: d })}
-              >
-                {d === 'peak' ? 'Peak (순간 최대값)' : 'RMS (평균 크기)'}
-              </button>
-            ))}
-          </div>
+          <More label="더 자세히: 어택·릴리스·메이크업 등">
+            <Slider label="어택" hint="넘은 뒤 누르기 시작하기까지" value={c.attackMs} range={ranges.compAttack} onChange={(v) => set({ attackMs: v })} color={color} defaultValue={10} />
+            <Slider label="릴리스" hint="작아진 뒤 누르기를 풀기까지" value={c.releaseMs} range={ranges.compRelease} onChange={(v) => set({ releaseMs: v })} color={color} defaultValue={150} />
+            <Slider label="메이크업" hint="눌러서 작아진 만큼 다시 올리기" value={c.makeupDb} range={ranges.makeup} onChange={(v) => set({ makeupDb: v })} color={color} defaultValue={0} />
+            <Slider label="니" hint="누르기 시작하는 경계를 얼마나 부드럽게" value={c.kneeDb} range={ranges.knee} onChange={(v) => set({ kneeDb: v })} color={color} defaultValue={2} />
+            <div>
+              <span className="sim-stat">검출 방식</span>
+              <Tabs
+                label="검출 방식"
+                items={[
+                  { id: 'peak' as const, label: 'Peak 순간 최대값' },
+                  { id: 'rms' as const, label: 'RMS 평균 크기' },
+                ]}
+                value={c.detector}
+                onChange={(d) => set({ detector: d })}
+              />
+            </div>
+          </More>
         </>
       )}
     </WidgetShell>

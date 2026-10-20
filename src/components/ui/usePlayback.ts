@@ -65,6 +65,12 @@ export function usePlayback(store: MixerStoreApi) {
 
   const cancelNotice = useCallback(() => setNeedNotice(false), []);
 
+  // 카드형 레슨에서 카드를 넘기면 재생을 멈춘다(보이지 않는 위젯이 계속 울리지 않게).
+  useEffect(() => {
+    window.addEventListener('lesson-card', stop);
+    return () => window.removeEventListener('lesson-card', stop);
+  }, [stop]);
+
   useEffect(
     () => () => {
       engineRef.current?.dispose();

@@ -37,7 +37,7 @@ export default function GeqWidget() {
         auxes: 1,
         initial: {
           listen: 0,
-          channels: { 0: { preamp: { gainDb: 0 }, sends: [{ levelDb: 0, pre: true }] } },
+          channels: { 0: { preamp: { gainDb: 0 }, sends: [{ levelDb: 0, tap: 'pre' }] } },
         },
       }),
     [],

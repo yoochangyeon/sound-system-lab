@@ -33,6 +33,12 @@ export function channelEqResponseDb(ch: ChannelState, f: number): number {
   return total;
 }
 
+/** 센드가 지나는 채널 필터의 응답. pre-eq 센드는 HPF·LPF만 지나고 PEQ를 건너뛴다. */
+export function sendEqResponseDb(s: MixerState, ch: number, aux: number, f: number): number {
+  const c = s.channels[ch];
+  return c.sends[aux]?.tap === 'pre-eq' ? channelEqResponseDb(c, f) - peqResponseDb(c, f) : channelEqResponseDb(c, f);
+}
+
 /** PEQ만의 응답(HPF 제외). */
 export function peqResponseDb(ch: ChannelState, f: number): number {
   let total = 0;
@@ -100,6 +106,7 @@ export function mainPathProblems(s: MixerState, ch: number): string[] {
 
 /**
  * 센드 경로 게인(c→a, dB) = 프리엠프 게인 + (post면 채널 페이더) + 센드 레벨 + Aux 페이더.
+ * 채널 EQ는 들어 있지 않다(주파수마다 다르므로 loopGainDb가 더한다. pre-eq 센드에는 더하지 않는다).
  * 채널·Aux 뮤트, 끝까지 내린 페이더·센드, 패치 없음이면 -∞.
  */
 export function sendPathGainDb(s: MixerState, ch: number, aux: number): number {
@@ -111,7 +118,7 @@ export function sendPathGainDb(s: MixerState, ch: number, aux: number): number {
   if (c.mute || bus.mute) return NEG_INF;
   if (send.levelDb === NEG_INF || bus.faderDb === NEG_INF) return NEG_INF;
   let g = c.preamp.gainDb + send.levelDb + bus.faderDb;
-  if (!send.pre) {
+  if (send.tap === 'post') {
     if (c.faderDb === NEG_INF) return NEG_INF;
     g += c.faderDb;
   }
@@ -138,7 +145,7 @@ export function loopGainDb(s: MixerState, ch: number, aux: number, f: number): n
   if (path === NEG_INF) return NEG_INF;
   return (
     path +
-    channelEqResponseDb(s.channels[ch], f) +
+    sendEqResponseDb(s, ch, aux, f) +
     geqResponseDb(s.auxes[aux].geq, f) +
     FEEDBACK_COUPLING_DB +
     roomResponseDb(s.howl.freq, f)
@@ -164,7 +171,7 @@ export function monitorLevelDb(s: MixerState, ch: number, aux: number): number {
   if (path === NEG_INF) return NEG_INF;
   let power = 0;
   for (const f of VOICE_BAND_FREQS) {
-    const db = channelEqResponseDb(s.channels[ch], f) + geqResponseDb(s.auxes[aux].geq, f);
+    const db = sendEqResponseDb(s, ch, aux, f) + geqResponseDb(s.auxes[aux].geq, f);
     power += Math.pow(10, db / 10);
   }
   return path + 10 * Math.log10(power / VOICE_BAND_FREQS.length);

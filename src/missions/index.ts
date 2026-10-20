@@ -71,7 +71,7 @@ const howl: Mission = {
     {
       label: 'post 센드로 바꾸고 채널 페이더 내리기',
       apply: (a) => {
-        a.setSend(VOCAL, 0, { pre: false });
+        a.setSend(VOCAL, 0, { tap: 'post' });
         a.setFader(VOCAL, -10);
       },
     },

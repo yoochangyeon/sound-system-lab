@@ -79,6 +79,7 @@ export class MixerEngine {
 
     this.strips.forEach((st) => {
       st.mainSend.connect(this.main.input);
+      st.sendsPreEq.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsPre.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsPost.forEach((g, a) => g.connect(this.auxes[a].input));
     });

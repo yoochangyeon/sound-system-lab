@@ -1,12 +1,13 @@
 // 입력 채널 하나의 신호 경로.
 // 입력 → 프리엠프 게인 → 디지털 클리핑 → [입력 미터] → 극성 → 채널 딜레이 → HPF → LPF → 게이트 → PEQ → 컴프
-//   → 페이더·뮤트 → [페이더 미터] → 팬 → 메인 할당 → 메인 버스
+//   → 인서트(원음 + 이펙트) → 페이더·뮤트 → [페이더 미터] → 팬 → 메인 할당 → 메인 버스
 //   ↘ 버스 센드(pre-eq: 게이트 뒤, pre: 컴프 뒤, post: 페이더 뒤)
 // 게이트·컴프의 입력 1은 키(사이드체인): 키 소스 → 키 필터 → 워클릿. 자기 채널을 필터 없이
 // 들을 때는 연결하지 않는다(워클릿이 본 신호로 검출한다).
 
 import { BUTTERWORTH_Q_DB } from './dsp/biquad';
 import { dbToGain } from './dsp/units';
+import { FxUnit } from './fx/fx-unit';
 import { Peq, RAMP } from './peq';
 import type { BusKind, ChannelState, CompState, KeyFilter, KeyState } from '../stores/mixer-model';
 
@@ -82,6 +83,13 @@ export class ChannelStrip {
   readonly gate: AudioWorkletNode;
   readonly peq: Peq;
   readonly comp: AudioWorkletNode;
+  readonly insertDry: GainNode;
+  readonly insertWet: GainNode;
+  /** 인서트 뒤(원음 + 이펙트). 페이더와 pre 센드가 여기서 받는다 */
+  readonly insertOut: GainNode;
+  /** 인서트 이펙트. 처음 켤 때 만든다 */
+  insertFx: FxUnit | null = null;
+  private insertWired = false;
   readonly fader: GainNode;
   readonly faderMeter: AnalyserNode;
   readonly panner: StereoPannerNode;
@@ -127,6 +135,9 @@ export class ChannelStrip {
       outputChannelCount: [1],
       processorOptions: { kind: 'comp' },
     });
+    this.insertDry = new GainNode(ctx, { ...mono, gain: 1 });
+    this.insertWet = new GainNode(ctx, { ...mono, gain: 0 });
+    this.insertOut = new GainNode(ctx, mono);
     this.fader = new GainNode(ctx, mono);
     this.faderMeter = new AnalyserNode(ctx, { fftSize: 1024 });
     this.panner = new StereoPannerNode(ctx);
@@ -143,10 +154,12 @@ export class ChannelStrip {
     this.input.connect(this.preamp).connect(this.clipper);
     this.clipper.connect(this.inputMeter);
     this.clipper.connect(this.polarity).connect(this.delay).connect(this.hpf).connect(this.lpf).connect(this.gate).connect(this.peq.input);
-    this.peq.output.connect(this.comp).connect(this.fader).connect(this.panner).connect(this.mainSend);
+    this.peq.output.connect(this.comp).connect(this.insertDry).connect(this.insertOut);
+    this.insertWet.connect(this.insertOut);
+    this.insertOut.connect(this.fader).connect(this.panner).connect(this.mainSend);
     this.fader.connect(this.faderMeter);
     this.sendsPreEq.forEach((g) => this.gate.connect(g));
-    this.sendsPre.forEach((g) => this.comp.connect(g));
+    this.sendsPre.forEach((g) => this.insertOut.connect(g));
     this.sendsPost.forEach((g) => this.fader.connect(g));
     this.sendsGroup.forEach((g) => this.panner.connect(g));
 
@@ -198,6 +211,8 @@ export class ChannelStrip {
     applyCompParams(this.comp, s.comp, t);
     this.compKey.apply(s.comp.key, this.keySource(s.comp.on, s.comp.key, this.peq.output, peers), t);
 
+    this.applyInsert(s, t);
+
     ramp(this.fader.gain, s.mute ? 0 : gainOf(s.faderDb));
     ramp(this.panner.pan, s.pan);
     ramp(this.mainSend.gain, s.mainAssign ? 1 : 0);
@@ -212,6 +227,24 @@ export class ChannelStrip {
     });
   }
 
+  /** 인서트: 켜면 컴프 뒤 소리를 이펙트에 넣고 원음과 섞는다. 끄면 이펙트 입력을 끊어 처리하지 않는다. */
+  private applyInsert(s: ChannelState, t: number): void {
+    const on = s.insert.on;
+    if (on && !this.insertFx) {
+      this.insertFx = new FxUnit(this.ctx);
+      this.insertFx.output.connect(this.insertWet);
+    }
+    if (on !== this.insertWired && this.insertFx) {
+      if (on) this.comp.connect(this.insertFx.input);
+      else this.comp.disconnect(this.insertFx.input);
+      this.insertWired = on;
+    }
+    if (on) this.insertFx?.apply(s.insert.fx);
+    const wet = on ? s.insert.mixPct / 100 : 0;
+    this.insertDry.gain.setTargetAtTime(1 - wet, t, RAMP);
+    this.insertWet.gain.setTargetAtTime(wet, t, RAMP);
+  }
+
   /** 키로 이을 노드. 꺼져 있거나 자기 소리를 그대로 들으면 잇지 않는다. */
   private keySource(on: boolean, k: KeyState, self: AudioNode, peers: ChannelStrip[]): AudioNode | null {
     if (!on) return null;
@@ -224,5 +257,6 @@ export class ChannelStrip {
     for (const n of [this.input, this.mainSend, ...this.sendsPreEq, ...this.sendsPre, ...this.sendsPost, ...this.sendsGroup]) n.disconnect();
     this.gate.port.onmessage = null;
     this.comp.port.onmessage = null;
+    this.insertFx?.dispose();
   }
 }

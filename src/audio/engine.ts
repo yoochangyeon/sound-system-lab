@@ -7,6 +7,7 @@
 
 import { Bus, MatrixBus } from './bus';
 import { ChannelStrip } from './channel-strip';
+import { FxUnit } from './fx/fx-unit';
 import { loadSample } from './context';
 import { HOWL_FLOOR_DB, howlStep } from './dsp/feedback';
 import { binsToThirdOctave, peakDb } from './dsp/rta';
@@ -33,6 +34,10 @@ export class MixerEngine {
   readonly auxes: Bus[];
   /** 그룹 → 메인 할당 */
   readonly busMain: GainNode[];
+  /** fx 버스마다 이펙트와 리턴(크기·뮤트 → 메인 할당). fx가 아닌 버스는 null */
+  readonly fxUnits: (FxUnit | null)[];
+  readonly fxReturns: (GainNode | null)[];
+  readonly fxReturnMeters: (AnalyserNode | null)[];
   readonly matrix: MatrixBus[];
   readonly listenMatrix: GainNode[];
   readonly inputNodes: GainNode[];
@@ -70,6 +75,9 @@ export class MixerEngine {
     this.main = new Bus(ctx, 2);
     this.auxes = kinds.map((k) => new Bus(ctx, k === 'group' ? 2 : 1));
     this.busMain = kinds.map(() => new GainNode(ctx, { gain: 0 }));
+    this.fxUnits = kinds.map((k) => (k === 'fx' ? new FxUnit(ctx) : null));
+    this.fxReturns = kinds.map((k) => (k === 'fx' ? new GainNode(ctx, { gain: 0 }) : null));
+    this.fxReturnMeters = kinds.map((k) => (k === 'fx' ? new AnalyserNode(ctx, { fftSize: 1024 }) : null));
     this.matrix = s.matrix.map(() => new MatrixBus(ctx, this.main.output, this.auxes.map((b) => b.output)));
     this.listenMatrix = this.matrix.map(() => new GainNode(ctx, { gain: 0 }));
     this.listenMix = new GainNode(ctx, { channelCount: 2, channelCountMode: 'explicit' });
@@ -92,7 +100,16 @@ export class MixerEngine {
       st.sendsPost.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsGroup.forEach((g, a) => g.connect(this.auxes[a].input));
     });
-    this.auxes.forEach((b, a) => b.output.connect(this.busMain[a]).connect(this.main.input));
+    this.auxes.forEach((b, a) => {
+      b.output.connect(this.busMain[a]).connect(this.main.input);
+      const fx = this.fxUnits[a];
+      const ret = this.fxReturns[a];
+      if (fx && ret) {
+        b.output.connect(fx.input);
+        fx.output.connect(ret).connect(this.main.input);
+        fx.output.connect(this.fxReturnMeters[a]!);
+      }
+    });
     this.matrix.forEach((m, i) => m.output.connect(this.listenMatrix[i]).connect(this.listenMix));
     this.main.output.connect(this.listenMain).connect(this.listenMix);
     this.auxes.forEach((b, a) => b.output.connect(this.listenAux[a]).connect(this.listenMix));
@@ -227,6 +244,7 @@ export class MixerEngine {
     this.howlOsc.stop();
     this.strips.forEach((s) => s.disconnect());
     [this.main, ...this.auxes].forEach((b) => b.disconnect());
+    this.fxUnits.forEach((f) => f?.dispose());
     this.listenMix.disconnect();
     this.limiter.disconnect();
   }
@@ -269,7 +287,11 @@ export class MixerEngine {
 
   private applyBus(b: MixerState['auxes'][number], i: number): void {
     this.auxes[i]?.apply(b);
-    this.busMain[i]?.gain.setTargetAtTime(b.kind === 'group' && b.mainAssign ? 1 : 0, this.ctx.currentTime, RAMP);
+    const t = this.ctx.currentTime;
+    this.busMain[i]?.gain.setTargetAtTime(b.kind === 'group' && b.mainAssign ? 1 : 0, t, RAMP);
+    this.fxUnits[i]?.apply(b.fx);
+    const ret = b.returnMute || !b.mainAssign || b.returnDb === -Infinity ? 0 : dbToGain(b.returnDb);
+    this.fxReturns[i]?.gain.setTargetAtTime(ret, t, RAMP);
   }
 
   private applyMatrix(s: MixerState): void {
@@ -346,6 +368,12 @@ export class MixerEngine {
   matrixPeakDb(i: number): number {
     const m = this.matrix[i];
     return m ? this.readPeak(m.analyser) : -Infinity;
+  }
+
+  /** FX 리턴(이펙트 출력, 리턴 페이더 앞) 피크 */
+  fxReturnPeakDb(bus: number): number {
+    const m = this.fxReturnMeters[bus];
+    return m ? this.readPeak(m) : -Infinity;
   }
 
   busCompGrDb(bus: BusRef): number {

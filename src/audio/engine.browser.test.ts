@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BUTTERWORTH_Q_DB, biquadResponseDb, type BiquadParams } from './dsp/biquad';
 import { Compressor } from './dsp/dynamics';
 import { ensureWorklets } from './worklets';
-import { maxAbs, renderMixer, SR, sineBuffer, tailRmsDb } from './test-helpers';
+import { burstBuffer, maxAbs, renderMixer, SR, sineBuffer, tailRmsDb, windowRmsDb } from './test-helpers';
 import type { MixerActions } from '../stores/mixer';
 
 describe('엔진: 채널 스트립', () => {
@@ -367,5 +367,107 @@ describe('엔진: 그룹·매트릭스·버스 처리', () => {
     });
     expect(tailRmsDb(boosted) - tailRmsDb(ref)).toBeGreaterThan(4);
     expect(tailRmsDb(back)).toBeCloseTo(tailRmsDb(ref), 1);
+  });
+});
+
+describe('엔진: 이펙트(Insert와 Send/Return)', () => {
+  const fxShape = { channels: 1, auxes: 2, auxKinds: ['fx', 'fx'] as ('fx')[], auxFx: ['reverb', 'delay'] as ('reverb' | 'delay')[] };
+  /** 채널 원음은 메인에 보내지 않고(리턴만 듣는다) FX 버스로 보낸다 */
+  const sendOnly = (bus: number) => (a: MixerActions) => {
+    a.setMainAssign(0, false);
+    a.setSend(0, bus, { levelDb: 0, tap: 'post' });
+  };
+
+  it('리버브 센드: 짧은 소리가 끝난 뒤에도 잔향이 남고, 길게 하면 더 오래 남는다', async () => {
+    const run = (decayS: number) =>
+      renderMixer({
+        freq: 1000,
+        db: -6,
+        seconds: 1.2,
+        shape: fxShape,
+        source: (ctx, s) => burstBuffer(ctx, s),
+        prepare: ({ store }) => {
+          const a = store.getState().actions;
+          sendOnly(0)(a);
+          a.setFx(0, { decayS, preDelayMs: 0 });
+        },
+      });
+    const short = await run(0.4);
+    const long = await run(2);
+    expect(windowRmsDb(long, 0.2, 0.3)).toBeGreaterThan(-60);
+    expect(windowRmsDb(long, 0.6, 0.8) - windowRmsDb(short, 0.6, 0.8)).toBeGreaterThan(20);
+  });
+
+  it('리턴을 끄거나 센드가 없으면 이펙트 소리가 없다', async () => {
+    const muted = await renderMixer({
+      freq: 1000,
+      db: -6,
+      shape: fxShape,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        sendOnly(0)(a);
+        a.setFxReturn(0, { returnMute: true });
+      },
+    });
+    const noSend = await renderMixer({ freq: 1000, db: -6, shape: fxShape, prepare: ({ store }) => store.getState().actions.setMainAssign(0, false) });
+    expect(tailRmsDb(muted)).toBeLessThan(-90);
+    expect(tailRmsDb(noSend)).toBeLessThan(-90);
+  });
+
+  it('딜레이: 메아리가 딜레이 시간 뒤에 오고, 피드백이 있으면 한 번 더 온다', async () => {
+    const run = (feedbackPct: number) =>
+      renderMixer({
+        freq: 1000,
+        db: -6,
+        seconds: 0.5,
+        shape: fxShape,
+        source: (ctx, s) => burstBuffer(ctx, s, 0.01),
+        // 시간은 처음 상태로 둔다(재생 중에 바꾸면 램프 동안 읽는 자리가 미끄러진다).
+        initial: (st) => {
+          const auxes = st.auxes.slice();
+          auxes[1] = { ...auxes[1], fx: { ...auxes[1].fx, timeMs: 100, feedbackPct, hiCutHz: 20000, loCutHz: 20 } };
+          // 메인 할당도 처음부터 끈다(재생 중에 끄면 램프 동안 원음이 조금 샌다).
+          const ch = { ...st.channels[0], mainAssign: false, sends: st.channels[0].sends.map((x, i) => (i === 1 ? { levelDb: 0, tap: 'post' as const } : x)) };
+          return { ...st, auxes, channels: [ch] };
+        },
+      });
+    const once = await run(0);
+    const twice = await run(50);
+    // 처음 30 ms는 메인 할당이 기본값에서 꺼지는 램프라 원음이 조금 샌다.
+    expect(windowRmsDb(once, 0.03, 0.09)).toBeLessThan(-90);
+    expect(windowRmsDb(once, 0.1, 0.11)).toBeGreaterThan(-30);
+    expect(windowRmsDb(once, 0.2, 0.21)).toBeLessThan(-80);
+    expect(windowRmsDb(twice, 0.2, 0.21)).toBeGreaterThan(-40);
+  });
+
+  it('인서트 리버브: 채널에 직접 끼우면 메인에 원음과 잔향이 함께 나오고, 끄면 잔향이 없다', async () => {
+    const run = (on: boolean) =>
+      renderMixer({
+        freq: 1000,
+        db: -6,
+        seconds: 0.8,
+        source: (ctx, s) => burstBuffer(ctx, s),
+        prepare: ({ store }) => store.getState().actions.setInsert(0, { on, mixPct: 50, fx: { decayS: 1.5, preDelayMs: 0 } }),
+      });
+    expect(windowRmsDb(await run(true), 0.3, 0.4)).toBeGreaterThan(-70);
+    expect(windowRmsDb(await run(false), 0.3, 0.4)).toBeLessThan(-100);
+  });
+
+  it('코러스는 왼쪽과 오른쪽이 다르게 흔들린다', async () => {
+    const out = await renderMixer({
+      freq: 1000,
+      db: -6,
+      shape: { ...fxShape, auxFx: ['chorus', 'delay'] as ('chorus' | 'delay')[] },
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        sendOnly(0)(a);
+        a.setFx(0, { type: 'chorus', rateHz: 3, depthPct: 100, hiCutHz: 20000, loCutHz: 20 });
+      },
+    });
+    const l = out.getChannelData(0);
+    const r = out.getChannelData(1);
+    let diff = 0;
+    for (let i = l.length / 2; i < l.length; i++) diff = Math.max(diff, Math.abs(l[i] - r[i]));
+    expect(diff).toBeGreaterThan(0.05);
   });
 });

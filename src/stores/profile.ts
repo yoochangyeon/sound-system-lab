@@ -22,6 +22,14 @@ export type ParamKey =
   | 'gateHold'
   | 'gateRelease'
   | 'delay'
+  | 'fxDecay'
+  | 'fxPreDelay'
+  | 'fxTime'
+  | 'fxFeedback'
+  | 'fxRate'
+  | 'fxDepth'
+  | 'fxHiCut'
+  | 'fxLoCut'
   | 'expRatio'
   | 'keyFreq'
   | 'mix'
@@ -56,6 +64,14 @@ export const GENERIC_PROFILE: DeviceProfile = {
     gateAttack: { min: 0, max: 120, step: 0.5, unit: 'ms' },
     gateHold: { min: 0, max: 2000, step: 1, unit: 'ms', log: true },
     gateRelease: { min: 5, max: 4000, step: 1, unit: 'ms', log: true },
+    fxDecay: { min: 0.2, max: 8, step: 0.1, unit: 's', log: true },
+    fxPreDelay: { min: 0, max: 200, step: 1, unit: 'ms' },
+    fxTime: { min: 1, max: 3000, step: 1, unit: 'ms', log: true },
+    fxFeedback: { min: 0, max: 90, step: 1, unit: '%' },
+    fxRate: { min: 0.1, max: 5, step: 0.05, unit: 'Hz', log: true },
+    fxDepth: { min: 0, max: 100, step: 1, unit: '%' },
+    fxHiCut: { min: 1000, max: 20000, step: 10, unit: 'Hz', log: true },
+    fxLoCut: { min: 20, max: 1000, step: 1, unit: 'Hz', log: true },
     delay: { min: 0.3, max: 500, step: 0.1, unit: 'ms', log: true },
     expRatio: { min: 1.5, max: 4, step: 0.5, unit: ':1' },
     keyFreq: { min: 20, max: 20000, step: 1, unit: 'Hz', log: true },

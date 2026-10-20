@@ -1,12 +1,9 @@
 ---
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { COMING_SOON } from '../../lib/release';
 import { chapterOf, lessonHref, sortedLessons, type Lesson } from '../../lib/lessons';
 
 export async function getStaticPaths() {
-  // 공개 전 프로덕션 빌드에서는 레슨 페이지를 만들지 않는다.
-  if (COMING_SOON) return [];
   const lessons = await sortedLessons();
   return lessons.map((lesson, i) => ({
     params: { id: lesson.id },

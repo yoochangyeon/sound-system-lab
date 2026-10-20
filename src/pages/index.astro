@@ -2,12 +2,22 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CHAPTERS, lessonHref, sortedLessons } from '../lib/lessons';
 import { QUIZZES } from '../quizzes';
+import { SITE_NAME } from '../lib/release';
+import { SITE_DESCRIPTION, SITE_TAGLINE, courseJsonLd, websiteJsonLd } from '../lib/seo';
 
 const lessons = await sortedLessons();
 const first = lessons[0];
+const site = Astro.site!;
+const jsonLd = [
+  websiteJsonLd(site),
+  courseJsonLd(
+    site,
+    lessons.map((l) => ({ title: l.data.title, url: new URL(lessonHref(l), site).href })),
+  ),
+];
 ---
 
-<BaseLayout title="코스" description="EQ, 컴프레서, 게이트를 직접 만지며 소리가 바뀌는 것을 듣는 방송실 음향 학습 사이트">
+<BaseLayout title="코스" fullTitle={`${SITE_NAME} · ${SITE_TAGLINE}`} description={SITE_DESCRIPTION} jsonLd={jsonLd}>
   <section class="hero">
     <p class="eyebrow">교회 방송실 봉사자를 위한 무료 코스</p>
     <h1>만지고 들으며<br />배우는 방송실 음향</h1>
@@ -24,7 +34,7 @@ const first = lessons[0];
     CHAPTERS.map((ch) => {
       const items = lessons.filter((l) => l.data.chapter === ch.key);
       return (
-        <section class="chapter">
+        <section class="chapter" id={ch.key}>
           <header class="chapter-head">
             <span class={`chapter-no is-${ch.no}`}>{ch.no}</span>
             <div>
@@ -127,6 +137,8 @@ const first = lessons[0];
   }
   .chapter {
     margin-top: 40px;
+    /* 경로 표시(/#basics)로 들어오면 고정 머리말에 가리지 않게 */
+    scroll-margin-top: 72px;
   }
   .chapter-head {
     display: flex;

@@ -1,1 +1,1 @@
-export const SITE_NAME = '음향 시스템 랩';
+export const SITE_NAME = '뮤트 좀 풀어주세요';

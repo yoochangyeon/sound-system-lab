@@ -1,0 +1,106 @@
+---
+// 마이크 지향성 그림. r = a + (1−a)·cosθ (무지향 a=1, 카디오이드 0.5, 슈퍼카디오이드 ≈0.37).
+// 널(가장 덜 받는 방향): 카디오이드 180°, 슈퍼카디오이드 약 125°(Shure, 확인 2026-10-20).
+interface Props {
+  only?: ('omni' | 'cardioid' | 'super')[];
+}
+const { only } = Astro.props;
+const all = [
+  { id: 'omni', name: '무지향', a: 1, nul: null as number | null, desc: '모든 방향을 고르게' },
+  { id: 'cardioid', name: '카디오이드', a: 0.5, nul: 180, desc: '앞은 잘, 바로 뒤는 덜' },
+  { id: 'super', name: '슈퍼카디오이드', a: 0.37, nul: 125, desc: '앞이 더 좁다. 뒤 비스듬히 덜' },
+] as const;
+const list = all.filter((p) => !only || only.includes(p.id as never));
+const R = 44;
+const C = 60;
+function path(a: number) {
+  const pts: string[] = [];
+  for (let d = 0; d <= 360; d += 4) {
+    const t = (d * Math.PI) / 180;
+    const r = Math.abs(a + (1 - a) * Math.cos(t)) * R;
+    // 0°가 위(마이크 앞)
+    pts.push(`${pts.length ? 'L' : 'M'}${(C + r * Math.sin(t)).toFixed(1)},${(C - r * Math.cos(t)).toFixed(1)}`);
+  }
+  return pts.join(' ') + 'Z';
+}
+const at = (deg: number, r: number) => {
+  const t = (deg * Math.PI) / 180;
+  return { x: C + r * Math.sin(t), y: C - r * Math.cos(t) };
+};
+---
+
+<figure class="polar" style={`--n:${list.length}`}>
+  <div class="grid">
+    {
+      list.map((p) => (
+        <div class="cell">
+          <svg viewBox="0 0 120 128" role="img" aria-label={`${p.name} 지향성`}>
+            <circle cx={C} cy={C} r={R} fill="none" stroke="#d1d6db" stroke-dasharray="2 3" />
+            <circle cx={C} cy={C} r={R / 2} fill="none" stroke="#e5e8eb" />
+            <path d={path(p.a)} fill="rgba(49,130,246,0.16)" stroke="#3182f6" stroke-width="2" />
+            {/* 소리 나는 쪽 */}
+            <text x={C} y={11} text-anchor="middle" font-size="11" fill="#4e5968" font-weight="700">
+              앞(입)
+            </text>
+            {/* 마이크 */}
+            <rect x={C - 4} y={C - 9} width="8" height="18" rx="4" fill="#191f28" />
+            {p.nul !== null &&
+              [p.nul, ...(p.nul !== 180 ? [360 - p.nul] : [])].map((d) => {
+                const q = at(d, R + 4);
+                return <circle cx={q.x} cy={q.y} r="4" fill="#f04452" />;
+              })}
+          </svg>
+          <strong>{p.name}</strong>
+          <small>{p.desc}</small>
+          {p.nul !== null && <small class="null">● 널 {p.nul}°</small>}
+        </div>
+      ))
+    }
+  </div>
+  <figcaption>파란 모양이 마이크가 잘 듣는 범위다. 빨간 점(널)은 가장 덜 받는 방향이다.</figcaption>
+</figure>
+
+<style>
+  .polar {
+    margin: 0 0 16px;
+    padding: 16px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 8px;
+  }
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 6px 12px;
+    border-radius: var(--radius);
+    background: #fff;
+    text-align: center;
+  }
+  svg {
+    width: 100%;
+    max-width: 130px;
+  }
+  strong {
+    font-size: 15px;
+  }
+  small {
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+  .null {
+    margin-top: 2px;
+    color: var(--red);
+    font-weight: 700;
+  }
+  figcaption {
+    margin-top: 10px;
+    color: var(--faint);
+    font-size: 13px;
+  }
+</style>

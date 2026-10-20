@@ -1,0 +1,86 @@
+---
+// 처리 전후 크기 비교 막대. comp: 큰 소리만 눌려 고르게 된다. gate: 사이의 작은 소리가 줄어든다.
+interface Props {
+  kind: 'comp' | 'gate';
+}
+const { kind } = Astro.props;
+// 소리 크기(0~1) 예시. 실제 측정값이 아니라 개념 그림이다.
+const comp = [0.3, 0.35, 0.5, 0.92, 0.95, 0.6, 0.28, 0.33, 0.85, 0.98, 0.4, 0.3];
+const gate = [0.9, 0.18, 0.15, 0.2, 0.85, 0.17, 0.2, 0.16, 0.92, 0.19, 0.15, 0.18];
+const src = kind === 'comp' ? comp : gate;
+const thr = kind === 'comp' ? 0.55 : 0.4;
+const after = src.map((v) => (kind === 'comp' ? (v > thr ? thr + (v - thr) / 4 : v) : v < thr ? v * 0.15 : v));
+const W = 300;
+const H = 80;
+const bw = W / src.length;
+const rows = [
+  { name: '처리 전', data: src },
+  { name: kind === 'comp' ? '컴프레서 후' : '게이트 후', data: after },
+];
+---
+
+<figure class="ba">
+  {
+    rows.map((r, ri) => (
+      <div class="row">
+        <span class="name">{r.name}</span>
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={r.name}>
+          {r.data.map((v, i) => {
+            const changed = ri === 1 && Math.abs(v - src[i]) > 0.01;
+            return (
+              <rect
+                x={i * bw + 3}
+                y={H - v * H}
+                width={bw - 6}
+                height={v * H}
+                rx="4"
+                fill={changed ? (kind === 'comp' ? '#fe8c00' : '#c9cfd6') : '#3182f6'}
+              />
+            );
+          })}
+          <line x1="0" x2={W} y1={H - thr * H} y2={H - thr * H} stroke="#f04452" stroke-dasharray="5 4" stroke-width="1.5" />
+        </svg>
+      </div>
+    ))
+  }
+  <figcaption>
+    <span class="thr">- - -</span> 스레숄드.{' '}
+    {kind === 'comp' ? '이 선을 넘은 큰 소리만 눌린다(주황).' : '이 선보다 작은 소리가 들어오면 문을 닫아 줄인다(회색).'}
+  </figcaption>
+</figure>
+
+<style>
+  .ba {
+    margin: 0 0 16px;
+    padding: 16px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 74px 1fr;
+    align-items: end;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    background: #fff;
+    margin-bottom: 8px;
+  }
+  .name {
+    align-self: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  svg {
+    display: block;
+    width: 100%;
+  }
+  figcaption {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .thr {
+    color: var(--red);
+    font-weight: 800;
+  }
+</style>

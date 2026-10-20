@@ -1,0 +1,132 @@
+---
+// 쉬운 믹서 화면 지도. 번호를 붙인 구역과 한 줄 설명.
+const areas = [
+  { n: 1, name: '재생 · 듣기', desc: '소리를 켜고, 메인·모니터 1·모니터 2 중 무엇을 들을지 고른다' },
+  { n: 2, name: '미션 카드', desc: '상황, 체크리스트, 힌트, 해설' },
+  { n: 3, name: '채널 8개', desc: '미터, 페이더, 끄기(뮤트), 메인 보내기. 이름을 누르면 선택된다' },
+  { n: 4, name: '채널 상세', desc: '선택한 채널의 입력(게인) · EQ · 컴프 · 모니터 탭' },
+  { n: 5, name: '모니터 · 메인', desc: '출력 페이더와 GEQ·RTA' },
+];
+---
+
+<figure class="mmap">
+  <div class="screen" aria-hidden="true">
+    <div class="z z1"><b>1</b></div>
+    <div class="z z2"><b>2</b></div>
+    <div class="z z3">
+      <b>3</b>
+      <div class="strips">{Array.from({ length: 8 }, () => <i />)}</div>
+    </div>
+    <div class="z z4"><b>4</b></div>
+    <div class="z z5"><b>5</b></div>
+  </div>
+  <ol>
+    {
+      areas.map((a) => (
+        <li>
+          <b>{a.n}</b>
+          <span>
+            <strong>{a.name}</strong>
+            <small>{a.desc}</small>
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+</figure>
+
+<style>
+  .mmap {
+    margin: 0 0 16px;
+    padding: 16px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  .screen {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px;
+    border-radius: var(--radius);
+    background: #fff;
+  }
+  .z {
+    position: relative;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    min-height: 26px;
+  }
+  .z b,
+  ol b {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .z b {
+    position: absolute;
+    left: 6px;
+    top: 6px;
+  }
+  .z1 {
+    min-height: 34px;
+    background: #eef1f4;
+  }
+  .z2 {
+    min-height: 40px;
+    background: var(--green-soft);
+  }
+  .z3 {
+    padding: 34px 8px 8px;
+  }
+  .strips {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+  }
+  .strips i {
+    height: 54px;
+    border-radius: 6px;
+    background: #fff;
+    background-image: linear-gradient(to top, var(--accent) 0 30%, transparent 30%);
+    background-size: 6px 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .z4 {
+    min-height: 56px;
+    background: #fff3e0;
+  }
+  .z5 {
+    min-height: 34px;
+    background: #e5f8ee;
+  }
+  ol {
+    list-style: none;
+    margin: 12px 0 0 !important;
+    padding: 0 !important;
+    display: grid;
+    gap: 8px;
+  }
+  li {
+    display: flex;
+    gap: 10px;
+    margin: 0 !important;
+  }
+  li span {
+    display: flex;
+    flex-direction: column;
+  }
+  li strong {
+    font-size: 16px;
+  }
+  li small {
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>

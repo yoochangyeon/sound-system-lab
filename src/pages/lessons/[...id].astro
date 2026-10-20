@@ -1,7 +1,10 @@
 ---
+// 카드형 레슨(기획서 S02). 원고의 `---`(가로줄)로 카드를 나누고, 스크립트가 한 장씩 보여 준다.
+// 스크립트가 없으면 모든 카드가 세로로 이어진다.
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { chapterOf, lessonHref, sortedLessons, type Lesson } from '../../lib/lessons';
+import '../../components/lesson/lesson.css';
 
 export async function getStaticPaths() {
   const lessons = await sortedLessons();
@@ -19,84 +22,117 @@ interface Props {
 const { lesson, prev, next } = Astro.props;
 const { Content } = await render(lesson);
 const chapter = chapterOf(lesson);
+const nextHref = next ? lessonHref(next) : '/lab/';
+const nextTitle = next ? next.data.title : '실습실에서 미션 풀기';
 ---
 
-<BaseLayout title={lesson.data.title} description={lesson.data.summary}>
-  <nav class="crumbs" aria-label="현재 위치">
-    <a href="/">홈</a> › <span>{chapter.label}</span>
-  </nav>
-  <article>
-    <h1>{lesson.data.title}</h1>
-    <p class="summary">{lesson.data.summary}</p>
-    <Content />
+<BaseLayout title={lesson.data.title} description={lesson.data.summary} bare>
+  <div class="lesson-top">
+    <div class="lesson-top-in">
+      <a class="lesson-back" href="/" aria-label="코스 목록으로">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </a>
+      <span class="lesson-top-title">{chapter.short} · {chapter.name}</span>
+      <span class="lesson-count" data-count></span>
+    </div>
+    <div class="lesson-progress" aria-hidden="true"><span data-progress></span></div>
+  </div>
+
+  <article class="lesson" data-lesson>
+    <div class="lesson-body" data-body>
+      <header class="lesson-intro">
+        <span class="lesson-chip">{chapter.short} {chapter.name}</span>
+        <h1>{lesson.data.title}</h1>
+        <p class="lesson-summary">{lesson.data.summary}</p>
+      </header>
+      <Content />
+    </div>
   </article>
-  <nav class="pager" aria-label="이전·다음 레슨">
+
+  <nav class="lesson-nav" aria-label="카드 넘기기" data-nav hidden>
+    <div class="lesson-nav-in">
+      <button type="button" class="btn is-grey lesson-prev" data-prev>이전</button>
+      <button type="button" class="btn lesson-next" data-next>다음</button>
+      <a class="btn lesson-next" data-finish href={nextHref} hidden>
+        <span class="finish-label">{next ? '다음 레슨' : '실습실로'}</span>
+      </a>
+    </div>
+  </nav>
+
+  <nav class="lesson-pager" aria-label="이전·다음 레슨" data-pager>
     {
       prev ? (
-        <a class="prev" href={lessonHref(prev)}>
-          <small>◀ 이전 · {chapterOf(prev).short}</small>
+        <a href={lessonHref(prev)}>
+          <small>이전 레슨</small>
           <span>{prev.data.title}</span>
         </a>
       ) : (
         <span />
       )
     }
-    {
-      next ? (
-        <a class="next" href={lessonHref(next)}>
-          <small>다음 · {chapterOf(next).short} ▶</small>
-          <span>{next.data.title}</span>
-        </a>
-      ) : (
-        <a class="next" href="/lab/">
-          <small>다음 ▶</small>
-          <span>실습실에서 콘솔 만져 보기</span>
-        </a>
-      )
-    }
+    <a href={nextHref} class="is-next">
+      <small>다음</small>
+      <span>{nextTitle}</span>
+    </a>
   </nav>
 </BaseLayout>
 
-<style>
-  .crumbs {
-    margin-top: 10px;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-  .crumbs a {
-    color: var(--muted);
-  }
-  .summary {
-    color: var(--muted);
-    margin-top: -0.4em;
-  }
-  .pager {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 40px;
-  }
-  .pager a {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface);
-    text-decoration: none;
-    color: var(--text);
-    min-width: 0;
-  }
-  .pager small {
-    color: var(--muted);
-  }
-  .pager .next {
-    text-align: right;
-  }
-  @media (max-width: 480px) {
-    .pager {
-      grid-template-columns: 1fr;
+<script>
+  function setup() {
+    const body = document.querySelector<HTMLElement>('[data-body]');
+    const nav = document.querySelector<HTMLElement>('[data-nav]');
+    if (!body || !nav || body.dataset.ready) return;
+    body.dataset.ready = '1';
+
+    // 가로줄(hr)마다 카드로 나눈다. 위젯 아일랜드가 다시 붙지 않도록 노드를 옮기지 않고 표시만 바꾼다.
+    const steps: HTMLElement[][] = [[]];
+    for (const el of Array.from(body.children) as HTMLElement[]) {
+      if (el.tagName === 'HR') {
+        el.classList.add('step-break');
+        if (steps[steps.length - 1].length) steps.push([]);
+      } else steps[steps.length - 1].push(el);
     }
+    if (!steps[steps.length - 1].length) steps.pop();
+
+    document.documentElement.classList.add('has-steps');
+    nav.hidden = false;
+    const count = document.querySelector<HTMLElement>('[data-count]')!;
+    const bar = document.querySelector<HTMLElement>('[data-progress]')!;
+    const prevBtn = nav.querySelector<HTMLButtonElement>('[data-prev]')!;
+    const nextBtn = nav.querySelector<HTMLButtonElement>('[data-next]')!;
+    const finish = nav.querySelector<HTMLAnchorElement>('[data-finish]')!;
+
+    let index = 0;
+    const show = (i: number, scroll = true) => {
+      index = Math.max(0, Math.min(steps.length - 1, i));
+      steps.forEach((s, k) => s.forEach((el) => el.classList.toggle('is-off', k !== index)));
+      for (const el of steps[index]) {
+        el.classList.remove('step-in');
+        void el.offsetWidth;
+        el.classList.add('step-in');
+      }
+      count.textContent = `${index + 1} / ${steps.length}`;
+      bar.style.width = `${((index + 1) / steps.length) * 100}%`;
+      prevBtn.classList.toggle('is-disabled', index === 0);
+      const last = index === steps.length - 1;
+      nextBtn.hidden = last;
+      finish.hidden = !last;
+      history.replaceState(null, '', index === 0 ? location.pathname : `#${index + 1}`);
+      if (scroll) window.scrollTo({ top: 0 });
+      // 카드가 바뀌면 숨어 있던 그래프가 폭을 다시 잰다.
+      window.dispatchEvent(new Event('resize'));
+    };
+
+    prevBtn.addEventListener('click', () => show(index - 1));
+    nextBtn.addEventListener('click', () => show(index + 1));
+    document.addEventListener('keydown', (e) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('input, select, textarea, [role="slider"]')) return;
+      if (e.key === 'ArrowRight') show(index + 1);
+      else if (e.key === 'ArrowLeft') show(index - 1);
+    });
+    const fromHash = Number(location.hash.slice(1));
+    show(Number.isFinite(fromHash) && fromHash > 0 ? fromHash - 1 : 0, false);
   }
-</style>
+  setup();
+</script>

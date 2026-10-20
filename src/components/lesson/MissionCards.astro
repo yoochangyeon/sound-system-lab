@@ -1,0 +1,73 @@
+---
+// 실습실 미션 4종 카드. 누르면 그 미션이 고른 상태로 쉬운 믹서가 열린다.
+import { MISSIONS } from '../../missions';
+
+const LOOK: Record<string, string> = {
+  howl: '모니터 1의 RTA와 GEQ',
+  sermon: '설교 채널의 입력·EQ·컴프 탭',
+  gain: '채널마다 입력 탭의 게인과 입력 미터',
+  'no-sound': '일렉 기타 채널의 입력 연결, 끄기, 메인 보내기',
+};
+---
+
+<div class="missions">
+  {
+    MISSIONS.map((m, i) => (
+      <a class="mission" href={`/lab/?mission=${m.id}`}>
+        <span class="no">{i + 1}</span>
+        <span class="tx">
+          <strong>{m.title}</strong>
+          <small>볼 곳: {LOOK[m.id]}</small>
+        </span>
+        <span class="go" aria-hidden="true">
+          ›
+        </span>
+      </a>
+    ))
+  }
+</div>
+
+<style>
+  .missions {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 16px;
+  }
+  .mission {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--bg-grey);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .no {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--green);
+    color: #fff;
+    font-weight: 800;
+  }
+  .tx {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .tx strong {
+    font-size: 17px;
+  }
+  .tx small {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .go {
+    color: var(--faint);
+    font-size: 24px;
+  }
+</style>

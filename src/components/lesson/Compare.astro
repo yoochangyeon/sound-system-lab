@@ -1,0 +1,79 @@
+---
+// 두세 가지를 나란히 비교하는 카드. tone으로 좋음/나쁨을 표시한다.
+interface Item {
+  title: string;
+  text: string;
+  tone?: 'good' | 'bad' | 'plain';
+  tag?: string;
+}
+interface Props {
+  items: Item[];
+}
+const { items } = Astro.props;
+---
+
+<div class="compare" style={`--n:${items.length}`}>
+  {
+    items.map((it) => (
+      <div class:list={['item', `is-${it.tone ?? 'plain'}`]}>
+        {(it.tag || it.tone === 'good' || it.tone === 'bad') && (
+          <span class="tag">{it.tag ?? (it.tone === 'good' ? '이렇게' : '이건 피하기')}</span>
+        )}
+        <strong>{it.title}</strong>
+        <p>{it.text}</p>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .compare {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 16px;
+  }
+  @media (max-width: 480px) {
+    .compare {
+      grid-template-columns: 1fr;
+    }
+  }
+  .item {
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--bg-grey);
+  }
+  .item.is-good {
+    background: var(--green-soft);
+  }
+  .item.is-bad {
+    background: var(--red-soft);
+  }
+  .tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .is-good .tag {
+    color: var(--green);
+  }
+  .is-bad .tag {
+    color: var(--red);
+  }
+  strong {
+    display: block;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+  p {
+    margin: 4px 0 0 !important;
+    color: var(--muted) !important;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+</style>

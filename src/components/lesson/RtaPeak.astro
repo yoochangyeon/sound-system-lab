@@ -1,0 +1,45 @@
+---
+// RTA 그림: 막대 하나가 튀어나온 모습(하울링 주파수). 개념 그림이다.
+interface Props {
+  label?: string;
+}
+const { label = '2.5 kHz' } = Astro.props;
+const bars = [30, 34, 40, 44, 48, 50, 52, 50, 49, 52, 50, 47, 46, 45, 92, 44, 40, 36, 32, 28, 24];
+const peak = bars.indexOf(Math.max(...bars));
+const W = 300;
+const H = 110;
+const bw = W / bars.length;
+---
+
+<figure class="rta">
+  <svg viewBox={`0 0 ${W} ${H + 18}`} role="img" aria-label="RTA에서 튀어나온 막대">
+    {bars.map((b, i) => <rect x={i * bw + 2} y={H - b} width={bw - 4} height={b} rx="3" fill={i === peak ? '#f04452' : '#1bc47d'} />)}
+    <text x={peak * bw + bw / 2} y={H - bars[peak] - 6} text-anchor="middle" font-size="12" font-weight="800" fill="#f04452">
+      {label}
+    </text>
+    <text x="0" y={H + 14} font-size="10" fill="#8b95a1">낮은 소리</text>
+    <text x={W} y={H + 14} font-size="10" fill="#8b95a1" text-anchor="end">높은 소리</text>
+  </svg>
+  <figcaption>RTA는 지금 나는 소리를 주파수별 막대로 보여 준다. 혼자 튀어나온 빨간 막대가 하울링 주파수다.</figcaption>
+</figure>
+
+<style>
+  .rta {
+    margin: 0 0 16px;
+    padding: 16px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  svg {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border-radius: var(--radius);
+    background: #fff;
+  }
+  figcaption {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>

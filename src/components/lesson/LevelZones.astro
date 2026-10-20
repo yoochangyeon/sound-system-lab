@@ -1,0 +1,120 @@
+---
+// 디지털 미터 구간(dBFS). 가로 막대 위에 너무 작음 / 알맞음 / 아슬아슬 / 클리핑을 나눠 보여 준다.
+const MIN = -48;
+const zones = [
+  { from: MIN, to: -18, name: '너무 작음', desc: '잡음에 묻힌다', c: '#c9cfd6' },
+  { from: -18, to: -6, name: '알맞음', desc: '큰 순간의 피크가 여기', c: 'var(--meter-green)' },
+  { from: -6, to: 0, name: '아슬아슬', desc: '여유가 거의 없다', c: 'var(--meter-yellow)' },
+];
+const pct = (d: number) => ((d - MIN) / -MIN) * 100;
+const ticks = [-48, -36, -24, -18, -12, -6, 0];
+---
+
+<figure class="zones">
+  <div class="bar">
+    {zones.map((z) => <span style={`left:${pct(z.from)}%;width:${pct(z.to) - pct(z.from)}%;background:${z.c}`} />)}
+    <span class="clip">클리핑</span>
+  </div>
+  <div class="ticks">
+    {ticks.map((t) => <span style={`left:${pct(t)}%`}>{t === 0 ? '0' : t}</span>)}
+  </div>
+  <div class="legend">
+    {
+      zones.map((z) => (
+        <div>
+          <i style={`background:${z.c}`} />
+          <strong>{z.name}</strong>
+          <small>{z.desc}</small>
+        </div>
+      ))
+    }
+    <div>
+      <i style="background:var(--meter-red)" />
+      <strong>0 dBFS 넘음</strong>
+      <small>꼭대기가 잘려 깨진다</small>
+    </div>
+  </div>
+  <figcaption>디지털 미터(dBFS). 0이 천장이라 숫자는 대부분 마이너스다.</figcaption>
+</figure>
+
+<style>
+  .zones {
+    margin: 0 0 16px;
+    padding: 20px 16px 16px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  .bar {
+    position: relative;
+    height: 36px;
+    margin-right: 56px;
+    border-radius: 10px 0 0 10px;
+    background: #e3e7eb;
+  }
+  .bar span:not(.clip) {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+  }
+  .bar span:first-child {
+    border-radius: 10px 0 0 10px;
+  }
+  .clip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 0 10px 10px 0;
+    background: var(--meter-red);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .ticks {
+    position: relative;
+    height: 22px;
+    margin-right: 56px;
+    color: var(--faint);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ticks span {
+    position: absolute;
+    top: 4px;
+    transform: translateX(-50%);
+  }
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    margin-top: 10px;
+  }
+  .legend div {
+    display: grid;
+    grid-template-columns: 12px 1fr;
+    column-gap: 8px;
+    align-items: center;
+  }
+  .legend i {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+  }
+  .legend strong {
+    font-size: 15px;
+  }
+  .legend small {
+    grid-column: 2;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  figcaption {
+    margin-top: 12px;
+    color: var(--faint);
+    font-size: 13px;
+  }
+</style>

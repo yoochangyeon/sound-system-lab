@@ -1,0 +1,66 @@
+---
+// 큰 숫자 몇 개로 보여 주기(예: −18 dBFS, 20 Hz~20 kHz).
+interface Props {
+  items: { value: string; label: string; tone?: 'blue' | 'red' | 'green' | 'grey' }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="numbers" style={`--n:${items.length}`}>
+  {
+    items.map((it) => (
+      <div class:list={['num', `is-${it.tone ?? 'blue'}`]}>
+        <strong>{it.value}</strong>
+        <span>{it.label}</span>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .numbers {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 16px;
+  }
+  .num {
+    padding: 16px 12px;
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    text-align: center;
+  }
+  .num.is-red {
+    background: var(--red-soft);
+  }
+  .num.is-green {
+    background: var(--green-soft);
+  }
+  .num.is-grey {
+    background: var(--bg-grey);
+  }
+  strong {
+    display: block;
+    color: var(--accent);
+    font-size: clamp(20px, 5.5vw, 26px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+  .is-red strong {
+    color: var(--red);
+  }
+  .is-green strong {
+    color: var(--green);
+  }
+  .is-grey strong {
+    color: var(--text);
+  }
+  span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+</style>

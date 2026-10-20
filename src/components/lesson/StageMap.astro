@@ -1,0 +1,89 @@
+---
+// 무대 배치도(위에서 본 그림). good: 메인은 마이크보다 앞, 웨지는 마이크 꼬리(널) 쪽.
+// bad: 메인이 마이크 뒤 무대 안, 웨지가 마이크 앞쪽을 겨눔.
+interface Props {
+  variant?: 'good' | 'bad';
+}
+const { variant = 'good' } = Astro.props;
+const good = variant === 'good';
+---
+
+<figure class:list={['stage', good ? 'is-good' : 'is-bad']}>
+  <span class="badge">{good ? '이렇게 두면 하울링이 덜 난다' : '이러면 하울링이 쉽게 난다'}</span>
+  <svg viewBox="0 0 320 250" role="img" aria-label={good ? '좋은 배치' : '나쁜 배치'}>
+    <rect x="10" y="10" width="300" height="120" rx="14" fill="#fff" />
+    <text x="22" y="30" font-size="11" fill="#8b95a1" font-weight="700">무대</text>
+    <rect x="10" y="150" width="300" height="90" rx="14" fill="#e8ebee" />
+    <text x="160" y="205" font-size="12" fill="#8b95a1" font-weight="700" text-anchor="middle">회중석</text>
+
+    {/* 인도자와 마이크 (회중석을 바라봄) */}
+    <circle cx="160" cy="62" r="13" fill="#191f28" />
+    <text x="160" y="40" font-size="10" fill="#4e5968" text-anchor="middle">인도자</text>
+    <rect x="156" y="78" width="8" height="16" rx="4" fill="#3182f6" />
+    <path d="M160 78 L138 50 A36 36 0 0 1 182 50 Z" fill="rgba(49,130,246,0.15)" />
+    <text x="176" y="93" font-size="10" fill="#3182f6" font-weight="700">마이크</text>
+
+    {
+      good ? (
+        <>
+          {/* 웨지: 마이크 꼬리 앞, 인도자를 향함 */}
+          <path d="M146 118 h28 l-4 -10 h-20 z" fill="#0a9f5c" />
+          <path d="M160 108 L146 100 M160 108 L174 100" stroke="#0a9f5c" stroke-width="2" fill="none" />
+          <text x="182" y="120" font-size="10" fill="#0a9f5c" font-weight="700">모니터(널 쪽)</text>
+          {/* 메인 스피커: 무대 앞 양옆, 회중석을 향함 */}
+          <rect x="22" y="134" width="30" height="22" rx="4" fill="#191f28" />
+          <rect x="268" y="134" width="30" height="22" rx="4" fill="#191f28" />
+          <path d="M37 158 l-16 30 h32 z" fill="rgba(25,31,40,0.12)" />
+          <path d="M283 158 l-16 30 h32 z" fill="rgba(25,31,40,0.12)" />
+          <text x="37" y="148" font-size="9" fill="#fff" text-anchor="middle">메인</text>
+          <text x="283" y="148" font-size="9" fill="#fff" text-anchor="middle">메인</text>
+        </>
+      ) : (
+        <>
+          {/* 웨지가 옆에서 마이크 앞을 겨눔 */}
+          <path d="M96 70 v24 l10 -4 v-16 z" fill="#f04452" />
+          <path d="M108 82 L140 70" stroke="#f04452" stroke-width="2" stroke-dasharray="4 3" />
+          <text x="62" y="110" font-size="10" fill="#f04452" font-weight="700">모니터가 마이크 앞을 겨눔</text>
+          {/* 메인 스피커가 마이크 뒤 무대 안쪽 */}
+          <rect x="145" y="14" width="30" height="16" rx="4" fill="#f04452" />
+          <text x="160" y="25" font-size="9" fill="#fff" text-anchor="middle">메인</text>
+          <path d="M175 22 L230 22" stroke="#f04452" stroke-width="2" />
+          <text x="234" y="26" font-size="10" fill="#f04452" font-weight="700">마이크 뒤 무대 안</text>
+        </>
+      )
+    }
+  </svg>
+</figure>
+
+<style>
+  .stage {
+    margin: 0 0 16px;
+    padding: 14px;
+    border-radius: var(--radius-l);
+  }
+  .is-good {
+    background: var(--green-soft);
+  }
+  .is-bad {
+    background: var(--red-soft);
+  }
+  .badge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 800;
+  }
+  .is-good .badge {
+    color: var(--green);
+  }
+  .is-bad .badge {
+    color: var(--red);
+  }
+  svg {
+    display: block;
+    width: 100%;
+  }
+</style>

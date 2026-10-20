@@ -1,0 +1,71 @@
+.quiz {
+  margin: 0 0 16px;
+  padding: 18px;
+  border-radius: var(--radius-l);
+  background: var(--bg-grey);
+}
+.quiz-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+.quiz-q {
+  margin: 10px 0 14px !important;
+  color: var(--text) !important;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.quiz-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.quiz-btn {
+  height: 64px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+}
+.quiz-btn:active {
+  transform: scale(0.97);
+}
+.quiz-btn.is-picked {
+  border-color: var(--red);
+  background: var(--red-soft);
+  color: var(--red);
+}
+.quiz-btn.is-answer {
+  border-color: var(--green);
+  background: var(--green-soft);
+  color: var(--green);
+}
+.quiz-result {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: #fff;
+}
+.quiz-result strong {
+  font-size: 16px;
+}
+.is-right .quiz-result strong {
+  color: var(--green);
+}
+.is-wrong .quiz-result strong {
+  color: var(--red);
+}
+.quiz-result p {
+  margin: 4px 0 0 !important;
+  color: var(--muted) !important;
+  font-size: 15px;
+}

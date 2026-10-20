@@ -1,0 +1,62 @@
+.clip-demo {
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: var(--radius-l);
+  background: var(--bg-grey);
+}
+.clip-demo svg {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius);
+  background: #fff;
+}
+.clip-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: #fff;
+}
+.clip-state strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.clip-state span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.clip-state.is-red strong {
+  color: var(--red);
+}
+.clip-state.is-yellow strong {
+  color: #c98a00;
+}
+.clip-state.is-green strong {
+  color: var(--green);
+}
+.clip-slider {
+  display: block;
+  margin-top: 14px;
+}
+.clip-slider span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.clip-slider b {
+  color: var(--accent);
+}
+.clip-demo input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 28px;
+}
+.clip-hint {
+  margin: 6px 0 0 !important;
+  color: var(--faint) !important;
+  font-size: 13px;
+}

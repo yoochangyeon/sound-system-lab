@@ -1,0 +1,58 @@
+---
+// EQ 모양 세 가지: HPF(저음 자르기), 셸프(계단), 피킹(종 모양).
+const W = 120;
+const H = 60;
+const shapes = [
+  { name: 'HPF', desc: '이 주파수 아래를 깎는다', d: `M0,${H - 4} C30,${H - 4} 34,${H / 2} 50,${H / 2 - 2} L${W},${H / 2 - 2}` },
+  { name: '셸프', desc: '위나 아래 전체를 계단처럼', d: `M0,${H / 2 + 12} L40,${H / 2 + 12} C60,${H / 2 + 12} 60,${H / 2 - 2} 80,${H / 2 - 2} L${W},${H / 2 - 2}` },
+  { name: '피킹', desc: '한 대역만 종 모양으로', d: `M0,${H / 2 - 2} L35,${H / 2 - 2} C50,${H / 2 - 2} 52,${H - 6} 60,${H - 6} C68,${H - 6} 70,${H / 2 - 2} 85,${H / 2 - 2} L${W},${H / 2 - 2}` },
+];
+---
+
+<figure class="shapes">
+  {
+    shapes.map((s) => (
+      <div class="cell">
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={s.name}>
+          <line x1="0" x2={W} y1={H / 2 - 2} y2={H / 2 - 2} stroke="#e5e8eb" />
+          <path d={s.d} stroke="#3182f6" stroke-width="3" fill="none" stroke-linecap="round" />
+        </svg>
+        <strong>{s.name}</strong>
+        <small>{s.desc}</small>
+      </div>
+    ))
+  }
+</figure>
+
+<style>
+  .shapes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 12px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  .cell {
+    padding: 10px;
+    border-radius: var(--radius);
+    background: #fff;
+    text-align: center;
+  }
+  svg {
+    display: block;
+    width: 100%;
+  }
+  strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+  }
+  small {
+    display: block;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+</style>

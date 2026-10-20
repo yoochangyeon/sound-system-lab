@@ -1,15 +1,9 @@
 ---
 // 실습실 입구(기획서 S04). 휴대폰에서도 열린다. 콘솔 자체는 가로 1024px 이상 기준.
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ComingSoon from '../../components/ComingSoon.astro';
-import { COMING_SOON } from '../../lib/release';
 import { MISSIONS } from '../../missions';
 ---
 
-{
-  COMING_SOON ? (
-    <ComingSoon />
-  ) : (
     <BaseLayout title="실습실" description="X32 스타일·dLive 스타일 콘솔 시뮬레이터에서 현장 문제를 풀어 본다">
       <h1>실습실</h1>
       <p>우리 교회 콘솔과 비슷한 쪽을 고르세요. 두 화면 모두 같은 소리와 같은 미션을 씁니다.</p>
@@ -37,8 +31,6 @@ import { MISSIONS } from '../../missions';
       </ol>
       <p>미션이 없는 자유 모드에서도 연습할 수 있습니다.</p>
     </BaseLayout>
-  )
-}
 
 <style>
   .cards {

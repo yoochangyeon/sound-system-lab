@@ -1,16 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ComingSoon from '../components/ComingSoon.astro';
-import { COMING_SOON, SITE_NAME } from '../lib/release';
+import { SITE_NAME } from '../lib/release';
 import { CHAPTERS, lessonHref, sortedLessons } from '../lib/lessons';
 
 const lessons = await sortedLessons();
 ---
 
-{
-  COMING_SOON ? (
-    <ComingSoon />
-  ) : (
     <BaseLayout title="커리큘럼" description="EQ, 컴프레서, 게이트를 직접 만지며 소리가 바뀌는 것을 듣는 방송실 음향 학습 사이트">
       <section class="hero">
         <h1>{SITE_NAME}</h1>
@@ -44,8 +39,6 @@ const lessons = await sortedLessons();
         );
       })}
     </BaseLayout>
-  )
-}
 
 <style>
   .hero {

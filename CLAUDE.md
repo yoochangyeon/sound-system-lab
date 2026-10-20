@@ -1,0 +1,68 @@
+# CLAUDE.md
+
+음향 시스템 학습 사이트. 기초 이론은 짧게, 디지털 믹서의 처리 기능(PEQ·GEQ·컴프레서·게이트 등)은 화면에서 직접 만지고 소리 변화를 들으며 배운다. 마지막에 X32·dLive 같은 실제 콘솔 화면을 본뜬 시뮬레이터로 실습한다.
+
+완전 무료 학습 사이트다. 로그인·진도 저장·결제는 만들지 않는다.
+
+## 대상과 문체
+
+- 대상은 교회 방송실 봉사자처럼 음향을 전공하지 않고 현장에서 일하는 사람이다. 이론보다 "주일 예배에서 이 소리가 나면 무엇을 만지나"처럼 현장 상황에서 출발한다.
+- 용어는 처음 나올 때 한 줄로 풀어 쓴다.
+- 문서는 '~한다' 체로 쓴다.
+- 강의 원고는 휴대폰에서도 읽히게, 콘솔 시뮬레이터는 가로 태블릿 이상을 기준으로 만든다.
+
+## 스택
+
+| 계층 | 선택 | 비고 |
+|---|---|---|
+| 사이트 | Astro 7 정적 빌드 + MDX | 서버 없음. Node 22.22 이상 |
+| 인터랙티브 UI | React 아일랜드 | 노브·페이더는 SVG, 매 프레임 바뀌는 RTA·미터는 Canvas |
+| 믹서 상태 | Zustand | 채널×파라미터를 React 밖 저장소 하나에 두고 UI와 오디오 엔진이 같이 구독한다 |
+| 신호 처리 | Web Audio API + AudioWorklet(TS) | 성능이 모자라다고 측정되면 그 처리기만 WASM으로 옮긴다 |
+| 테스트 | Vitest | DSP 순수 함수의 수치 검증 |
+
+진도·설정처럼 사용자별로 남길 값이 생기면 `localStorage`로만 처리한다.
+
+## 폴더
+
+| 경로 | 내용 |
+|---|---|
+| `src/content/lessons/<장>/` | 강의 원고(MDX). 장: `01-basics`, `02-processing`, `03-consoles`. 스키마는 `src/content.config.ts` |
+| `src/audio/` | 오디오 엔진(프레임워크 무관 TS). UI 코드를 넣지 않는다 |
+| `src/audio/dsp/` | 샘플 단위 처리 순수 함수(검출기, 게인 계산 등). Web Audio에 의존하지 않아 Vitest로 바로 검사한다 |
+| `src/audio/worklets/` | `dsp/` 함수를 감싼 `AudioWorkletProcessor` |
+| `src/stores/` | Zustand 저장소 |
+| `src/components/sim/` | 처리기 하나씩 만지는 React 위젯(PEQ, GEQ, Comp, Gate…). MDX에서 `client:only="react"`로 불러 쓴다 |
+| `src/consoles/<기기>/` | 콘솔 화면 재현 시뮬레이터. `sim/` 위젯과 `audio/` 엔진을 조합한다 |
+| `public/audio/` | 실습용 음원(드럼·보컬 스템 등) |
+
+## 오디오 엔진 원칙
+
+- AudioContext는 `src/audio/context.ts`의 `getAudioContext()` 하나만 쓰고, 사용자 클릭 뒤에 처음 만든다(자동재생 정책).
+- 파라미터 변경은 `setTargetAtTime` 등으로 램프해 지퍼 노이즈를 막는다.
+- PEQ·GEQ는 `BiquadFilterNode`(GEQ는 31밴드 peaking)로 만든다.
+- 다이내믹스(컴프레서·게이트·익스팬더·리미터·디에서)는 `DynamicsCompressorNode`를 쓰지 않고 AudioWorklet으로 직접 만든다. 내장 노드로는 사이드체인, Peak/RMS 검출, 홀드 같은 콘솔 기본 기능을 보여줄 수 없다.
+- 그래프(주파수 응답, GR 미터)는 엔진이 숫자를 내주고 UI가 그린다.
+
+## 콘솔 화면 재현 규칙
+
+- 실제 기기 UI를 픽셀 단위로 베끼거나 제조사 스크린샷·로고를 쓰지 않는다. 레이아웃·조작 흐름을 본뜬 자체 디자인으로 만든다.
+- 기기명은 "X32 스타일", "dLive 스타일"처럼 설명 목적으로만 쓴다.
+- 기기별 동작(파라미터 범위, 단위, 메뉴 구조)을 새로 넣으면 확인한 매뉴얼·날짜를 해당 파일 주석에 남긴다.
+
+## 음원
+
+- 저작권이 확인된 음원만 `public/audio/`에 넣고, 출처와 라이선스를 `public/audio/SOURCES.md`에 적는다.
+
+## 명령
+
+```bash
+npm run dev      # http://localhost:4321
+npm run build    # dist/ 정적 빌드
+npx astro check  # 타입 검사
+npm test         # Vitest
+```
+
+개발 서버는 `npx astro dev --background`로 띄우고 `npx astro dev stop`으로 끈다. 화면 확인은 Aside에서 `http://localhost:4321`을 바로 연다.
+
+- Astro 문서: https://docs.astro.build

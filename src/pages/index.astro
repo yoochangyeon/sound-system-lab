@@ -1,0 +1,34 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const chapters = [
+  { key: 'basics', label: '1장. 음향 기초' },
+  { key: 'processing', label: '2장. 신호 처리' },
+  { key: 'consoles', label: '3장. 디지털 믹서 실습' },
+] as const;
+
+const lessons = (await getCollection('lessons')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="커리큘럼">
+  <h1>음향 시스템 랩</h1>
+  <p>EQ, 컴프레서, 게이트를 직접 만지며 소리가 바뀌는 것을 듣는다.</p>
+  {
+    chapters.map((ch) => (
+      <section>
+        <h2>{ch.label}</h2>
+        <ul>
+          {lessons
+            .filter((l) => l.data.chapter === ch.key)
+            .map((l) => (
+              <li>
+                <a href={`/lessons/${l.id}/`}>{l.data.title}</a>
+                {l.data.draft && ' (작성 중)'}
+              </li>
+            ))}
+        </ul>
+      </section>
+    ))
+  }
+</BaseLayout>

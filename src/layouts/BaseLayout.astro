@@ -1,0 +1,31 @@
+---
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} · 음향 시스템 랩</title>
+  </head>
+  <body>
+    <header><a href="/">음향 시스템 랩</a></header>
+    <main><slot /></main>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    color-scheme: light dark;
+    font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  }
+  body {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+</style>

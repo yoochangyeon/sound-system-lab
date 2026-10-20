@@ -1,7 +1,7 @@
 // 믹서 상태의 모양과 기본값. 엔진·UI·미션이 공유하는 유일한 계약이다.
 // 값은 기종과 상관없는 표준 단위(dB, Hz, ms, 비율)로 저장한다.
 
-import type { DetectorMode } from '../audio/dsp/dynamics';
+import type { CompMode, DetectorMode, GateMode } from '../audio/dsp/dynamics';
 import { flatGeq } from '../audio/dsp/geq';
 
 export type PeqBandType = 'lowshelf' | 'peaking' | 'highshelf';
@@ -22,13 +22,30 @@ export interface PreampState {
   lpfFreq: number;
 }
 
+/** 키 필터: 검출할 소리만 골라 듣는다. lowcut은 저역을 빼고, band는 그 주변만 남긴다. */
+export type KeyFilter = 'off' | 'lowcut' | 'highcut' | 'band';
+
+/** 사이드체인(키): 다이내믹스가 무엇을 듣고 움직일지 */
+export interface KeyState {
+  /** 'self'는 자기 채널, 숫자는 그 채널(0부터)의 소리로 검출한다 */
+  source: 'self' | number;
+  filter: KeyFilter;
+  freq: number;
+  /** 켜면 처리 대신 키 신호를 들려준다(키 필터 맞추기) */
+  listen: boolean;
+}
+
 export interface GateState {
   on: boolean;
+  mode: GateMode;
+  /** 익스팬더 비율(1:2면 2) */
+  expRatio: number;
   thresholdDb: number;
   rangeDb: number;
   attackMs: number;
   holdMs: number;
   releaseMs: number;
+  key: KeyState;
 }
 
 export interface PeqState {
@@ -38,6 +55,7 @@ export interface PeqState {
 
 export interface CompState {
   on: boolean;
+  mode: CompMode;
   thresholdDb: number;
   ratio: number;
   kneeDb: number;
@@ -45,6 +63,9 @@ export interface CompState {
   releaseMs: number;
   makeupDb: number;
   detector: DetectorMode;
+  /** 0~100%. 100보다 작으면 원음과 섞는다(병렬 압축) */
+  mixPct: number;
+  key: KeyState;
 }
 
 export interface SendState {
@@ -107,14 +128,29 @@ export const DEFAULT_PEQ_BANDS: PeqBandState[] = [
   { type: 'highshelf', freq: 8000, gainDb: 0, q: 0.7 },
 ];
 
+export function defaultKey(): KeyState {
+  return { source: 'self', filter: 'off', freq: 1000, listen: false };
+}
+
 export function defaultChannel(name: string, auxCount: number): ChannelState {
   return {
     name,
     preamp: { gainDb: 0, hpfOn: false, hpfFreq: 80, lpfOn: false, lpfFreq: 12000 },
-    gate: { on: false, thresholdDb: -40, rangeDb: 40, attackMs: 1, holdMs: 50, releaseMs: 150 },
+    gate: {
+      on: false,
+      mode: 'gate',
+      expRatio: 2,
+      thresholdDb: -40,
+      rangeDb: 40,
+      attackMs: 1,
+      holdMs: 50,
+      releaseMs: 150,
+      key: defaultKey(),
+    },
     peq: { on: true, bands: DEFAULT_PEQ_BANDS.map((b) => ({ ...b })) },
     comp: {
       on: false,
+      mode: 'comp',
       thresholdDb: -20,
       ratio: 3,
       kneeDb: 2,
@@ -122,6 +158,8 @@ export function defaultChannel(name: string, auxCount: number): ChannelState {
       releaseMs: 150,
       makeupDb: 0,
       detector: 'peak',
+      mixPct: 100,
+      key: defaultKey(),
     },
     faderDb: 0,
     mute: false,

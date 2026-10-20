@@ -2,11 +2,48 @@
 // 입력 → 프리엠프 게인 → 디지털 클리핑 → [입력 미터] → HPF → LPF → 게이트 → PEQ → 컴프
 //   → 페이더·뮤트 → [페이더 미터] → 팬 → 메인 할당 → 메인 버스
 //   ↘ Aux 센드(pre: 컴프 뒤, post: 페이더 뒤)
+// 게이트·컴프의 입력 1은 키(사이드체인): 키 소스 → 키 필터 → 워클릿. 자기 채널을 필터 없이
+// 들을 때는 연결하지 않는다(워클릿이 본 신호로 검출한다).
 
 import { BUTTERWORTH_Q_DB } from './dsp/biquad';
 import { dbToGain } from './dsp/units';
 import { Peq, RAMP } from './peq';
-import type { ChannelState } from '../stores/mixer-model';
+import type { ChannelState, KeyFilter, KeyState } from '../stores/mixer-model';
+
+const GATE_MODE = { gate: 0, exp: 1, duck: 2 } as const;
+const KEY_FILTER: Record<KeyFilter, BiquadFilterType> = {
+  off: 'allpass',
+  lowcut: 'highpass',
+  highcut: 'lowpass',
+  band: 'bandpass',
+};
+
+/** 다이내믹스 하나의 키 경로. 연결된 키 소스를 기억해 바뀔 때만 다시 잇는다. */
+class KeyPath {
+  readonly input: GainNode;
+  readonly filter: BiquadFilterNode;
+  private source: AudioNode | null = null;
+  constructor(
+    ctx: BaseAudioContext,
+    private target: AudioWorkletNode,
+  ) {
+    const mono = { channelCount: 1, channelCountMode: 'explicit' as const, channelInterpretation: 'speakers' as const };
+    this.input = new GainNode(ctx, mono);
+    this.filter = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 1000, Q: 2 });
+    this.input.connect(this.filter).connect(target, 0, 1);
+  }
+  apply(k: KeyState, source: AudioNode | null, t: number): void {
+    const type = KEY_FILTER[k.filter];
+    if (this.filter.type !== type) this.filter.type = type;
+    this.filter.frequency.setTargetAtTime(k.freq, t, RAMP);
+    if (source === this.source) return;
+    // 키 여부는 바로 바꾼다(램프하면 그 사이에 엉뚱한 신호로 검출한다).
+    this.target.parameters.get('keyed')?.setValueAtTime(source ? 1 : 0, t);
+    this.source?.disconnect(this.input);
+    source?.connect(this.input);
+    this.source = source;
+  }
+}
 
 function gainOf(db: number): number {
   return db === -Infinity ? 0 : dbToGain(db);
@@ -33,6 +70,10 @@ export class ChannelStrip {
   readonly mainSend: GainNode;
   readonly sendsPre: GainNode[];
   readonly sendsPost: GainNode[];
+  /** 다른 채널이 이 채널을 키로 들을 때 쓰는 자리(필터 뒤, 다이내믹스 앞) */
+  readonly keyTap: AudioNode;
+  readonly gateKey: KeyPath;
+  readonly compKey: KeyPath;
 
   gateGrDb = 0;
   gateOpen = false;
@@ -50,14 +91,14 @@ export class ChannelStrip {
     this.hpf = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 80, Q: BUTTERWORTH_Q_DB });
     this.lpf = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 20000, Q: BUTTERWORTH_Q_DB });
     this.gate = new AudioWorkletNode(ctx, 'dynamics', {
-      numberOfInputs: 1,
+      numberOfInputs: 2,
       numberOfOutputs: 1,
       outputChannelCount: [1],
       processorOptions: { kind: 'gate' },
     });
     this.peq = new Peq(ctx);
     this.comp = new AudioWorkletNode(ctx, 'dynamics', {
-      numberOfInputs: 1,
+      numberOfInputs: 2,
       numberOfOutputs: 1,
       outputChannelCount: [1],
       processorOptions: { kind: 'comp' },
@@ -68,6 +109,10 @@ export class ChannelStrip {
     this.mainSend = new GainNode(ctx);
     this.sendsPre = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
     this.sendsPost = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
+
+    this.keyTap = this.lpf;
+    this.gateKey = new KeyPath(ctx, this.gate);
+    this.compKey = new KeyPath(ctx, this.comp);
 
     this.input.connect(this.preamp).connect(this.clipper);
     this.clipper.connect(this.inputMeter);
@@ -86,8 +131,8 @@ export class ChannelStrip {
     };
   }
 
-  /** 상태를 노드 파라미터로 옮긴다. */
-  apply(s: ChannelState): void {
+  /** 상태를 노드 파라미터로 옮긴다. peers는 다른 채널을 키 소스로 찾을 때 쓴다. */
+  apply(s: ChannelState, peers: ChannelStrip[] = []): void {
     const t = this.ctx.currentTime;
     const ramp = (p: AudioParam, v: number) => p.setTargetAtTime(v, t, RAMP);
     const set = (node: AudioWorkletNode, name: string, v: number) => {
@@ -112,6 +157,10 @@ export class ChannelStrip {
     set(this.gate, 'hold', s.gate.holdMs);
     set(this.gate, 'release', s.gate.releaseMs);
     set(this.gate, 'bypass', s.gate.on ? 0 : 1);
+    set(this.gate, 'mode', GATE_MODE[s.gate.mode]);
+    set(this.gate, 'expRatio', s.gate.expRatio);
+    set(this.gate, 'listen', s.gate.key.listen ? 1 : 0);
+    this.gateKey.apply(s.gate.key, this.keySource(s.gate.on, s.gate.key, this.lpf, peers), t);
 
     this.peq.apply(s.peq);
 
@@ -123,6 +172,10 @@ export class ChannelStrip {
     set(this.comp, 'makeup', s.comp.makeupDb);
     set(this.comp, 'detector', s.comp.detector === 'rms' ? 1 : 0);
     set(this.comp, 'bypass', s.comp.on ? 0 : 1);
+    set(this.comp, 'mode', s.comp.mode === 'exp' ? 1 : 0);
+    set(this.comp, 'mix', s.comp.mixPct);
+    set(this.comp, 'listen', s.comp.key.listen ? 1 : 0);
+    this.compKey.apply(s.comp.key, this.keySource(s.comp.on, s.comp.key, this.peq.output, peers), t);
 
     ramp(this.fader.gain, s.mute ? 0 : gainOf(s.faderDb));
     ramp(this.panner.pan, s.pan);
@@ -132,6 +185,14 @@ export class ChannelStrip {
       if (this.sendsPre[i]) ramp(this.sendsPre[i].gain, send.pre ? g : 0);
       if (this.sendsPost[i]) ramp(this.sendsPost[i].gain, send.pre ? 0 : g);
     });
+  }
+
+  /** 키로 이을 노드. 꺼져 있거나 자기 소리를 그대로 들으면 잇지 않는다. */
+  private keySource(on: boolean, k: KeyState, self: AudioNode, peers: ChannelStrip[]): AudioNode | null {
+    if (!on) return null;
+    const peer = typeof k.source === 'number' ? peers[k.source] : undefined;
+    if (peer && peer !== this) return peer.keyTap;
+    return k.filter !== 'off' || k.listen ? self : null;
   }
 
   disconnect(): void {

@@ -27,3 +27,4 @@ pnpm-debug.log*
 
 # Claude Code 작업 트리
 .claude/worktrees/
+.vitest/

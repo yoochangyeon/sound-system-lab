@@ -146,6 +146,73 @@ describe('엔진: 다이내믹스 워클릿', () => {
   });
 });
 
+describe('엔진: 사이드체인·모드·Mix', () => {
+  // 채널 0과 1이 같은 사인 입력을 받는다. 채널 1은 뮤트해 키로만 쓴다(키는 페이더 앞에서 뽑는다).
+  const twoCh = {
+    shape: { channels: 2 },
+    initial: (s: Parameters<NonNullable<Parameters<typeof renderMixer>[0]['initial']>>[0]) => ({ ...s, patch: [0, 0] }),
+  };
+  const muteKeyChannel = (a: MixerActions) => a.setMute(1, true);
+
+  it('덕킹: 다른 채널을 키로 들으면 그 채널이 클 때 레인지만큼 줄인다(자기 소리는 스레숄드 아래)', async () => {
+    const run = (key: 'self' | number) =>
+      renderMixer({
+        freq: 1000,
+        db: -50,
+        ...twoCh,
+        prepare: ({ store }) => {
+          const a = store.getState().actions;
+          muteKeyChannel(a);
+          a.setPreamp(1, { gainDb: 30 }); // 키 채널은 −20 dBFS
+          a.setGate(0, { on: true, mode: 'duck', thresholdDb: -40, rangeDb: 12, attackMs: 1, holdMs: 10, releaseMs: 50, key: { source: key } });
+        },
+      });
+    const self = await run('self');
+    const ducked = await run(1);
+    expect(tailRmsDb(self) - tailRmsDb(ducked)).toBeCloseTo(12, 0);
+  });
+
+  it('컴프 키를 다른 채널로 두면 자기 소리가 작아도 키가 크면 누른다', async () => {
+    const run = (key: 'self' | number) =>
+      renderMixer({
+        freq: 1000,
+        db: -40,
+        ...twoCh,
+        prepare: ({ store }) => {
+          const a = store.getState().actions;
+          muteKeyChannel(a);
+          a.setPreamp(1, { gainDb: 28 }); // 키 채널은 −12 dBFS
+          a.setComp(0, { on: true, thresholdDb: -20, ratio: 4, kneeDb: 0, attackMs: 1, releaseMs: 50, key: { source: key } });
+        },
+      });
+    const self = await run('self');
+    const keyed = await run(1);
+    expect(tailRmsDb(self) - tailRmsDb(keyed)).toBeCloseTo(6, 0);
+  });
+
+  it('Mix 0%면 컴프를 세게 걸어도 원음 그대로다', async () => {
+    const ref = await renderMixer({ freq: 1000, db: -20 });
+    const dry = await renderMixer({
+      freq: 1000,
+      db: -20,
+      prepare: ({ store }) => store.getState().actions.setComp(0, { on: true, thresholdDb: -40, ratio: 10, mixPct: 0 }),
+    });
+    expect(tailRmsDb(dry)).toBeCloseTo(tailRmsDb(ref), 1);
+  });
+
+  it('키 듣기: 키 필터를 지난 소리가 나온다(1 kHz 사인에 하이컷 100 Hz면 크게 준다)', async () => {
+    const ref = await renderMixer({ freq: 1000, db: -20 });
+    const listen = (filter: 'band' | 'highcut', freq: number) =>
+      renderMixer({
+        freq: 1000,
+        db: -20,
+        prepare: ({ store }) => store.getState().actions.setComp(0, { on: true, key: { filter, freq, listen: true } }),
+      });
+    expect(tailRmsDb(await listen('band', 1000))).toBeCloseTo(tailRmsDb(ref), 0);
+    expect(tailRmsDb(ref) - tailRmsDb(await listen('highcut', 100))).toBeGreaterThan(20);
+  });
+});
+
 describe('엔진: Aux 센드', () => {
   const shape = { channels: 1, auxes: 1 };
   const listenAux = (pre: boolean, faderDb: number) =>

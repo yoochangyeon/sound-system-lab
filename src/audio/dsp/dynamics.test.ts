@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compGainDb, compTransferDb, Compressor, Gate, SafetyLimiter, timeCoef, type CompParams } from './dynamics';
+import { compGainDb, compTransferDb, Compressor, expGainDb, Gate, SafetyLimiter, timeCoef, type CompParams } from './dynamics';
 import { dbToGain, gainToDb } from './units';
 
 const SR = 48000;
@@ -96,6 +96,92 @@ describe('게이트', () => {
     expect(gate.grDb).toBeGreaterThan(-1);
     gate.process([constant(-60, 0.02)], g); // 60 ms → 홀드 끝
     expect(gate.open).toBe(false);
+  });
+});
+
+describe('컴프 EXP 모드(아래로 늘리기)', () => {
+  const exp = { thresholdDb: -40, ratio: 2, kneeDb: 0 };
+  it('스레숄드 위는 그대로', () => expect(expGainDb(-30, exp)).toBe(0));
+  it('1:2면 스레숄드보다 10 dB 작을 때 10 dB 더 줄인다', () => expect(expGainDb(-50, exp)).toBeCloseTo(-10, 9));
+  it('아주 작은 소리도 −80 dB 아래로는 줄이지 않는다', () => expect(expGainDb(-120, { ...exp, ratio: 4 })).toBe(-80));
+  it('Compressor가 mode exp로 작은 소리를 줄인다', () => {
+    const comp = new Compressor(SR);
+    const x = constant(-50, 0.3);
+    comp.process([x], { ...base, thresholdDb: -40, ratio: 2, mode: 'exp', attackMs: 1 });
+    expect(gainToDb(x[x.length - 1])).toBeCloseTo(-60, 1);
+  });
+});
+
+describe('사이드체인(키 입력)', () => {
+  it('컴프는 키 신호로 검출하고 게인은 본 신호에 건다', () => {
+    const comp = new Compressor(SR);
+    const x = constant(-40, 0.3); // 본 신호는 스레숄드 아래
+    const key = constant(-12, 0.3); // 키는 8 dB 넘는다 → 6 dB 누름
+    comp.process([x], base, false, [key]);
+    expect(comp.grDb).toBeCloseTo(-6, 2);
+    expect(gainToDb(x[x.length - 1])).toBeCloseTo(-46, 1);
+  });
+
+  it('키가 없으면 본 신호로 검출한다(기존과 같다)', () => {
+    const comp = new Compressor(SR);
+    comp.process([constant(-40, 0.3)], base);
+    expect(comp.grDb).toBe(0);
+  });
+
+  it('게이트도 키 신호가 크면 열린다', () => {
+    const gate = new Gate(SR);
+    const x = constant(-60, 0.1);
+    gate.process([x], { thresholdDb: -40, rangeDb: 30, attackMs: 0.5, holdMs: 10, releaseMs: 20 }, false, [constant(-20, 0.1)]);
+    expect(gate.open).toBe(true);
+    expect(gainToDb(x[x.length - 1])).toBeCloseTo(-60, 1);
+  });
+});
+
+describe('병렬 압축(Mix)', () => {
+  it('Mix 50%면 원음 반 + 눌린 소리 반', () => {
+    const comp = new Compressor(SR);
+    const x = constant(-12, 0.3);
+    comp.process([x], { ...base, mixPct: 50 }); // 눌린 쪽은 −18 dB
+    const expected = 0.5 * dbToGain(-12) + 0.5 * dbToGain(-18);
+    expect(x[x.length - 1]).toBeCloseTo(expected, 4);
+  });
+  it('Mix 0%면 원음 그대로', () => {
+    const comp = new Compressor(SR);
+    const x = constant(-12, 0.3);
+    comp.process([x], { ...base, mixPct: 0 });
+    expect(x[x.length - 1]).toBeCloseTo(dbToGain(-12), 6);
+  });
+});
+
+describe('게이트 모드', () => {
+  const g = { thresholdDb: -40, rangeDb: 30, attackMs: 0.5, holdMs: 10, releaseMs: 5 };
+
+  it('익스팬더(1:2)는 스레숄드 아래 10 dB에서 10 dB만 줄인다', () => {
+    const gate = new Gate(SR);
+    gate.process([constant(-50, 0.5)], { ...g, mode: 'exp', expRatio: 2 });
+    expect(gate.grDb).toBeCloseTo(-10, 0);
+  });
+
+  it('익스팬더도 레인지보다 더 줄이지 않는다', () => {
+    const gate = new Gate(SR);
+    gate.process([constant(-80, 0.5)], { ...g, mode: 'exp', expRatio: 4 });
+    expect(gate.grDb).toBeCloseTo(-30, 0);
+  });
+
+  it('덕킹: 키가 스레숄드를 넘으면 레인지만큼 줄인다', () => {
+    const gate = new Gate(SR);
+    const music = constant(-20, 0.3);
+    gate.process([music], { ...g, mode: 'duck', rangeDb: 12 }, false, [constant(-20, 0.3)]);
+    expect(gate.grDb).toBeCloseTo(-12, 1);
+    expect(gainToDb(music[music.length - 1])).toBeCloseTo(-32, 1);
+  });
+
+  it('덕킹: 키가 조용해지면 홀드·릴리스 뒤 돌아온다', () => {
+    const gate = new Gate(SR);
+    const p = { ...g, mode: 'duck' as const, rangeDb: 12 };
+    gate.process([constant(-20, 0.2)], p, false, [constant(-20, 0.2)]);
+    gate.process([constant(-20, 0.3)], p, false, [constant(-80, 0.3)]);
+    expect(gate.grDb).toBeGreaterThan(-0.5);
   });
 });
 

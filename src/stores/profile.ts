@@ -21,6 +21,9 @@ export type ParamKey =
   | 'gateAttack'
   | 'gateHold'
   | 'gateRelease'
+  | 'expRatio'
+  | 'keyFreq'
+  | 'mix'
   | 'compThreshold'
   | 'ratio'
   | 'knee'
@@ -52,6 +55,9 @@ export const GENERIC_PROFILE: DeviceProfile = {
     gateAttack: { min: 0, max: 120, step: 0.5, unit: 'ms' },
     gateHold: { min: 0, max: 2000, step: 1, unit: 'ms', log: true },
     gateRelease: { min: 5, max: 4000, step: 1, unit: 'ms', log: true },
+    expRatio: { min: 1.5, max: 4, step: 0.5, unit: ':1' },
+    keyFreq: { min: 20, max: 20000, step: 1, unit: 'Hz', log: true },
+    mix: { min: 0, max: 100, step: 1, unit: '%' },
     compThreshold: { min: -60, max: 0, step: 0.5, unit: 'dB' },
     ratio: { min: 1, max: 20, step: 0.1, unit: ':1', log: true },
     knee: { min: 0, max: 10, step: 0.5, unit: 'dB' },

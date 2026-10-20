@@ -221,7 +221,7 @@ export class MixerEngine {
   // ---- 상태 → 그래프 ----
 
   private applyAll(s: MixerState): void {
-    s.channels.forEach((c, i) => this.strips[i]?.apply(c));
+    s.channels.forEach((c, i) => this.strips[i]?.apply(c, this.strips));
     this.main.apply(s.main);
     s.auxes.forEach((b, i) => this.auxes[i]?.apply(b));
     this.applyListen(s);
@@ -231,7 +231,7 @@ export class MixerEngine {
   private onChange(next: MixerStore, prev: MixerStore): void {
     if (next.channels !== prev.channels) {
       next.channels.forEach((c, i) => {
-        if (c !== prev.channels[i]) this.strips[i]?.apply(c);
+        if (c !== prev.channels[i]) this.strips[i]?.apply(c, this.strips);
       });
     }
     if (next.main !== prev.main) this.main.apply(next.main);

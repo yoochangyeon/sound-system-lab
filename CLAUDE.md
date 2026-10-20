@@ -19,7 +19,7 @@
 | 인터랙티브 UI | React 아일랜드 | 노브·페이더는 SVG, 매 프레임 바뀌는 RTA·미터는 Canvas |
 | 믹서 상태 | Zustand | 채널×파라미터를 React 밖 저장소 하나에 두고 UI와 오디오 엔진이 같이 구독한다 |
 | 신호 처리 | Web Audio API + AudioWorklet(TS) | 성능이 모자라다고 측정되면 그 처리기만 WASM으로 옮긴다 |
-| 테스트 | Vitest + 브라우저 모드(Playwright Chromium) | unit(Node): DSP 순수 함수·믹서 상태·미션 판정. browser: OfflineAudioContext로 실제 그래프·워클릿 |
+| 테스트 | Vitest + 브라우저 모드(Playwright Chromium·WebKit) | unit(Node): DSP 순수 함수·믹서 상태·미션 판정. browser: OfflineAudioContext로 실제 그래프·워클릿 |
 
 진도·설정처럼 사용자별로 남길 값이 생기면 `localStorage`로만 처리한다.
 
@@ -66,7 +66,7 @@ npm run build    # dist/ 정적 빌드
 npx astro check  # 타입 검사
 npm test         # Vitest 전체(unit + browser)
 npm run test:unit     # Node 테스트만(*.test.ts)
-npm run test:browser  # Chromium 엔진 테스트만(*.browser.test.ts). 처음 한 번 npx playwright install chromium
+npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts). 처음 한 번 npx playwright install chromium webkit
 ```
 
 개발 서버는 `npx astro dev --background`로 띄우고 `npx astro dev stop`으로 끈다. 화면 확인은 Aside에서 `http://localhost:4321`을 바로 연다.

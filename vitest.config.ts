@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 // 두 경계를 나눠 돌린다.
 // - unit: Node. DSP 순수 함수(②), 믹서 상태·미션 판정(①). 파일명 *.test.ts
-// - browser: Chromium. OfflineAudioContext로 실제 그래프·워클릿(③). 파일명 *.browser.test.ts
+// - browser: Chromium·WebKit(Safari 엔진). OfflineAudioContext로 실제 그래프·워클릿(③). 파일명 *.browser.test.ts
 export default defineConfig({
   test: {
     projects: [
@@ -23,7 +23,7 @@ export default defineConfig({
             enabled: true,
             headless: true,
             provider: playwright(),
-            instances: [{ browser: 'chromium' }],
+            instances: [{ browser: 'chromium' }, { browser: 'webkit' }],
           },
         },
       },

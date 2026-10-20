@@ -17,6 +17,8 @@ import {
   type PreampState,
   type SendTap,
   type HowlState,
+  type MatrixState,
+  type PeqState,
 } from './mixer-model';
 
 export type BusRef = 'main' | number;
@@ -41,6 +43,12 @@ export interface MixerActions {
   setBusMute(bus: BusRef, mute: boolean): void;
   setGeqBand(bus: BusRef, band: number, db: number): void;
   resetGeq(bus: BusRef): void;
+  /** 그룹을 메인으로 보낼지 */
+  setBusMainAssign(bus: number, on: boolean): void;
+  setBusPeqOn(bus: BusRef, on: boolean): void;
+  setBusPeqBand(bus: BusRef, band: number, p: Partial<PeqBandState>): void;
+  setBusComp(bus: BusRef, p: DynPatch<CompState>): void;
+  setMatrix(i: number, p: { faderDb?: number; mute?: boolean; fromMainDb?: number; fromBus?: { bus: number; db: number } }): void;
   setPatch(ch: number, input: number | null): void;
   setListen(target: ListenTarget): void;
   setHowl(p: Partial<HowlState>): void;
@@ -90,6 +98,29 @@ function clampComp(x: CompState, c: Clamp): CompState {
   };
 }
 
+function clampPeq(x: PeqState, c: Clamp): PeqState {
+  return { ...x, bands: x.bands.map((b) => ({ ...b, freq: c('eqFreq', b.freq), gainDb: c('eqGain', b.gainDb), q: c('eqQ', b.q) })) };
+}
+
+function clampBus(b: BusState, c: Clamp): BusState {
+  return {
+    ...b,
+    faderDb: c('fader', b.faderDb),
+    geq: b.geq.map((g) => c('geqGain', g)),
+    peq: clampPeq(b.peq, c),
+    comp: clampComp(b.comp, c),
+  };
+}
+
+function clampMatrix(m: MatrixState, c: Clamp): MatrixState {
+  return {
+    ...m,
+    faderDb: c('fader', m.faderDb),
+    fromMainDb: c('send', m.fromMainDb),
+    fromBusDb: m.fromBusDb.map((d) => c('send', d)),
+  };
+}
+
 /** 상태의 모든 파라미터를 프로필 범위로 자른다(예: dLive 스타일의 최소 게인). */
 export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
   const c = (key: Parameters<typeof clampParam>[1], v: number) => clampParam(profile, key, v);
@@ -105,16 +136,14 @@ export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
         delayMs: c('delay', x.preamp.delayMs),
       },
       gate: clampGate(x.gate, c),
-      peq: {
-        ...x.peq,
-        bands: x.peq.bands.map((b) => ({ ...b, freq: c('eqFreq', b.freq), gainDb: c('eqGain', b.gainDb), q: c('eqQ', b.q) })),
-      },
+      peq: clampPeq(x.peq, c),
       comp: clampComp(x.comp, c),
       faderDb: c('fader', x.faderDb),
       sends: x.sends.map((sd) => ({ ...sd, levelDb: c('send', sd.levelDb) })),
     })),
-    main: { ...s.main, faderDb: c('fader', s.main.faderDb), geq: s.main.geq.map((g) => c('geqGain', g)) },
-    auxes: s.auxes.map((b) => ({ ...b, faderDb: c('fader', b.faderDb), geq: b.geq.map((g) => c('geqGain', g)) })),
+    main: clampBus(s.main, c),
+    auxes: s.auxes.map((b) => clampBus(b, c)),
+    matrix: s.matrix.map((m) => clampMatrix(m, c)),
   };
 }
 
@@ -213,6 +242,27 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
           return { ...x, geq };
         }),
       resetGeq: (bus) => updateBus(bus, (x) => ({ ...x, geq: x.geq.map(() => 0) })),
+      setBusMainAssign: (bus, on) => updateBus(bus, (x) => ({ ...x, mainAssign: on })),
+      setBusPeqOn: (bus, on) => updateBus(bus, (x) => ({ ...x, peq: { ...x.peq, on } })),
+      setBusPeqBand: (bus, band, p) =>
+        updateBus(bus, (x) => {
+          if (!x.peq.bands[band]) return x;
+          const bands = x.peq.bands.slice();
+          bands[band] = { ...bands[band], ...p };
+          return { ...x, peq: clampPeq({ ...x.peq, bands }, c) };
+        }),
+      setBusComp: (bus, { key, ...p }) =>
+        updateBus(bus, (x) => ({ ...x, comp: clampComp({ ...x.comp, ...p, key: { ...x.comp.key, ...key } }, c) })),
+      setMatrix: (i, { fromBus, ...p }) =>
+        set((s) => {
+          const m = s.matrix[i];
+          if (!m) return s;
+          const fromBusDb = m.fromBusDb.slice();
+          if (fromBus && fromBus.bus < fromBusDb.length) fromBusDb[fromBus.bus] = fromBus.db;
+          const matrix = s.matrix.slice();
+          matrix[i] = clampMatrix({ ...m, ...p, fromBusDb }, c);
+          return { matrix };
+        }),
       setPatch: (ch, input) =>
         set((s) => {
           if (ch < 0 || ch >= s.patch.length) return s;

@@ -51,6 +51,7 @@ export async function renderMixer(opts: {
   const seconds = opts.seconds ?? 0.6;
   const ctx = new OfflineAudioContext({ numberOfChannels: 2, length: Math.round(seconds * SR), sampleRate: SR });
   let state = defaultMixerState({
+    ...opts.shape,
     channels: opts.shape?.channels ?? 1,
     auxes: opts.shape?.auxes ?? 0,
     inputs: opts.shape?.inputs ?? [{ label: 'IN 1', stemId: 'test' }],

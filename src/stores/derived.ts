@@ -79,12 +79,23 @@ export function compGrEstimateDb(s: MixerState, ch: number): number {
   return compGainDb(lvl, c);
 }
 
-/** 채널 신호가 메인까지 가는가(패치·스템·뮤트·페이더·메인 할당·메인 뮤트·메인 페이더). */
+/** 채널이 그룹 a를 거쳐 메인으로 가는가(센드·그룹 뮤트·그룹 페이더·그룹의 메인 할당). */
+export function channelReachesMainViaGroup(s: MixerState, ch: number, a: number): boolean {
+  const b = s.auxes[a];
+  const send = s.channels[ch]?.sends[a];
+  if (!b || b.kind !== 'group' || !send) return false;
+  return send.levelDb !== NEG_INF && !b.mute && b.faderDb !== NEG_INF && b.mainAssign;
+}
+
+/** 채널 신호가 메인까지 가는가(패치·스템·뮤트·페이더, 그리고 메인 할당이나 그룹 경로, 메인 뮤트·페이더). */
 export function channelReachesMain(s: MixerState, ch: number): boolean {
   const c = s.channels[ch];
   if (!c) return false;
   if (!channelStem(s, ch)) return false;
-  if (c.mute || c.faderDb === NEG_INF || !c.mainAssign) return false;
+  if (c.mute || c.faderDb === NEG_INF) return false;
+  const direct = c.mainAssign;
+  const viaGroup = s.auxes.some((_, a) => channelReachesMainViaGroup(s, ch, a));
+  if (!direct && !viaGroup) return false;
   if (s.main.mute || s.main.faderDb === NEG_INF) return false;
   return true;
 }
@@ -98,7 +109,7 @@ export function mainPathProblems(s: MixerState, ch: number): string[] {
   else if (!s.inputs[input]?.stemId) out.push('patch-empty');
   if (c.mute) out.push('mute');
   if (c.faderDb === NEG_INF) out.push('fader-down');
-  if (!c.mainAssign) out.push('main-assign-off');
+  if (!c.mainAssign && !s.auxes.some((_, a) => channelReachesMainViaGroup(s, ch, a))) out.push('main-assign-off');
   if (s.main.mute) out.push('main-mute');
   if (s.main.faderDb === NEG_INF) out.push('main-fader-down');
   return out;

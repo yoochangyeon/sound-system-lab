@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sound-system-lab.vercel.app/sitemap-index.xml
+Sitemap: https://unmute-please.vercel.app/sitemap-index.xml

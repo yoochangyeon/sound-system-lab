@@ -5,7 +5,7 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
-const SITE = 'https://sound-system-lab.vercel.app';
+const SITE = 'https://unmute-please.vercel.app';
 
 const redirects = {
   // 2차 개편(#36): 기종별 콘솔(X32·dLive 스타일)을 쉬운 믹서 하나로 합쳤다.

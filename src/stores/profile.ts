@@ -1,5 +1,5 @@
-// 기종 프로필: 파라미터 범위·스텝·표시 단위. 저장소는 값을 현재 프로필 범위로 자른다.
-// 위젯처럼 기종이 없는 곳은 범위가 넓은 기본 프로필을 쓴다.
+// 파라미터 프로필: 범위·스텝·표시 단위. 저장소는 값을 현재 프로필 범위로 자른다.
+// 위젯과 쉬운 믹서는 기본 프로필 하나를 쓴다(2차 개편에서 기종별 프로필을 뺐다).
 
 export interface Range {
   min: number;
@@ -34,7 +34,7 @@ export type ParamKey =
   | 'geqGain';
 
 export interface DeviceProfile {
-  id: 'generic' | 'x32' | 'dlive';
+  id: string;
   name: string;
   ranges: Record<ParamKey, Range>;
 }

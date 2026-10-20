@@ -1,64 +1,37 @@
 ---
-// 실습실 입구(기획서 S04). 휴대폰에서도 열린다. 콘솔 자체는 가로 1024px 이상 기준.
+// 실습실 = 쉬운 믹서(기획서 S05·S06, 2차 개편 #36). 휴대폰에서도 열리고 가로 태블릿 이상을 권장한다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { MISSIONS } from '../../missions';
+import MixerApp from '../../mixer/MixerApp';
 ---
 
-    <BaseLayout title="실습실" description="X32 스타일·dLive 스타일 콘솔 시뮬레이터에서 현장 문제를 풀어 본다">
-      <h1>실습실</h1>
-      <p>우리 교회 콘솔과 비슷한 쪽을 고르세요. 두 화면 모두 같은 소리와 같은 미션을 씁니다.</p>
-      <div class="cards">
-        <a class="card" href="/lab/x32/">
-          <strong>X32 스타일</strong>
-          <span>왼쪽 화면 버튼(HOME·SENDS·ROUTING·MAIN)을 눌러 화면을 바꾸고, 채널 스트립 전체를 한 화면에서 본다.</span>
-        </a>
-        <a class="card" href="/lab/dlive/">
-          <strong>dLive 스타일</strong>
-          <span>위쪽 처리 탭(Preamp·Gate·PEQ·Compressor)으로 한 구역씩 크게 보고, Mix 키로 모니터 센드를 다룬다.</span>
-        </a>
-      </div>
-      <p class="note">※ 콘솔 화면은 가로로 놓은 태블릿이나 컴퓨터(가로 1024px 이상)에서 열어 주세요.</p>
-      <p class="note">
-        ※ "X32 스타일", "dLive 스타일"은 설명을 위한 이름입니다. 실제 기기 화면을 베끼지 않은 자체 디자인이며 제조사와 관계없습니다.
-      </p>
-      <h2>미션</h2>
-      <ol>
-        {MISSIONS.map((m) => (
-          <li>
-            <strong>{m.title}</strong> — {m.situation}
-          </li>
-        ))}
-      </ol>
-      <p>미션이 없는 자유 모드에서도 연습할 수 있습니다.</p>
-    </BaseLayout>
+<BaseLayout title="실습실" description="8채널 쉬운 믹서에서 하울링, 설교, 게인, 소리 안 나는 채널 문제를 직접 풀어 본다" width="wide">
+  <header class="lab-head">
+    <p class="eyebrow">실습실</p>
+    <h1>쉬운 믹서</h1>
+    <p>실제 기종을 그대로 옮기지 않고, 처음 배우는 사람이 보기 쉽게 만든 8채널 믹서입니다. 가로로 놓은 태블릿이나 컴퓨터에서 가장 편합니다.</p>
+  </header>
+  <MixerApp client:only="react" />
+  <noscript><p>믹서는 자바스크립트가 켜져 있어야 동작합니다.</p></noscript>
+</BaseLayout>
 
 <style>
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
-    margin: 16px 0;
+  .lab-head {
+    padding: 20px 0 16px;
   }
-  .card {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 16px;
-    border-radius: var(--radius);
-    background: var(--panel-bg);
-    color: var(--panel-text);
-    text-decoration: none;
+  .eyebrow {
+    margin: 0 0 6px;
+    color: var(--green);
+    font-weight: 700;
+    font-size: 15px;
   }
-  .card strong {
-    font-size: 1.15rem;
+  h1 {
+    margin: 0;
+    font-size: clamp(28px, 7vw, 36px);
+    letter-spacing: -0.03em;
   }
-  .card span {
-    color: var(--panel-muted);
-    font-size: 0.92rem;
-    line-height: 1.55;
-  }
-  .note {
+  .lab-head p:last-child {
+    margin: 8px 0 0;
     color: var(--muted);
-    font-size: 0.9rem;
+    max-width: 640px;
   }
 </style>

@@ -1,7 +1,7 @@
 // 레슨 위젯용 작은 믹서 상태: 채널 1개(+필요하면 Aux 1개) + 메인.
 // 입력은 위젯이 고를 수 있는 스템들이고, 채널 1에 무엇을 꽂을지가 곧 '음원 선택'이다.
 import { stemById } from '../../audio/stems';
-import { GENERIC_PROFILE } from '../../consoles/profile';
+import { GENERIC_PROFILE } from '../../stores/profile';
 import { createMixerStore, type MixerStoreApi } from '../../stores/mixer';
 import { defaultMixerState, deepMerge, type DeepPartial, type MixerState } from '../../stores/mixer-model';
 

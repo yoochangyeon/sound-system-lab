@@ -7,13 +7,13 @@ export interface Stem {
   file: string;
   /** 화면에 보일 악기 이름 */
   label: string;
-  /** 무대 박스 단자 이름(콘솔 패치 화면) */
+  /** 무대 박스 단자 이름(쉬운 믹서 입력 고르기). 믹서에 없으면 '—' */
   input: string;
   /** 파일 전체 샘플 피크(dBFS) */
   peakDb: number;
   /** 소리가 나는 구간의 RMS(dBFS) */
   rmsDb: number;
-  /** 콘솔 기본 채널(0부터) */
+  /** 쉬운 믹서 기본 채널(0부터). 믹서에 없으면 −1 */
   defaultChannel: number;
   /** 설교처럼 말소리인가 */
   speech?: boolean;

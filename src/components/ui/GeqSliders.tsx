@@ -1,6 +1,6 @@
 // GEQ 슬라이더 묶음. 휴대폰에서는 이 묶음 안에서만 가로로 스크롤된다.
 import { GEQ_FREQS, formatHz } from '../../audio/dsp/geq';
-import type { Range } from '../../consoles/profile';
+import type { Range } from '../../stores/profile';
 
 export interface GeqSlidersProps {
   gains: number[];

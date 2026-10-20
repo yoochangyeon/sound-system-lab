@@ -1,0 +1,413 @@
+/* 쉬운 믹서(기획서 S05). 휴대폰은 한 줄, 넓은 화면은 두 줄(왼쪽 채널·상세, 오른쪽 미션·출력). */
+.mx {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mx-bar {
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-l);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.mx-bar .sim-play {
+  flex: 1 1 160px;
+  width: auto;
+}
+.mx-listen {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mx-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* 넓은 화면에서만 재생 바를 위에 붙인다(휴대폰에서는 화면을 너무 가린다) */
+@media (min-width: 768px) {
+  .mx-bar {
+    position: sticky;
+    top: 60px;
+  }
+}
+/* 휴대폰: 미션 → 채널 → 상세 → 출력 순서 */
+.mx-col {
+  display: contents;
+}
+.mx-area-mission {
+  order: 1;
+}
+.mx-area-strips {
+  order: 2;
+  min-width: 0;
+}
+.mx-area-detail {
+  order: 3;
+  min-width: 0;
+}
+.mx-area-out {
+  order: 4;
+}
+@media (min-width: 960px) {
+  .mx-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+  }
+  .mx-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+}
+
+.mx-card {
+  padding: 18px;
+  border-radius: var(--radius-l);
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.mx-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin-bottom: 12px;
+}
+.mx-card h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.mx-chno {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  vertical-align: 2px;
+}
+.mx-wide {
+  width: 100%;
+  min-height: 48px;
+}
+
+/* 채널 줄 */
+.mx-strips {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(76px, 1fr));
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.mx-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--radius);
+  background: var(--bg-grey);
+  border: 2px solid transparent;
+}
+.mx-strip.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mx-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.mx-name small {
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 700;
+}
+.mx-name span {
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.is-selected .mx-name {
+  background: var(--accent);
+  color: #fff;
+}
+.is-selected .mx-name small {
+  color: rgba(255, 255, 255, 0.8);
+}
+.mx-fader-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+}
+.mx-fader-row .sim-meter {
+  width: auto !important;
+  padding-top: 10px;
+}
+.mx-toggle {
+  min-height: 34px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.mx-toggle.is-mute.is-on {
+  background: var(--red);
+  color: #fff;
+}
+.mx-toggle.is-main.is-on {
+  background: var(--green);
+  color: #fff;
+}
+.mx-legend {
+  margin: 10px 0 0;
+  color: var(--faint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mx-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  vertical-align: 0;
+}
+.mx-dot.is-mute {
+  background: var(--red);
+}
+.mx-dot.is-main {
+  background: var(--green);
+}
+
+/* 채널 상세 */
+.mx-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.mx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-grey);
+}
+.mx-field span {
+  font-size: 15px;
+  font-weight: 700;
+}
+.mx-field select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+.mx-verdict {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+.mx-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* 출력 */
+.mx-outs {
+  display: grid;
+  gap: 8px;
+}
+.mx-out {
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--bg-grey);
+}
+.mx-out.is-main {
+  background: var(--green-soft);
+}
+.mx-out-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mx-out-row .grow {
+  flex: 1;
+  min-width: 0;
+}
+.mx-out-row .sim-slider {
+  background: #fff;
+}
+.mx-out-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.mx-out-actions .mx-toggle {
+  flex: 0 0 64px;
+  min-height: 32px;
+}
+.mx-out-actions .sim-btn {
+  flex: 1;
+  background: #fff;
+}
+.mx-out-actions .sim-btn.is-active {
+  background: var(--accent-soft);
+}
+.mx-geq {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: #fff;
+}
+.mx-geq .sim-geq {
+  background: var(--bg-grey);
+}
+
+/* 미션 카드 */
+.mx-mission .sim-chips {
+  margin: -2px -2px 0;
+  padding: 2px;
+}
+.mx-mission.is-done {
+  border-color: var(--green);
+}
+.mx-mission-body {
+  margin-top: 14px;
+}
+.mx-mission-body h2 {
+  margin: 6px 0 6px;
+}
+.mx-mission-body p {
+  margin: 0 0 12px;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.mx-mission-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mx-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+.mx-badge.is-done {
+  background: var(--green);
+  color: #fff;
+}
+.mx-checks {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.mx-checks li {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-grey);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mx-checks li span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+.mx-checks li.is-ok {
+  background: var(--green-soft);
+  color: var(--text);
+}
+.mx-checks li.is-ok span {
+  background: var(--green);
+  border-color: var(--green);
+}
+.mx-hints {
+  display: grid;
+  gap: 8px;
+}
+.mx-hint {
+  margin: 0 !important;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--yellow-soft);
+  font-size: 14px !important;
+}
+.mx-hint strong {
+  display: block;
+  color: #b07a00;
+  font-size: 13px;
+}
+.mx-explain {
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--green-soft);
+}
+.mx-explain h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--green);
+}

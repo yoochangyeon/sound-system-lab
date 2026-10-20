@@ -14,7 +14,7 @@ const { items, title } = Astro.props;
       items.map((t, i) => (
         <li>
           <span class="no">{i + 1}</span>
-          <span class="text" set:html={t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')} />
+          <span class="text" set:html={t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\[(.+?)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>')} />
         </li>
       ))
     }

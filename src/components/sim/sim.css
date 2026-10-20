@@ -579,6 +579,21 @@ label.sim-group-title {
   background: var(--bg-grey);
   -webkit-overflow-scrolling: touch;
 }
+.sim-geq.has-more-right {
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+.sim-geq.has-more-left {
+  mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+}
+.sim-geq.has-more-left.has-more-right {
+  mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+}
+.sim-geq-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
 .sim-geq-band {
   display: flex;
   flex-direction: column;

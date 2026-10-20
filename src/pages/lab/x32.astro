@@ -1,0 +1,16 @@
+---
+import LabLayout from '../../layouts/LabLayout.astro';
+import ComingSoon from '../../components/ComingSoon.astro';
+import X32Console from '../../consoles/x32/X32Console';
+import { COMING_SOON } from '../../lib/release';
+---
+
+{
+  COMING_SOON ? (
+    <ComingSoon />
+  ) : (
+    <LabLayout title="X32 스타일 콘솔">
+      <X32Console client:only="react" />
+    </LabLayout>
+  )
+}

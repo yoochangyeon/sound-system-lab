@@ -1,0 +1,420 @@
+/* 콘솔 화면. 가로 1024px 이상 기준. */
+.con-app {
+  border-radius: 0;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 640px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  font-size: 14px;
+}
+.con-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--panel-line);
+  background: var(--panel-surface);
+}
+.con-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.con-brand small {
+  color: var(--panel-muted);
+  font-size: 0.72rem;
+}
+.con-exit {
+  margin-left: auto;
+  color: var(--panel-muted);
+}
+.con-play {
+  min-width: 96px;
+}
+.con-body {
+  display: grid;
+  grid-template-columns: auto 1fr 300px;
+  min-height: 0;
+  overflow: hidden;
+}
+.is-dlive .con-body {
+  grid-template-columns: 1fr 300px;
+}
+.con-screen {
+  padding: 12px;
+  overflow: auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.con-section {
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--panel-surface);
+  min-width: 0;
+}
+.con-chtitle {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.con-chtitle-no {
+  color: var(--panel-muted);
+  font-family: var(--mono);
+  margin-right: 4px;
+}
+.con-subtabs {
+  display: flex;
+  gap: 6px;
+}
+
+/* X32 스타일: 왼쪽 세로 화면 버튼 + 한 화면에 채널 스트립 전체 */
+.con-x32-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 8px;
+  border-right: 1px solid var(--panel-line);
+  background: #111317;
+}
+.con-x32-nav button {
+  appearance: none;
+  border: 1px solid var(--panel-line);
+  background: var(--panel-raised);
+  color: var(--panel-text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  font: inherit;
+  min-width: 96px;
+}
+.con-x32-nav button small {
+  color: var(--panel-muted);
+  font-size: 0.7rem;
+}
+.con-x32-nav button.is-active {
+  border-color: #60a5fa;
+  background: #172554;
+}
+.con-x32-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 10px;
+}
+
+/* dLive 스타일: 위쪽 처리 탭 + 큰 처리 화면 + 구역 타일 */
+.con-dlive-tabs {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  background: #0c0d10;
+  border-radius: 8px;
+  padding: 3px;
+}
+.con-dlive-tabs button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--panel-muted);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+}
+.con-dlive-tabs button.is-active {
+  background: #3f3f46;
+  color: #fff;
+}
+.con-dlive-overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.con-tile {
+  appearance: none;
+  border: 1px solid var(--panel-line);
+  background: var(--panel-raised);
+  color: var(--panel-text);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  font: inherit;
+}
+.con-tile small {
+  color: var(--panel-muted);
+}
+.con-tile.is-active {
+  border-color: #a1a1aa;
+}
+
+.con-band {
+  border-left: 1px solid var(--panel-line);
+  padding-left: 6px;
+}
+.con-band-name {
+  font-size: 0.72rem;
+  color: var(--panel-muted);
+}
+
+/* Aux 센드 */
+.con-sends {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+  align-items: start;
+}
+.con-send {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+}
+.con-send-name {
+  font-size: 0.7rem;
+  color: var(--panel-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.con-send-master {
+  grid-row: span 2;
+  border-color: var(--fn-bus);
+}
+
+/* 패치 */
+.con-patch {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+.con-patch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+}
+.con-patch-row.is-empty {
+  border-color: #7f1d1d;
+}
+.con-patch-ch small {
+  color: var(--panel-muted);
+  margin-left: 4px;
+}
+.con-patch-row select {
+  background: var(--panel-raised);
+  color: var(--panel-text);
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  padding: 4px;
+  font: inherit;
+}
+
+/* 미션 패널 */
+.con-mission {
+  border-left: 1px solid var(--panel-line);
+  background: #111317;
+  padding: 12px;
+  overflow: auto;
+  min-height: 0;
+}
+.con-mission-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.con-mission-head select {
+  max-width: 190px;
+}
+.con-mission-body h3 {
+  margin: 4px 0;
+}
+.con-mission-body p {
+  line-height: 1.55;
+  margin: 6px 0;
+}
+.con-mission-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #3a2a10;
+  color: #ffd38a;
+  font-weight: 700;
+  margin: 4px 0;
+}
+.con-mission-status.is-done {
+  background: #14532d;
+  color: #bbf7d0;
+}
+.con-checks {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+  font-size: 0.82rem;
+  color: var(--panel-muted);
+}
+.con-checks li.is-ok {
+  color: #86efac;
+}
+.con-hint {
+  background: var(--panel-raised);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.88rem;
+}
+.con-explain {
+  border-top: 1px solid var(--panel-line);
+  margin-top: 8px;
+  padding-top: 6px;
+}
+.con-explain p {
+  font-size: 0.9rem;
+}
+.con-mission-list {
+  padding-left: 1.2em;
+}
+.con-linkish {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: #93c5fd;
+  cursor: pointer;
+  font: inherit;
+  padding: 2px 0;
+  text-align: left;
+}
+
+/* 레이어 바·페이더 뱅크 */
+.con-layerbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  border-top: 1px solid var(--panel-line);
+  background: var(--panel-surface);
+}
+.con-bank {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  background: #101114;
+  overflow-x: auto;
+}
+.con-bank.is-sends .con-strip {
+  background: #0f1d14;
+}
+.con-bank-strips {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(54px, 1fr));
+  gap: 4px;
+  flex: 1;
+}
+.con-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 2px;
+  border-radius: 6px;
+  background: var(--panel-surface);
+  border: 1px solid transparent;
+  min-width: 0;
+}
+.con-strip.is-selected {
+  border-color: #60a5fa;
+}
+.con-sel {
+  appearance: none;
+  border: 1px solid var(--panel-line);
+  background: var(--panel-raised);
+  color: var(--panel-text);
+  border-radius: 5px;
+  width: 100%;
+  padding: 3px 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font: inherit;
+  min-width: 0;
+}
+.con-sel.is-active {
+  background: #1d4ed8;
+  border-color: #60a5fa;
+}
+.con-ch-no {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.con-ch-name {
+  font-size: 0.66rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.con-assign {
+  padding: 2px 6px !important;
+  font-size: 0.66rem !important;
+}
+.con-assign.is-active {
+  background: #166534 !important;
+  border-color: #22c55e !important;
+  color: #fff !important;
+}
+.con-pan {
+  width: 100%;
+  accent-color: #a1a1aa;
+}
+.con-fader-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.con-main-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--fn-bus);
+  background: var(--panel-surface);
+}
+.con-strip-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.con-strip .is-mute,
+.con-main-strip .is-mute {
+  font-size: 0.66rem;
+  padding: 2px 6px;
+  min-height: 26px;
+}
+
+/* 좁은 화면 안내(S07) */
+.con-narrow {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 40px max(16px, calc((100% - 480px) / 2));
+  font-family: var(--font);
+  color: var(--text);
+  line-height: 1.7;
+}

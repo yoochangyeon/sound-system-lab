@@ -119,6 +119,8 @@ export interface ChannelState {
   insert: InsertState;
   faderDb: number;
   mute: boolean;
+  /** 솔로: 켜진 채널만 골라 듣는다(이어폰·방송실 모니터). 메인 스피커 소리는 바뀌지 않는다 */
+  solo: boolean;
   pan: number; // -1(왼쪽) ~ 1(오른쪽)
   mainAssign: boolean;
   sends: SendState[]; // Aux 개수만큼
@@ -173,6 +175,43 @@ export interface HowlState {
   freq: number;
 }
 
+/** DCA: 소리가 지나가지 않는 원격 페이더. 묶인 채널의 페이더에 이 값을 더하고, 뮤트하면 묶인 채널이 꺼진다 */
+export interface DcaState {
+  name: string;
+  faderDb: number;
+  mute: boolean;
+  /** 채널마다 묶였는지 */
+  members: boolean[];
+}
+
+/** 뮤트 그룹: 켜면 묶인 채널을 한꺼번에 끈다 */
+export interface MuteGroupState {
+  name: string;
+  on: boolean;
+  members: boolean[];
+}
+
+export type SoloMode = 'pfl' | 'afl';
+
+/** 씬에 저장하는 것: 채널·버스·매트릭스·DCA·뮤트 그룹·링크 설정(입력 연결·듣기·씬 자신은 빼고) */
+export type SceneSnapshot = Pick<MixerState, 'channels' | 'main' | 'auxes' | 'matrix' | 'dca' | 'muteGroups' | 'links'>;
+
+export interface SceneState {
+  name: string;
+  snapshot: SceneSnapshot | null;
+}
+
+export type OscType = 'sine' | 'pink';
+
+/** 오실레이터: 시험 신호를 버스 하나에 넣는다(스피커 점검, 레벨 맞추기) */
+export interface OscState {
+  on: boolean;
+  type: OscType;
+  freq: number;
+  levelDb: number;
+  target: 'main' | number;
+}
+
 /** 'main' 메인, number 버스 번호(0부터), 'reference' 정답 믹스(원곡 믹스), 'matrix-n' 매트릭스 */
 export type ListenTarget = 'main' | number | 'reference' | `matrix-${number}`;
 
@@ -189,6 +228,13 @@ export interface MixerState {
   howl: HowlState;
   /** 스테레오 링크: links[k]면 채널 2k와 2k+1이 같이 움직인다(팬 제외) */
   links: boolean[];
+  dca: DcaState[];
+  muteGroups: MuteGroupState[];
+  soloMode: SoloMode;
+  scenes: SceneState[];
+  /** 리콜 세이프: 켜진 채널은 씬을 불러와도 바뀌지 않는다 */
+  safes: boolean[];
+  osc: OscState;
 }
 
 export const DEFAULT_PEQ_BANDS: PeqBandState[] = [
@@ -242,6 +288,7 @@ export function defaultChannel(name: string, auxCount: number): ChannelState {
     insert: { on: false, mixPct: 30, fx: defaultFx('reverb') },
     faderDb: 0,
     mute: false,
+    solo: false,
     pan: 0,
     mainAssign: true,
     sends: Array.from({ length: auxCount }, () => ({ levelDb: -Infinity, tap: 'pre' as const })),
@@ -297,6 +344,10 @@ export interface MixerShape {
   auxFx?: (FxType | undefined)[];
   /** 매트릭스 이름들(기본 없음) */
   matrixNames?: string[];
+  /** DCA·뮤트 그룹·씬 개수(기본 0) */
+  dcaCount?: number;
+  muteGroupCount?: number;
+  sceneCount?: number;
 }
 
 /** 채널 n개, Aux m개짜리 기본 상태. 입력 i는 채널 i에 꽂힌다. */
@@ -314,6 +365,21 @@ export function defaultMixerState(shape: MixerShape): MixerState {
     listen: 'main',
     howl: { active: false, channel: 0, aux: 0, freq: 2500 },
     links: Array.from({ length: Math.floor(shape.channels / 2) }, () => false),
+    dca: Array.from({ length: shape.dcaCount ?? 0 }, (_, i) => ({
+      name: `DCA ${i + 1}`,
+      faderDb: 0,
+      mute: false,
+      members: Array.from({ length: shape.channels }, () => false),
+    })),
+    muteGroups: Array.from({ length: shape.muteGroupCount ?? 0 }, (_, i) => ({
+      name: `뮤트 ${i + 1}`,
+      on: false,
+      members: Array.from({ length: shape.channels }, () => false),
+    })),
+    soloMode: 'pfl',
+    scenes: Array.from({ length: shape.sceneCount ?? 0 }, (_, i) => ({ name: `씬 ${i + 1}`, snapshot: null })),
+    safes: Array.from({ length: shape.channels }, () => false),
+    osc: { on: false, type: 'pink', freq: 1000, levelDb: -30, target: 'main' },
   };
 }
 

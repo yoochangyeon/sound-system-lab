@@ -9,6 +9,29 @@ import type { ChannelState, MixerState } from './mixer-model';
 
 const NEG_INF = -Infinity;
 
+/** 채널 ch를 묶은 DCA들 */
+export function dcasOf(s: MixerState, ch: number) {
+  return s.dca.filter((d) => d.members[ch]);
+}
+
+/** 뮤트 그룹 때문에 꺼졌는가 */
+export function mutedByGroup(s: MixerState, ch: number): boolean {
+  return s.muteGroups.some((g) => g.on && g.members[ch]);
+}
+
+/**
+ * 실제로 소리에 걸리는 채널 상태: 페이더에 묶인 DCA 페이더를 더하고, DCA 뮤트·뮤트 그룹을 뮤트에 합친다.
+ * 엔진과 판정이 같은 값을 쓴다. 바뀐 것이 없으면 같은 객체를 돌려준다.
+ */
+export function effectiveChannel(s: MixerState, ch: number): ChannelState {
+  const c = s.channels[ch];
+  const dcas = dcasOf(s, ch);
+  const mute = c.mute || dcas.some((d) => d.mute) || mutedByGroup(s, ch);
+  const faderDb = dcas.reduce((db, d) => db + d.faderDb, c.faderDb);
+  if (mute === c.mute && faderDb === c.faderDb) return c;
+  return { ...c, mute, faderDb: Number.isNaN(faderDb) ? NEG_INF : faderDb };
+}
+
 export function hpfFilter(ch: ChannelState): BiquadParams | null {
   return ch.preamp.hpfOn ? { type: 'highpass', freq: ch.preamp.hpfFreq, gainDb: 0, q: BUTTERWORTH_Q_DB } : null;
 }
@@ -89,8 +112,8 @@ export function channelReachesMainViaGroup(s: MixerState, ch: number, a: number)
 
 /** 채널 신호가 메인까지 가는가(패치·스템·뮤트·페이더, 그리고 메인 할당이나 그룹 경로, 메인 뮤트·페이더). */
 export function channelReachesMain(s: MixerState, ch: number): boolean {
-  const c = s.channels[ch];
-  if (!c) return false;
+  if (!s.channels[ch]) return false;
+  const c = effectiveChannel(s, ch);
   if (!channelStem(s, ch)) return false;
   if (c.mute || c.faderDb === NEG_INF) return false;
   const direct = c.mainAssign;
@@ -103,12 +126,16 @@ export function channelReachesMain(s: MixerState, ch: number): boolean {
 /** 무엇 때문에 메인까지 안 가는지(힌트·디버그용). */
 export function mainPathProblems(s: MixerState, ch: number): string[] {
   const c = s.channels[ch];
+  const dcas = dcasOf(s, ch);
   const out: string[] = [];
   const input = s.patch[ch];
   if (input === null || input === undefined) out.push('patch-none');
   else if (!s.inputs[input]?.stemId) out.push('patch-empty');
   if (c.mute) out.push('mute');
   if (c.faderDb === NEG_INF) out.push('fader-down');
+  if (dcas.some((x) => x.mute)) out.push('dca-mute');
+  if (dcas.some((x) => x.faderDb === NEG_INF)) out.push('dca-down');
+  if (mutedByGroup(s, ch)) out.push('mute-group');
   if (!c.mainAssign && !s.auxes.some((_, a) => channelReachesMainViaGroup(s, ch, a))) out.push('main-assign-off');
   if (s.main.mute) out.push('main-mute');
   if (s.main.faderDb === NEG_INF) out.push('main-fader-down');
@@ -121,10 +148,11 @@ export function mainPathProblems(s: MixerState, ch: number): string[] {
  * 채널·Aux 뮤트, 끝까지 내린 페이더·센드, 패치 없음이면 -∞.
  */
 export function sendPathGainDb(s: MixerState, ch: number, aux: number): number {
-  const c = s.channels[ch];
+  if (!s.channels[ch]) return NEG_INF;
+  const c = effectiveChannel(s, ch);
   const bus = s.auxes[aux];
-  const send = c?.sends[aux];
-  if (!c || !bus || !send) return NEG_INF;
+  const send = c.sends[aux];
+  if (!bus || !send) return NEG_INF;
   if (!channelStem(s, ch)) return NEG_INF;
   if (c.mute || bus.mute) return NEG_INF;
   if (send.levelDb === NEG_INF || bus.faderDb === NEG_INF) return NEG_INF;

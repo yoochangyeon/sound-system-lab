@@ -1,7 +1,7 @@
 // SVG 노브. 위아래로 끌면(마우스·터치) 값이 바뀐다. 키보드 화살표도 된다. 더블클릭하면 기본값.
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Range } from '../../consoles/profile';
-import { fmtUnit, fromNorm, toNorm } from './scale';
+import { fmtRange, fromNorm, toNorm } from './scale';
 
 export interface KnobProps {
   label: string;
@@ -61,7 +61,7 @@ export function Knob({ label, value, range, onChange, color = 'var(--fn-eq)', si
     e.preventDefault();
   };
 
-  const text = format ? format(value) : fmtUnit(value, range.unit);
+  const text = format ? format(value) : fmtRange(value, range);
 
   return (
     <div className={`sim-knob${disabled ? ' is-disabled' : ''}`} style={{ width: Math.max(size, 64) }}>

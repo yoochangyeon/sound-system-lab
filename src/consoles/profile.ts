@@ -8,6 +8,8 @@ export interface Range {
   unit: string;
   /** 노브·슬라이더를 로그 눈금으로 움직일지(주파수, 시간 등) */
   log?: boolean;
+  /** 화면 표시 = 저장 값 + offset (예: dBFS를 dBu로 보여 줄 때 +18) */
+  offset?: number;
 }
 
 export type ParamKey =

@@ -81,3 +81,10 @@ export function fmtUnit(v: number, unit: string): string {
       return `${+v.toFixed(2)}`;
   }
 }
+
+/** 프로필 범위의 단위·표시 오프셋대로 값을 보여 준다. */
+export function fmtRange(v: number, r: Pick<Range, 'unit' | 'offset'>): string {
+  const shown = Number.isFinite(v) ? v + (r.offset ?? 0) : v;
+  if (r.unit === 'dBu') return fmtDb(shown).replace(' dB', ' dBu');
+  return fmtUnit(shown, r.unit);
+}

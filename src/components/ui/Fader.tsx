@@ -1,5 +1,6 @@
 // 세로 페이더(SVG). 콘솔 페이더처럼 −∞~+10 dB, 0 dB 근처가 넓다.
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { capture } from './pointer';
 import { faderToNorm, fmtDb, normToFader } from './scale';
 
 export interface FaderProps {
@@ -49,8 +50,8 @@ export function Fader({ label, value, onChange, height = 160, color = 'var(--pan
         aria-valuetext={fmtDb(value)}
         aria-orientation="vertical"
         onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId);
           dragging.current = true;
+          capture(e.currentTarget, e.pointerId);
           fromEvent(e);
         }}
         onPointerMove={(e) => dragging.current && fromEvent(e)}

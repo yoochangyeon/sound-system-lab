@@ -1,5 +1,6 @@
 // SVG 노브. 위아래로 끌면(마우스·터치) 값이 바뀐다. 키보드 화살표도 된다. 더블클릭하면 기본값.
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { capture } from './pointer';
 import type { Range } from '../../consoles/profile';
 import { fmtRange, fromNorm, toNorm } from './scale';
 
@@ -41,8 +42,8 @@ export function Knob({ label, value, range, onChange, color = 'var(--fn-eq)', si
 
   const onDown = (e: PointerEvent<SVGSVGElement>) => {
     if (disabled) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
     drag.current = { y: e.clientY, norm };
+    capture(e.currentTarget, e.pointerId);
   };
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
     if (!drag.current) return;

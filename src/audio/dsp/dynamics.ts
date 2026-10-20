@@ -71,18 +71,24 @@ export class Compressor {
   }
 
   process(channels: Float32Array[], p: CompParams, bypass = false): void {
+    // 꺼져 있으면 아무것도 하지 않는다(콘솔 16채널의 처리량을 줄인다).
+    if (bypass) {
+      this.grDb = 0;
+      return;
+    }
     const n = channels[0]?.length ?? 0;
     const att = timeCoef(p.attackMs, this.sampleRate);
     const rel = timeCoef(p.releaseMs, this.sampleRate);
     const makeup = dbToGain(p.makeupDb);
+    let g = dbToGain(this.grDb) * makeup;
     for (let i = 0; i < n; i++) {
       let x = 0;
       for (const ch of channels) if (Math.abs(ch[i]) > Math.abs(x)) x = ch[i];
       const target = compGainDb(this.det.levelDb(x, p.detector), p);
       const c = target < this.grDb ? att : rel;
       this.grDb = c * this.grDb + (1 - c) * target;
-      if (bypass) continue;
-      const g = dbToGain(this.grDb) * makeup;
+      // dB → 배율 변환은 8샘플마다(약 0.17 ms) 한 번. 귀로 구분되지 않고 계산은 크게 준다.
+      if ((i & 7) === 0) g = dbToGain(this.grDb) * makeup;
       for (const ch of channels) ch[i] *= g;
     }
   }
@@ -105,7 +111,13 @@ export class Gate {
   constructor(private sampleRate: number) {}
 
   process(channels: Float32Array[], p: GateParams, bypass = false): void {
+    if (bypass) {
+      this.grDb = 0;
+      this.open = true;
+      return;
+    }
     const n = channels[0]?.length ?? 0;
+    let g = dbToGain(this.grDb);
     const att = timeCoef(p.attackMs, this.sampleRate);
     const rel = timeCoef(p.releaseMs, this.sampleRate);
     const holdSamples = Math.round((p.holdMs / 1000) * this.sampleRate);
@@ -124,8 +136,7 @@ export class Gate {
       const target = this.open ? 0 : -Math.abs(p.rangeDb);
       const c = target > this.grDb ? att : rel;
       this.grDb = c * this.grDb + (1 - c) * target;
-      if (bypass) continue;
-      const g = dbToGain(this.grDb);
+      if ((i & 7) === 0) g = dbToGain(this.grDb);
       for (const ch of channels) ch[i] *= g;
     }
   }

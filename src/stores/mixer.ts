@@ -10,6 +10,7 @@ import {
   type CompState,
   type DeepPartial,
   type GateState,
+  type KeyState,
   type ListenTarget,
   type MixerState,
   type PeqBandState,
@@ -19,12 +20,15 @@ import {
 
 export type BusRef = 'main' | number;
 
+/** 다이내믹스 액션 입력: 키는 일부만 바꿀 수 있다. */
+type DynPatch<T extends { key: KeyState }> = Partial<Omit<T, 'key'>> & { key?: Partial<KeyState> };
+
 export interface MixerActions {
   setPreamp(ch: number, p: Partial<PreampState>): void;
-  setGate(ch: number, p: Partial<GateState>): void;
+  setGate(ch: number, p: DynPatch<GateState>): void;
   setPeqOn(ch: number, on: boolean): void;
   setPeqBand(ch: number, band: number, p: Partial<PeqBandState>): void;
-  setComp(ch: number, p: Partial<CompState>): void;
+  setComp(ch: number, p: DynPatch<CompState>): void;
   setFader(ch: number, db: number): void;
   setMute(ch: number, mute: boolean): void;
   setPan(ch: number, pan: number): void;
@@ -50,6 +54,39 @@ export interface MixerStore extends MixerState {
 
 export type MixerStoreApi = StoreApi<MixerStore>;
 
+type Clamp = (key: Parameters<typeof clampParam>[1], v: number) => number;
+
+function clampKey(k: KeyState, c: Clamp): KeyState {
+  return { ...k, freq: c('keyFreq', k.freq) };
+}
+
+function clampGate(g: GateState, c: Clamp): GateState {
+  return {
+    ...g,
+    thresholdDb: c('gateThreshold', g.thresholdDb),
+    rangeDb: c('gateRange', g.rangeDb),
+    attackMs: c('gateAttack', g.attackMs),
+    holdMs: c('gateHold', g.holdMs),
+    releaseMs: c('gateRelease', g.releaseMs),
+    expRatio: c('expRatio', g.expRatio),
+    key: clampKey(g.key, c),
+  };
+}
+
+function clampComp(x: CompState, c: Clamp): CompState {
+  return {
+    ...x,
+    thresholdDb: c('compThreshold', x.thresholdDb),
+    ratio: c('ratio', x.ratio),
+    kneeDb: c('knee', x.kneeDb),
+    attackMs: c('compAttack', x.attackMs),
+    releaseMs: c('compRelease', x.releaseMs),
+    makeupDb: c('makeup', x.makeupDb),
+    mixPct: c('mix', x.mixPct),
+    key: clampKey(x.key, c),
+  };
+}
+
 /** 상태의 모든 파라미터를 프로필 범위로 자른다(예: dLive 스타일의 최소 게인). */
 export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
   const c = (key: Parameters<typeof clampParam>[1], v: number) => clampParam(profile, key, v);
@@ -58,27 +95,12 @@ export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
     channels: s.channels.map((x) => ({
       ...x,
       preamp: { ...x.preamp, gainDb: c('gain', x.preamp.gainDb), hpfFreq: c('hpfFreq', x.preamp.hpfFreq), lpfFreq: c('lpfFreq', x.preamp.lpfFreq) },
-      gate: {
-        ...x.gate,
-        thresholdDb: c('gateThreshold', x.gate.thresholdDb),
-        rangeDb: c('gateRange', x.gate.rangeDb),
-        attackMs: c('gateAttack', x.gate.attackMs),
-        holdMs: c('gateHold', x.gate.holdMs),
-        releaseMs: c('gateRelease', x.gate.releaseMs),
-      },
+      gate: clampGate(x.gate, c),
       peq: {
         ...x.peq,
         bands: x.peq.bands.map((b) => ({ ...b, freq: c('eqFreq', b.freq), gainDb: c('eqGain', b.gainDb), q: c('eqQ', b.q) })),
       },
-      comp: {
-        ...x.comp,
-        thresholdDb: c('compThreshold', x.comp.thresholdDb),
-        ratio: c('ratio', x.comp.ratio),
-        kneeDb: c('knee', x.comp.kneeDb),
-        attackMs: c('compAttack', x.comp.attackMs),
-        releaseMs: c('compRelease', x.comp.releaseMs),
-        makeupDb: c('makeup', x.comp.makeupDb),
-      },
+      comp: clampComp(x.comp, c),
       faderDb: c('fader', x.faderDb),
       sends: x.sends.map((sd) => ({ ...sd, levelDb: c('send', sd.levelDb) })),
     })),
@@ -122,19 +144,8 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
             ...(p.lpfFreq !== undefined && { lpfFreq: c('lpfFreq', p.lpfFreq) }),
           },
         })),
-      setGate: (ch, p) =>
-        updateChannel(ch, (x) => ({
-          ...x,
-          gate: {
-            ...x.gate,
-            ...p,
-            ...(p.thresholdDb !== undefined && { thresholdDb: c('gateThreshold', p.thresholdDb) }),
-            ...(p.rangeDb !== undefined && { rangeDb: c('gateRange', p.rangeDb) }),
-            ...(p.attackMs !== undefined && { attackMs: c('gateAttack', p.attackMs) }),
-            ...(p.holdMs !== undefined && { holdMs: c('gateHold', p.holdMs) }),
-            ...(p.releaseMs !== undefined && { releaseMs: c('gateRelease', p.releaseMs) }),
-          },
-        })),
+      setGate: (ch, { key, ...p }) =>
+        updateChannel(ch, (x) => ({ ...x, gate: clampGate({ ...x.gate, ...p, key: { ...x.gate.key, ...key } }, c) })),
       setPeqOn: (ch, on) => updateChannel(ch, (x) => ({ ...x, peq: { ...x.peq, on } })),
       setPeqBand: (ch, band, p) =>
         updateChannel(ch, (x) => {
@@ -149,20 +160,8 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
           };
           return { ...x, peq: { ...x.peq, bands } };
         }),
-      setComp: (ch, p) =>
-        updateChannel(ch, (x) => ({
-          ...x,
-          comp: {
-            ...x.comp,
-            ...p,
-            ...(p.thresholdDb !== undefined && { thresholdDb: c('compThreshold', p.thresholdDb) }),
-            ...(p.ratio !== undefined && { ratio: c('ratio', p.ratio) }),
-            ...(p.kneeDb !== undefined && { kneeDb: c('knee', p.kneeDb) }),
-            ...(p.attackMs !== undefined && { attackMs: c('compAttack', p.attackMs) }),
-            ...(p.releaseMs !== undefined && { releaseMs: c('compRelease', p.releaseMs) }),
-            ...(p.makeupDb !== undefined && { makeupDb: c('makeup', p.makeupDb) }),
-          },
-        })),
+      setComp: (ch, { key, ...p }) =>
+        updateChannel(ch, (x) => ({ ...x, comp: clampComp({ ...x.comp, ...p, key: { ...x.comp.key, ...key } }, c) })),
       setFader: (ch, db) => updateChannel(ch, (x) => ({ ...x, faderDb: c('fader', db) })),
       setMute: (ch, mute) => updateChannel(ch, (x) => ({ ...x, mute })),
       setPan: (ch, pan) => updateChannel(ch, (x) => ({ ...x, pan: Math.max(-1, Math.min(1, pan)) })),

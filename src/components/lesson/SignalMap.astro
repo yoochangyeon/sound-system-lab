@@ -1,0 +1,423 @@
+---
+// 신호 흐름 지도. 레슨 id(at)만 넘기면 그 레슨까지 배운 칸이 나오고, 이번 레슨에서 새로 생긴 칸을 강조한다.
+// 갈라지는 곳(●), 나갔다 돌아오는 길, 여러 버스로 나가는 같은 소리를 한 그림에서 본다. 데이터·배치는 signal-map.ts.
+import { describeSignalMap, layoutSignalMap, type State } from './signal-map';
+
+interface Props {
+  /** 레슨 id, 예: '02-processing/07-reverb-delay' */
+  at: string;
+}
+const { at } = Astro.props;
+const L = layoutSignalMap(at);
+const uid = `sm-${at.replace(/[^a-z0-9]/gi, '-')}`;
+const hot = (s: State) => s === 'new' || s === 'focus';
+
+/** 꺾이는 곳을 둥글린 선 */
+function pathOf(pts: [number, number][], r = 8): string {
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x, y] = pts[i];
+    const next = pts[i + 1];
+    if (!next) {
+      d += ` L${x} ${y}`;
+      break;
+    }
+    const [px, py] = pts[i - 1];
+    const [nx, ny] = next;
+    const inLen = Math.hypot(x - px, y - py);
+    const outLen = Math.hypot(nx - x, ny - y);
+    const k = Math.min(r, inLen / 2, outLen / 2);
+    const ax = x - ((x - px) / inLen) * k;
+    const ay = y - ((y - py) / inLen) * k;
+    const bx = x + ((nx - x) / outLen) * k;
+    const by = y + ((ny - y) / outLen) * k;
+    d += ` L${ax} ${ay} Q${x} ${y} ${bx} ${by}`;
+  }
+  return d;
+}
+const marker = (kind: string, state: State) => `url(#${uid}-${hot(state) ? 'hot' : kind})`;
+const legend = [
+  { kind: 'pre', text: '입력·페이더' },
+  { kind: 'eq', text: 'EQ' },
+  { kind: 'dyn', text: '다이내믹스' },
+  { kind: 'fx', text: '이펙트' },
+  { kind: 'bus', text: '버스·출력' },
+];
+const pct = Math.round((L.learned / L.total) * 100);
+---
+
+<figure class="smap">
+  <svg viewBox={`0 0 ${L.width} ${L.height}`} role="img" aria-label={describeSignalMap(L)}>
+    <defs>
+      {
+        ['sig', 'fx', 'key', 'hot'].map((k) => (
+          <marker id={`${uid}-${k}`} class={`mk mk-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1L9 5L1 9z" />
+          </marker>
+        ))
+      }
+    </defs>
+
+    <rect class="channel" x={L.channel.x} y={L.channel.y} width={L.channel.w} height={L.channel.h} rx="16" />
+    <text class="channel-t" x={L.channel.r - 8} y={L.channel.y + 14} text-anchor="end">콘솔 채널</text>
+
+    {L.edges.map((e) => <path class:list={['edge', `e-${e.kind}`, { hot: hot(e.state) }]} d={pathOf(e.points)} marker-end={marker(e.kind, e.state)} />)}
+    {L.edges.map((e) => <path class:list={['flow', `e-${e.kind}`, { hot: hot(e.state) }]} d={pathOf(e.points)} />)}
+    {L.edges.filter((e) => e.junction).map((e) => <circle class="junction" cx={e.junction![0]} cy={e.junction![1]} r="4" />)}
+    {
+      L.edges
+        .filter((e) => e.label)
+        .map((e) => (
+          <text class:list={['elabel', `e-${e.kind}`, { hot: hot(e.label!.state) }]} x={e.label!.x} y={e.label!.y} text-anchor={e.label!.end ? 'end' : 'start'}>
+            {e.label!.text}
+          </text>
+        ))
+    }
+
+    <rect class="proc" x={L.proc.x} y={L.proc.y} width={L.proc.w} height={L.proc.h} rx="12" />
+    <text class="proc-t" x={L.proc.x + 12} y={L.proc.y + 16}>채널 처리</text>
+    {
+      L.chips.map((c) => (
+        <g class:list={['chip', `k-${c.kind}`, `s-${c.state}`]}>
+          <rect x={c.x} y={c.y} width={c.w} height={c.h} rx="6" />
+          <circle cx={c.x + 9} cy={c.cy} r="3.5" />
+          <text x={c.x + 18} y={c.cy + 4}>
+            {c.name}
+          </text>
+          {c.state === 'new' && <text class="chip-new" x={c.r - 6} y={c.cy + 4} text-anchor="end">새로</text>}
+        </g>
+      ))
+    }
+
+    {
+      L.nodes.map((n) => (
+        <g class:list={['node', `k-${n.kind}`, `s-${n.state}`]}>
+          <rect class="bg" x={n.x} y={n.y} width={n.w} height={n.h} rx="12" />
+          <rect class="bar" x={n.x + 8} y={n.y + 11} width="4" height={n.h - 22} rx="2" />
+          <text class="nm" x={n.x + 18} y={n.y + 19}>
+            {n.name}
+          </text>
+          {n.sub && (
+            <text class="sb" x={n.x + 18} y={n.y + 34}>
+              {n.sub}
+            </text>
+          )}
+          {n.state === 'new' && (
+            <g class="pill pill-new">
+              <rect x={n.r - 34} y={n.y - 8} width="30" height="16" rx="8" />
+              <text x={n.r - 19} y={n.y + 3.5} text-anchor="middle">새로</text>
+            </g>
+          )}
+          {n.badge && (
+            <g class:list={['pill', 'pill-badge', `k-${n.badge.kind}`, { hot: hot(n.badge.state) }]}>
+              <rect x={n.r - 38} y={n.y - 8} width="34" height="16" rx="8" />
+              <text x={n.r - 21} y={n.y + 3.5} text-anchor="middle">{n.badge.text}</text>
+            </g>
+          )}
+        </g>
+      ))
+    }
+  </svg>
+  <figcaption>
+    <p class="note">{L.note}</p>
+    <div class="meta">
+      <ul class="legend" aria-hidden="true">
+        {legend.map((l) => <li class={`k-${l.kind}`}><i />{l.text}</li>)}
+        <li class="lg-junction"><i />갈라지는 곳</li>
+      </ul>
+      <span class="progress">
+        <span class="bar" style={`--p:${pct}%`}><span /></span>
+        지도 {L.learned}/{L.total}칸
+      </span>
+    </div>
+  </figcaption>
+</figure>
+
+<style>
+  .smap {
+    margin: 0 0 16px;
+    padding: 16px 12px 14px;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  svg {
+    display: block;
+    width: 100%;
+    max-width: 440px;
+    height: auto;
+    margin: 0 auto;
+    font-family: inherit;
+    overflow: visible;
+  }
+  .k-src,
+  .k-pre {
+    --c: var(--fn-preamp);
+  }
+  .k-eq {
+    --c: var(--fn-eq);
+  }
+  .k-dyn {
+    --c: var(--fn-dyn);
+  }
+  .k-fx {
+    --c: var(--fn-fx);
+  }
+  .k-bus,
+  .k-out {
+    --c: var(--fn-bus);
+  }
+
+  .channel {
+    fill: none;
+    stroke: var(--line-2);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+  }
+  .channel-t {
+    font-size: 10.5px;
+    font-weight: 600;
+    fill: var(--faint);
+  }
+
+  /* 선: 바탕선 + 흐르는 점 */
+  .edge {
+    fill: none;
+    stroke: var(--line-2);
+    stroke-width: 2;
+  }
+  .edge.e-fx {
+    stroke: color-mix(in srgb, var(--fn-fx) 45%, white);
+  }
+  .edge.e-key {
+    stroke: var(--fn-dyn);
+    stroke-dasharray: 4 4;
+    stroke-width: 1.5;
+  }
+  .edge.hot {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .edge.e-key.hot {
+    stroke: var(--fn-dyn);
+  }
+  .mk path {
+    fill: var(--line-2);
+  }
+  .mk-fx path {
+    fill: color-mix(in srgb, var(--fn-fx) 60%, white);
+  }
+  .mk-key path {
+    fill: var(--fn-dyn);
+  }
+  .mk-hot path {
+    fill: var(--accent);
+  }
+  .flow {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-dasharray: 0 14;
+    opacity: 0.45;
+  }
+  .flow.e-fx {
+    stroke: var(--fn-fx);
+  }
+  .flow.e-key {
+    stroke: var(--fn-dyn);
+  }
+  .flow.hot {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .flow {
+      animation: run 1.1s linear infinite;
+    }
+  }
+  @keyframes run {
+    to {
+      stroke-dashoffset: -14;
+    }
+  }
+  .junction {
+    fill: var(--accent);
+    stroke: var(--bg-grey);
+    stroke-width: 2;
+  }
+  .elabel {
+    font-size: 10px;
+    font-weight: 600;
+    fill: var(--muted);
+  }
+  .elabel.e-fx {
+    fill: var(--fn-fx);
+  }
+  .elabel.e-key {
+    fill: var(--fn-dyn);
+  }
+  .elabel.hot {
+    fill: var(--accent);
+  }
+  .elabel.e-key.hot {
+    fill: var(--fn-dyn);
+  }
+
+  /* 채널 처리 상자와 칸 */
+  .proc {
+    fill: #fff;
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+  .proc-t {
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--muted);
+  }
+  .chip rect {
+    fill: color-mix(in srgb, var(--c) 10%, white);
+    stroke: none;
+  }
+  .chip circle {
+    fill: var(--c);
+  }
+  .chip text {
+    font-size: 11.5px;
+    font-weight: 600;
+    fill: var(--text);
+  }
+  .chip.s-named rect {
+    fill: none;
+    stroke: var(--line-2);
+    stroke-dasharray: 3 3;
+  }
+  .chip.s-named circle {
+    fill: var(--line-2);
+  }
+  .chip.s-named text {
+    fill: var(--faint);
+    font-weight: 500;
+  }
+  .chip.s-new rect,
+  .chip.s-focus rect {
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .chip .chip-new {
+    font-size: 9.5px;
+    font-weight: 700;
+    fill: var(--accent);
+  }
+
+  /* 칸 */
+  .node .bg {
+    fill: #fff;
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+  .node.k-out .bg {
+    fill: color-mix(in srgb, var(--fn-bus) 8%, white);
+  }
+  .node.s-new .bg,
+  .node.s-focus .bg {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+  .node .bar {
+    fill: var(--c);
+  }
+  .nm {
+    font-size: 13px;
+    font-weight: 700;
+    fill: var(--text);
+  }
+  .sb {
+    font-size: 10.5px;
+    fill: var(--muted);
+  }
+  .pill text {
+    font-size: 9.5px;
+    font-weight: 700;
+    fill: #fff;
+  }
+  .pill-new rect {
+    fill: var(--accent);
+  }
+  .pill-badge rect {
+    fill: var(--c);
+  }
+  .pill-badge.hot rect {
+    stroke: var(--accent-soft);
+    stroke-width: 3;
+    paint-order: stroke;
+  }
+
+  /* 아래 설명 */
+  figcaption {
+    max-width: 440px;
+    margin: 12px auto 0;
+  }
+  .note {
+    margin: 0 0 10px !important;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-2);
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 !important;
+  }
+  .legend i {
+    width: 4px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .legend .lg-junction i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .progress .bar {
+    width: 56px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .progress .bar span {
+    display: block;
+    width: var(--p);
+    height: 100%;
+    background: var(--accent);
+  }
+</style>

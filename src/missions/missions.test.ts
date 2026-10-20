@@ -1,18 +1,18 @@
-// 경계 ①: 미션마다, 기종 프로필마다
+// 경계 ①: 미션마다(쉬운 믹서 8채널)
 //  - 시작 상태는 실패, 정답 조작은 성공, 함정 조작은 실패
-//  - 정답 조작이 그 프로필의 파라미터 범위 안에서 가능하다(잘리지 않는다)
+//  - 정답 조작이 파라미터 범위 안에서 가능하다(잘리지 않는다)
 import { describe, expect, it } from 'vitest';
-import { DLIVE_PROFILE } from '../consoles/dlive/profile';
-import { consoleDefaultState } from '../consoles/shared/console-state';
-import { X32_PROFILE } from '../consoles/x32/profile';
+import { mixerDefaultState } from '../mixer/mixer-state';
 import { createMixerStore, snapshot, type MixerStoreApi } from '../stores/mixer';
+import { GENERIC_PROFILE } from '../stores/profile';
+import { channelReachesMain } from '../stores/derived';
 import { MISSIONS } from '.';
 import type { Mission } from './types';
 
-const PROFILES = [X32_PROFILE, DLIVE_PROFILE];
+const PROFILES = [GENERIC_PROFILE];
 
-function start(m: Mission, profile: typeof X32_PROFILE): { store: MixerStoreApi; startState: ReturnType<typeof snapshot> } {
-  const store = createMixerStore(consoleDefaultState(), profile);
+function start(m: Mission, profile: typeof GENERIC_PROFILE): { store: MixerStoreApi; startState: ReturnType<typeof snapshot> } {
+  const store = createMixerStore(mixerDefaultState(), profile);
   store.getState().actions.apply(m.initial);
   return { store, startState: snapshot(store) };
 }
@@ -53,11 +53,22 @@ describe.each(PROFILES)('미션 판정 — $name', (profile) => {
 });
 
 describe('기본 믹스', () => {
-  it('하울링은 꺼져 있고, 설교 채널은 뮤트, 나머지 스템 채널은 메인까지 간다', () => {
-    const s = consoleDefaultState();
+  it('채널 8개·모니터 2개, 하울링은 꺼져 있고, 설교 채널만 뮤트, 나머지는 메인까지 간다', () => {
+    const s = mixerDefaultState();
     expect(s.howl.active).toBe(false);
-    expect(s.channels[1].mute).toBe(true);
-    expect(s.channels.length).toBe(16);
+    expect(s.channels.length).toBe(8);
     expect(s.auxes.length).toBe(2);
+    expect(s.inputs.every((i) => i.stemId)).toBe(true);
+    s.channels.forEach((c, i) => {
+      expect(c.mute).toBe(c.name === '설교');
+      if (c.name !== '설교') expect(channelReachesMain(s, i)).toBe(true);
+    });
+  });
+
+  it('미션이 쓰는 채널은 모두 8채널 안에 있다', () => {
+    for (const m of MISSIONS) {
+      expect(m.focusChannel).toBeGreaterThanOrEqual(0);
+      expect(m.focusChannel).toBeLessThan(8);
+    }
   });
 });

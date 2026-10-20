@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GENERIC_PROFILE } from '../consoles/profile';
+import { GENERIC_PROFILE } from './profile';
 import { createMixerStore, snapshot } from './mixer';
 import { defaultMixerState } from './mixer-model';
 import {
@@ -147,11 +147,20 @@ describe('센드 경로와 하울링', () => {
   });
 });
 
-describe('dLive 스타일 프로필', () => {
-  it('저장소를 만들 때와 미션 상태를 적용할 때 프로필 범위로 자른다', async () => {
-    const { DLIVE_PROFILE } = await import('../consoles/dlive/profile');
-    const st = createMixerStore(defaultMixerState({ channels: 2, auxes: 1, inputs }), DLIVE_PROFILE);
-    // 기본 게이트 스레숄드 −40 dBFS는 범위 안, GEQ는 ±12 dB
+describe('좁은 프로필', () => {
+  it('저장소를 만들 때와 미션 상태를 적용할 때 프로필 범위로 자른다', () => {
+    const r = GENERIC_PROFILE.ranges;
+    const NARROW = {
+      id: 'narrow',
+      name: '좁은 범위',
+      ranges: {
+        ...r,
+        gain: { ...r.gain, min: -15 },
+        hpfFreq: { ...r.hpfFreq, max: 2000 },
+        geqGain: { ...r.geqGain, min: -12, max: 12 },
+      },
+    };
+    const st = createMixerStore(defaultMixerState({ channels: 2, auxes: 1, inputs }), NARROW);
     st.getState().actions.apply({ channels: { 0: { preamp: { gainDb: -30, hpfFreq: 3000 } } }, auxes: { 0: { geq: { 3: -15 } } } });
     const s = st.getState();
     expect(s.channels[0].preamp.gainDb).toBe(-15);

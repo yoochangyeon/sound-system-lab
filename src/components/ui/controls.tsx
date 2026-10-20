@@ -1,8 +1,8 @@
 // 2차 개편 조작부: 가로 슬라이더, 켜기/끄기 스위치, '더 자세히' 접기, 탭.
 // 노브 대신 손가락으로 끌기 쉬운 가로 슬라이더를 쓴다(기획서 10장).
 import type { CSSProperties, ReactNode } from 'react';
-import type { Range } from '../../consoles/profile';
-import { fmtRange, fromNorm, toNorm } from './scale';
+import type { Range } from '../../stores/profile';
+import { faderToNorm, fmtRange, fromNorm, normToFader, toNorm } from './scale';
 
 const STEPS = 1000;
 
@@ -17,10 +17,13 @@ export interface SliderProps {
   defaultValue?: number;
   format?: (v: number) => string;
   disabled?: boolean;
+  /** 'fader'면 콘솔 페이더 눈금(−∞~+10 dB, 0 dB 근처가 넓다)을 쓴다 */
+  scale?: 'fader';
 }
 
-export function Slider({ label, value, range, onChange, hint, color, defaultValue, format, disabled }: SliderProps) {
-  const norm = toNorm(value, range);
+export function Slider({ label, value, range, onChange, hint, color, defaultValue, format, disabled, scale }: SliderProps) {
+  const isFader = scale === 'fader';
+  const norm = isFader ? faderToNorm(value) : toNorm(value, range);
   const text = format ? format(value) : fmtRange(value, range);
   const style = { '--fill': `${(norm * 100).toFixed(1)}%`, ...(color ? { '--accent-fn': color } : {}) } as CSSProperties;
   return (
@@ -39,7 +42,10 @@ export function Slider({ label, value, range, onChange, hint, color, defaultValu
         disabled={disabled}
         aria-label={label}
         aria-valuetext={text}
-        onChange={(e) => onChange(fromNorm(Number(e.target.value) / STEPS, range))}
+        onChange={(e) => {
+          const n = Number(e.target.value) / STEPS;
+          onChange(isFader ? normToFader(n) : fromNorm(n, range));
+        }}
         onDoubleClick={() => defaultValue !== undefined && !disabled && onChange(defaultValue)}
       />
     </label>

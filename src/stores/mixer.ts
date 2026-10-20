@@ -2,7 +2,7 @@
 // UI는 액션만 부르고, 엔진은 상태 변화를 Web Audio 파라미터 램프로 옮긴다.
 
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import { clampParam, GENERIC_PROFILE, type DeviceProfile } from '../consoles/profile';
+import { clampParam, GENERIC_PROFILE, type DeviceProfile } from './profile';
 import {
   deepMerge,
   type BusState,

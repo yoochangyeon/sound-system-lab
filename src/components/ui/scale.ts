@@ -1,5 +1,5 @@
 // 노브·페이더 값 ↔ 0~1 위치, 값 표시 형식.
-import type { Range } from '../../consoles/profile';
+import type { Range } from '../../stores/profile';
 
 export function toNorm(v: number, r: Pick<Range, 'min' | 'max' | 'log'>): number {
   if (v === -Infinity) return 0;

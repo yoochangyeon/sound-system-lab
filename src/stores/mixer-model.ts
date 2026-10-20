@@ -20,6 +20,11 @@ export interface PreampState {
   /** LPF(로우패스 필터): 이 주파수 위를 깎는다 */
   lpfOn: boolean;
   lpfFreq: number;
+  /** 극성 반전: 파형을 위아래로 뒤집는다 */
+  invert: boolean;
+  /** 채널 딜레이: 소리를 늦춘다(에코가 아니다). 마이크 거리·스피커 거리 맞추기 */
+  delayOn: boolean;
+  delayMs: number;
 }
 
 /** 키 필터: 검출할 소리만 골라 듣는다. lowcut은 저역을 빼고, band는 그 주변만 남긴다. */
@@ -68,9 +73,12 @@ export interface CompState {
   key: KeyState;
 }
 
+/** 센드를 뽑는 자리: EQ 앞(게이트 뒤), 페이더 앞(컴프 뒤), 페이더 뒤 */
+export type SendTap = 'pre-eq' | 'pre' | 'post';
+
 export interface SendState {
   levelDb: number;
-  pre: boolean;
+  tap: SendTap;
 }
 
 export interface ChannelState {
@@ -119,6 +127,8 @@ export interface MixerState {
   auxes: BusState[];
   listen: ListenTarget;
   howl: HowlState;
+  /** 스테레오 링크: links[k]면 채널 2k와 2k+1이 같이 움직인다(팬 제외) */
+  links: boolean[];
 }
 
 export const DEFAULT_PEQ_BANDS: PeqBandState[] = [
@@ -135,7 +145,7 @@ export function defaultKey(): KeyState {
 export function defaultChannel(name: string, auxCount: number): ChannelState {
   return {
     name,
-    preamp: { gainDb: 0, hpfOn: false, hpfFreq: 80, lpfOn: false, lpfFreq: 12000 },
+    preamp: { gainDb: 0, hpfOn: false, hpfFreq: 80, lpfOn: false, lpfFreq: 12000, invert: false, delayOn: false, delayMs: 1 },
     gate: {
       on: false,
       mode: 'gate',
@@ -165,7 +175,7 @@ export function defaultChannel(name: string, auxCount: number): ChannelState {
     mute: false,
     pan: 0,
     mainAssign: true,
-    sends: Array.from({ length: auxCount }, () => ({ levelDb: -Infinity, pre: true })),
+    sends: Array.from({ length: auxCount }, () => ({ levelDb: -Infinity, tap: 'pre' as const })),
   };
 }
 
@@ -193,6 +203,7 @@ export function defaultMixerState(shape: MixerShape): MixerState {
     auxes: auxNames.map((n) => defaultBus(n)),
     listen: 'main',
     howl: { active: false, channel: 0, aux: 0, freq: 2500 },
+    links: Array.from({ length: Math.floor(shape.channels / 2) }, () => false),
   };
 }
 

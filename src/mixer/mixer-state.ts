@@ -28,7 +28,7 @@ export function mixerDefaultState(song: Song = DEFAULT_SONG): MixerState {
       name: stem.label,
       preamp: { ...c.preamp, gainDb: Math.round((TARGET_PEAK_DB - stem.peakDb) * 2) / 2 },
       faderDb: slot.faderDb,
-      sends: slot.sends.map((levelDb) => ({ levelDb, pre: true })),
+      sends: slot.sends.map((levelDb) => ({ levelDb, tap: 'pre' as const })),
     };
   });
   return s;

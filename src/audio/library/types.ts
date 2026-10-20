@@ -46,8 +46,8 @@ export interface SongStem {
 export interface MixerSlot {
   stem: string;
   faderDb: number;
-  /** 모니터 1(보컬)·모니터 2(밴드)로 보내는 양 */
-  sends: [number, number];
+  /** 버스(모니터 1 보컬, 모니터 2 밴드 …)로 보내는 양. 모자란 버스는 보내지 않는다 */
+  sends: number[];
 }
 
 export interface Song {

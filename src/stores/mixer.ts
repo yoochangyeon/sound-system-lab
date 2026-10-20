@@ -15,6 +15,7 @@ import {
   type MixerState,
   type PeqBandState,
   type PreampState,
+  type SendTap,
   type HowlState,
 } from './mixer-model';
 
@@ -33,7 +34,9 @@ export interface MixerActions {
   setMute(ch: number, mute: boolean): void;
   setPan(ch: number, pan: number): void;
   setMainAssign(ch: number, on: boolean): void;
-  setSend(ch: number, aux: number, p: { levelDb?: number; pre?: boolean }): void;
+  setSend(ch: number, aux: number, p: { levelDb?: number; tap?: SendTap }): void;
+  /** 채널 2k와 2k+1을 묶는다. 켜면 2k의 설정을 2k+1에 복사하고 팬을 양쪽 끝으로 벌린다. */
+  setLink(pair: number, on: boolean): void;
   setBusFader(bus: BusRef, db: number): void;
   setBusMute(bus: BusRef, mute: boolean): void;
   setGeqBand(bus: BusRef, band: number, db: number): void;
@@ -94,7 +97,13 @@ export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
     ...s,
     channels: s.channels.map((x) => ({
       ...x,
-      preamp: { ...x.preamp, gainDb: c('gain', x.preamp.gainDb), hpfFreq: c('hpfFreq', x.preamp.hpfFreq), lpfFreq: c('lpfFreq', x.preamp.lpfFreq) },
+      preamp: {
+        ...x.preamp,
+        gainDb: c('gain', x.preamp.gainDb),
+        hpfFreq: c('hpfFreq', x.preamp.hpfFreq),
+        lpfFreq: c('lpfFreq', x.preamp.lpfFreq),
+        delayMs: c('delay', x.preamp.delayMs),
+      },
       gate: clampGate(x.gate, c),
       peq: {
         ...x.peq,
@@ -115,11 +124,14 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
   return createStore<MixerStore>()((set, get) => {
     const c = (key: Parameters<typeof clampParam>[1], v: number) => clampParam(get().profile, key, v);
 
-    const updateChannel = (ch: number, fn: (x: ChannelState) => ChannelState) =>
+    /** 채널 하나를 바꾼다. 링크된 짝이 있으면 같은 변경을 짝에도 건다(link: false면 이 채널만). */
+    const updateChannel = (ch: number, fn: (x: ChannelState) => ChannelState, link = true) =>
       set((s) => {
         if (!s.channels[ch]) return s;
         const channels = s.channels.slice();
         channels[ch] = fn(channels[ch]);
+        const mate = ch ^ 1;
+        if (link && s.links[ch >> 1] && channels[mate]) channels[mate] = fn(channels[mate]);
         return { channels };
       });
 
@@ -142,6 +154,7 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
             ...(p.gainDb !== undefined && { gainDb: c('gain', p.gainDb) }),
             ...(p.hpfFreq !== undefined && { hpfFreq: c('hpfFreq', p.hpfFreq) }),
             ...(p.lpfFreq !== undefined && { lpfFreq: c('lpfFreq', p.lpfFreq) }),
+            ...(p.delayMs !== undefined && { delayMs: c('delay', p.delayMs) }),
           },
         })),
       setGate: (ch, { key, ...p }) =>
@@ -164,7 +177,20 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
         updateChannel(ch, (x) => ({ ...x, comp: clampComp({ ...x.comp, ...p, key: { ...x.comp.key, ...key } }, c) })),
       setFader: (ch, db) => updateChannel(ch, (x) => ({ ...x, faderDb: c('fader', db) })),
       setMute: (ch, mute) => updateChannel(ch, (x) => ({ ...x, mute })),
-      setPan: (ch, pan) => updateChannel(ch, (x) => ({ ...x, pan: Math.max(-1, Math.min(1, pan)) })),
+      setPan: (ch, pan) => updateChannel(ch, (x) => ({ ...x, pan: Math.max(-1, Math.min(1, pan)) }), false),
+      setLink: (pair, on) =>
+        set((s) => {
+          const [l, r] = [pair * 2, pair * 2 + 1];
+          if (!s.channels[r] || s.links[pair] === on) return s;
+          const links = s.links.slice();
+          links[pair] = on;
+          if (!on) return { links };
+          const channels = s.channels.slice();
+          const src = channels[l];
+          channels[l] = { ...src, pan: -1 };
+          channels[r] = { ...structuredClone(src), name: channels[r].name, pan: 1 };
+          return { links, channels };
+        }),
       setMainAssign: (ch, on) => updateChannel(ch, (x) => ({ ...x, mainAssign: on })),
       setSend: (ch, aux, p) =>
         updateChannel(ch, (x) => {
@@ -172,7 +198,7 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
           const sends = x.sends.slice();
           sends[aux] = {
             ...sends[aux],
-            ...(p.pre !== undefined && { pre: p.pre }),
+            ...(p.tap !== undefined && { tap: p.tap }),
             ...(p.levelDb !== undefined && { levelDb: c('send', p.levelDb) }),
           };
           return { ...x, sends };

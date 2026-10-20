@@ -1,7 +1,7 @@
 // 입력 채널 하나의 신호 경로.
-// 입력 → 프리엠프 게인 → 디지털 클리핑 → [입력 미터] → HPF → LPF → 게이트 → PEQ → 컴프
+// 입력 → 프리엠프 게인 → 디지털 클리핑 → [입력 미터] → 극성 → 채널 딜레이 → HPF → LPF → 게이트 → PEQ → 컴프
 //   → 페이더·뮤트 → [페이더 미터] → 팬 → 메인 할당 → 메인 버스
-//   ↘ Aux 센드(pre: 컴프 뒤, post: 페이더 뒤)
+//   ↘ 버스 센드(pre-eq: 게이트 뒤, pre: 컴프 뒤, post: 페이더 뒤)
 // 게이트·컴프의 입력 1은 키(사이드체인): 키 소스 → 키 필터 → 워클릿. 자기 채널을 필터 없이
 // 들을 때는 연결하지 않는다(워클릿이 본 신호로 검출한다).
 
@@ -59,6 +59,8 @@ export class ChannelStrip {
   readonly preamp: GainNode;
   readonly clipper: WaveShaperNode;
   readonly inputMeter: AnalyserNode;
+  readonly polarity: GainNode;
+  readonly delay: DelayNode;
   readonly hpf: BiquadFilterNode;
   readonly lpf: BiquadFilterNode;
   readonly gate: AudioWorkletNode;
@@ -68,6 +70,7 @@ export class ChannelStrip {
   readonly faderMeter: AnalyserNode;
   readonly panner: StereoPannerNode;
   readonly mainSend: GainNode;
+  readonly sendsPreEq: GainNode[];
   readonly sendsPre: GainNode[];
   readonly sendsPost: GainNode[];
   /** 다른 채널이 이 채널을 키로 들을 때 쓰는 자리(필터 뒤, 다이내믹스 앞) */
@@ -88,6 +91,8 @@ export class ChannelStrip {
     this.preamp = new GainNode(ctx, mono);
     this.clipper = new WaveShaperNode(ctx, { ...mono, curve: clipCurve() });
     this.inputMeter = new AnalyserNode(ctx, { fftSize: 1024 });
+    this.polarity = new GainNode(ctx, { ...mono, gain: 1 });
+    this.delay = new DelayNode(ctx, { ...mono, maxDelayTime: 0.5, delayTime: 0 });
     this.hpf = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 80, Q: BUTTERWORTH_Q_DB });
     this.lpf = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 20000, Q: BUTTERWORTH_Q_DB });
     this.gate = new AudioWorkletNode(ctx, 'dynamics', {
@@ -107,6 +112,7 @@ export class ChannelStrip {
     this.faderMeter = new AnalyserNode(ctx, { fftSize: 1024 });
     this.panner = new StereoPannerNode(ctx);
     this.mainSend = new GainNode(ctx);
+    this.sendsPreEq = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
     this.sendsPre = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
     this.sendsPost = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
 
@@ -116,9 +122,10 @@ export class ChannelStrip {
 
     this.input.connect(this.preamp).connect(this.clipper);
     this.clipper.connect(this.inputMeter);
-    this.clipper.connect(this.hpf).connect(this.lpf).connect(this.gate).connect(this.peq.input);
+    this.clipper.connect(this.polarity).connect(this.delay).connect(this.hpf).connect(this.lpf).connect(this.gate).connect(this.peq.input);
     this.peq.output.connect(this.comp).connect(this.fader).connect(this.panner).connect(this.mainSend);
     this.fader.connect(this.faderMeter);
+    this.sendsPreEq.forEach((g) => this.gate.connect(g));
     this.sendsPre.forEach((g) => this.comp.connect(g));
     this.sendsPost.forEach((g) => this.fader.connect(g));
 
@@ -141,6 +148,9 @@ export class ChannelStrip {
     };
 
     ramp(this.preamp.gain, gainOf(s.preamp.gainDb));
+    // 극성은 바로 뒤집는다(램프하면 그 사이 소리가 0을 지나며 작아진다).
+    this.polarity.gain.setValueAtTime(s.preamp.invert ? -1 : 1, t);
+    ramp(this.delay.delayTime, s.preamp.delayOn ? s.preamp.delayMs / 1000 : 0);
     const hpfType: BiquadFilterType = s.preamp.hpfOn ? 'highpass' : 'allpass';
     if (this.hpf.type !== hpfType) this.hpf.type = hpfType;
     ramp(this.hpf.frequency, s.preamp.hpfOn ? s.preamp.hpfFreq : 20);
@@ -182,8 +192,9 @@ export class ChannelStrip {
     ramp(this.mainSend.gain, s.mainAssign ? 1 : 0);
     s.sends.forEach((send, i) => {
       const g = s.mute ? 0 : gainOf(send.levelDb);
-      if (this.sendsPre[i]) ramp(this.sendsPre[i].gain, send.pre ? g : 0);
-      if (this.sendsPost[i]) ramp(this.sendsPost[i].gain, send.pre ? 0 : g);
+      if (this.sendsPreEq[i]) ramp(this.sendsPreEq[i].gain, send.tap === 'pre-eq' ? g : 0);
+      if (this.sendsPre[i]) ramp(this.sendsPre[i].gain, send.tap === 'pre' ? g : 0);
+      if (this.sendsPost[i]) ramp(this.sendsPost[i].gain, send.tap === 'post' ? g : 0);
     });
   }
 
@@ -196,7 +207,7 @@ export class ChannelStrip {
   }
 
   disconnect(): void {
-    for (const n of [this.input, this.mainSend, ...this.sendsPre, ...this.sendsPost]) n.disconnect();
+    for (const n of [this.input, this.mainSend, ...this.sendsPreEq, ...this.sendsPre, ...this.sendsPost]) n.disconnect();
     this.gate.port.onmessage = null;
     this.comp.port.onmessage = null;
   }

@@ -213,6 +213,27 @@ describe('엔진: 사이드체인·모드·Mix', () => {
   });
 });
 
+describe('엔진: 채널 설정', () => {
+  const twoCh = {
+    shape: { channels: 2 },
+    initial: (s: Parameters<NonNullable<Parameters<typeof renderMixer>[0]['initial']>>[0]) => ({ ...s, patch: [0, 0] }),
+  };
+
+  it('같은 소리 두 채널 중 하나의 극성을 뒤집으면 거의 사라진다', async () => {
+    const same = await renderMixer({ freq: 500, db: -20, ...twoCh });
+    const inverted = await renderMixer({ freq: 500, db: -20, ...twoCh, prepare: ({ store }) => store.getState().actions.setPreamp(1, { invert: true }) });
+    expect(tailRmsDb(same) - tailRmsDb(inverted)).toBeGreaterThan(40);
+  });
+
+  it('500 Hz 사인을 한 채널만 1 ms 늦추면(반 주기) 상쇄되고, 2 ms면 다시 더해진다', async () => {
+    const delayed = (ms: number) =>
+      renderMixer({ freq: 500, db: -20, ...twoCh, prepare: ({ store }) => store.getState().actions.setPreamp(1, { delayOn: true, delayMs: ms }) });
+    const same = await renderMixer({ freq: 500, db: -20, ...twoCh });
+    expect(tailRmsDb(same) - tailRmsDb(await delayed(1))).toBeGreaterThan(30);
+    expect(tailRmsDb(await delayed(2))).toBeCloseTo(tailRmsDb(same), 0);
+  });
+});
+
 describe('엔진: Aux 센드', () => {
   const shape = { channels: 1, auxes: 1 };
   const listenAux = (pre: boolean, faderDb: number) =>
@@ -222,7 +243,7 @@ describe('엔진: Aux 센드', () => {
       shape,
       prepare: ({ store }) => {
         const a = store.getState().actions;
-        a.setSend(0, 0, { levelDb: 0, pre });
+        a.setSend(0, 0, { levelDb: 0, tap: pre ? 'pre' : 'post' });
         a.setFader(0, faderDb);
         a.setListen(0);
       },
@@ -235,6 +256,22 @@ describe('엔진: Aux 센드', () => {
     const preDown = await listenAux(true, -10);
     expect(tailRmsDb(post0) - tailRmsDb(postDown)).toBeCloseTo(10, 0);
     expect(tailRmsDb(pre0) - tailRmsDb(preDown)).toBeCloseTo(0, 1);
+  });
+
+  it('EQ 앞(pre-eq) 센드는 채널 PEQ를 따르지 않는다', async () => {
+    const run = (tap: 'pre-eq' | 'pre') =>
+      renderMixer({
+        freq: 1000,
+        db: -20,
+        shape,
+        prepare: ({ store }) => {
+          const a = store.getState().actions;
+          a.setSend(0, 0, { levelDb: 0, tap });
+          a.setPeqBand(0, 1, { freq: 1000, gainDb: -12, q: 1 });
+          a.setListen(0);
+        },
+      });
+    expect(tailRmsDb(await run('pre-eq')) - tailRmsDb(await run('pre'))).toBeCloseTo(12, 0);
   });
 
   it('듣기를 Aux로 바꾸면 센드가 없는 채널은 들리지 않는다', async () => {

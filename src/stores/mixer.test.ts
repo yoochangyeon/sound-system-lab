@@ -101,17 +101,71 @@ describe('신호 경로', () => {
   });
 });
 
+describe('스테레오 링크', () => {
+  it('켜면 앞 채널 설정을 뒤 채널에 복사하고 팬을 양쪽 끝으로 벌린다(이름은 그대로)', () => {
+    const st = makeStore();
+    const a = st.getState().actions;
+    a.setPreamp(0, { hpfOn: true, hpfFreq: 120 });
+    a.setLink(0, true);
+    const [l, r] = st.getState().channels;
+    expect(r.preamp.hpfFreq).toBe(120);
+    expect(r.name).toBe('IN 2');
+    expect([l.pan, r.pan]).toEqual([-1, 1]);
+  });
+
+  it('링크된 동안 한쪽 변경이 짝에도 걸리고, 팬은 따로 움직인다', () => {
+    const st = makeStore();
+    const a = st.getState().actions;
+    a.setLink(0, true);
+    a.setFader(1, -7);
+    a.setComp(0, { on: true, ratio: 5 });
+    a.setPan(0, -0.5);
+    const [l, r] = st.getState().channels;
+    expect([l.faderDb, r.faderDb]).toEqual([-7, -7]);
+    expect(r.comp.ratio).toBe(5);
+    expect([l.pan, r.pan]).toEqual([-0.5, 1]);
+  });
+
+  it('풀면 다시 따로 움직이고, 다른 짝은 영향이 없다', () => {
+    const st = makeStore();
+    const a = st.getState().actions;
+    a.setLink(0, true);
+    a.setLink(0, false);
+    a.setFader(0, -3);
+    a.setFader(2, -9);
+    const ch = st.getState().channels;
+    expect([ch[0].faderDb, ch[1].faderDb, ch[2].faderDb, ch[3].faderDb]).toEqual([-3, 0, -9, 0]);
+  });
+
+  it('채널 딜레이는 범위로 잘린다', () => {
+    const st = makeStore();
+    st.getState().actions.setPreamp(0, { delayOn: true, delayMs: 900 });
+    expect(st.getState().channels[0].preamp.delayMs).toBe(500);
+  });
+});
+
 describe('센드 경로와 하울링', () => {
   it('post 센드는 채널 페이더를 더하고, pre는 더하지 않는다', () => {
     const st = makeStore();
     const a = st.getState().actions;
     a.setPreamp(0, { gainDb: 10 });
-    a.setSend(0, 0, { levelDb: -5, pre: true });
+    a.setSend(0, 0, { levelDb: -5, tap: 'pre' });
     a.setFader(0, -8);
     a.setBusFader(0, -2);
     expect(sendPathGainDb(snapshot(st), 0, 0)).toBeCloseTo(10 - 5 - 2, 9);
-    a.setSend(0, 0, { pre: false });
+    a.setSend(0, 0, { tap: 'post' });
     expect(sendPathGainDb(snapshot(st), 0, 0)).toBeCloseTo(10 - 5 - 2 - 8, 9);
+  });
+
+  it('EQ 앞(pre-eq) 센드의 하울링 루프에는 PEQ가 들어가지 않는다', () => {
+    const st = makeStore();
+    const a = st.getState().actions;
+    a.setSend(0, 0, { levelDb: 0 });
+    a.setHowl({ active: true, channel: 0, aux: 0, freq: 1000 });
+    a.setPeqBand(0, 1, { freq: 1000, gainDb: -12, q: 2 });
+    const cut = howlLoopGainDb(snapshot(st));
+    a.setSend(0, 0, { tap: 'pre-eq' });
+    expect(howlLoopGainDb(snapshot(st)) - cut).toBeCloseTo(12, 0);
   });
 
   it('뮤트, 센드 맨 아래, Aux 뮤트면 -∞', () => {

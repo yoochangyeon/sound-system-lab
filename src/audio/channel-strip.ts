@@ -8,7 +8,7 @@
 import { BUTTERWORTH_Q_DB } from './dsp/biquad';
 import { dbToGain } from './dsp/units';
 import { Peq, RAMP } from './peq';
-import type { ChannelState, KeyFilter, KeyState } from '../stores/mixer-model';
+import type { BusKind, ChannelState, CompState, KeyFilter, KeyState } from '../stores/mixer-model';
 
 const GATE_MODE = { gate: 0, exp: 1, duck: 2 } as const;
 const KEY_FILTER: Record<KeyFilter, BiquadFilterType> = {
@@ -45,6 +45,22 @@ class KeyPath {
   }
 }
 
+/** 컴프 상태를 워클릿 파라미터로 옮긴다(키 경로는 따로). 채널·버스가 같이 쓴다. */
+export function applyCompParams(node: AudioWorkletNode, c: CompState, t: number): void {
+  const set = (name: string, v: number) => node.parameters.get(name)?.setTargetAtTime(v, t, RAMP);
+  set('threshold', c.thresholdDb);
+  set('ratio', c.ratio);
+  set('knee', c.kneeDb);
+  set('attack', c.attackMs);
+  set('release', c.releaseMs);
+  set('makeup', c.makeupDb);
+  set('detector', c.detector === 'rms' ? 1 : 0);
+  set('bypass', c.on ? 0 : 1);
+  set('mode', c.mode === 'exp' ? 1 : 0);
+  set('mix', c.mixPct);
+  set('listen', c.key.listen ? 1 : 0);
+}
+
 function gainOf(db: number): number {
   return db === -Infinity ? 0 : dbToGain(db);
 }
@@ -73,6 +89,8 @@ export class ChannelStrip {
   readonly sendsPreEq: GainNode[];
   readonly sendsPre: GainNode[];
   readonly sendsPost: GainNode[];
+  /** 그룹 버스로 가는 스테레오 센드(팬 뒤, 페이더 뒤) */
+  readonly sendsGroup: GainNode[];
   /** 다른 채널이 이 채널을 키로 들을 때 쓰는 자리(필터 뒤, 다이내믹스 앞) */
   readonly keyTap: AudioNode;
   readonly gateKey: KeyPath;
@@ -84,8 +102,9 @@ export class ChannelStrip {
 
   constructor(
     private ctx: BaseAudioContext,
-    auxCount: number,
+    private busKinds: BusKind[],
   ) {
+    const auxCount = busKinds.length;
     const mono = { channelCount: 1, channelCountMode: 'explicit' as const, channelInterpretation: 'speakers' as const };
     this.input = new GainNode(ctx, { ...mono, gain: 1 });
     this.preamp = new GainNode(ctx, mono);
@@ -115,6 +134,7 @@ export class ChannelStrip {
     this.sendsPreEq = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
     this.sendsPre = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
     this.sendsPost = Array.from({ length: auxCount }, () => new GainNode(ctx, { ...mono, gain: 0 }));
+    this.sendsGroup = Array.from({ length: auxCount }, () => new GainNode(ctx, { gain: 0 }));
 
     this.keyTap = this.lpf;
     this.gateKey = new KeyPath(ctx, this.gate);
@@ -128,6 +148,7 @@ export class ChannelStrip {
     this.sendsPreEq.forEach((g) => this.gate.connect(g));
     this.sendsPre.forEach((g) => this.comp.connect(g));
     this.sendsPost.forEach((g) => this.fader.connect(g));
+    this.sendsGroup.forEach((g) => this.panner.connect(g));
 
     this.gate.port.onmessage = (e) => {
       this.gateGrDb = e.data.gr;
@@ -174,17 +195,7 @@ export class ChannelStrip {
 
     this.peq.apply(s.peq);
 
-    set(this.comp, 'threshold', s.comp.thresholdDb);
-    set(this.comp, 'ratio', s.comp.ratio);
-    set(this.comp, 'knee', s.comp.kneeDb);
-    set(this.comp, 'attack', s.comp.attackMs);
-    set(this.comp, 'release', s.comp.releaseMs);
-    set(this.comp, 'makeup', s.comp.makeupDb);
-    set(this.comp, 'detector', s.comp.detector === 'rms' ? 1 : 0);
-    set(this.comp, 'bypass', s.comp.on ? 0 : 1);
-    set(this.comp, 'mode', s.comp.mode === 'exp' ? 1 : 0);
-    set(this.comp, 'mix', s.comp.mixPct);
-    set(this.comp, 'listen', s.comp.key.listen ? 1 : 0);
+    applyCompParams(this.comp, s.comp, t);
     this.compKey.apply(s.comp.key, this.keySource(s.comp.on, s.comp.key, this.peq.output, peers), t);
 
     ramp(this.fader.gain, s.mute ? 0 : gainOf(s.faderDb));
@@ -192,9 +203,12 @@ export class ChannelStrip {
     ramp(this.mainSend.gain, s.mainAssign ? 1 : 0);
     s.sends.forEach((send, i) => {
       const g = s.mute ? 0 : gainOf(send.levelDb);
-      if (this.sendsPreEq[i]) ramp(this.sendsPreEq[i].gain, send.tap === 'pre-eq' ? g : 0);
-      if (this.sendsPre[i]) ramp(this.sendsPre[i].gain, send.tap === 'pre' ? g : 0);
-      if (this.sendsPost[i]) ramp(this.sendsPost[i].gain, send.tap === 'post' ? g : 0);
+      // 그룹은 탭과 상관없이 팬 뒤(페이더 뒤) 스테레오로 받는다.
+      const group = this.busKinds[i] === 'group';
+      if (this.sendsPreEq[i]) ramp(this.sendsPreEq[i].gain, !group && send.tap === 'pre-eq' ? g : 0);
+      if (this.sendsPre[i]) ramp(this.sendsPre[i].gain, !group && send.tap === 'pre' ? g : 0);
+      if (this.sendsPost[i]) ramp(this.sendsPost[i].gain, !group && send.tap === 'post' ? g : 0);
+      if (this.sendsGroup[i]) ramp(this.sendsGroup[i].gain, group ? g : 0);
     });
   }
 
@@ -207,7 +221,7 @@ export class ChannelStrip {
   }
 
   disconnect(): void {
-    for (const n of [this.input, this.mainSend, ...this.sendsPreEq, ...this.sendsPre, ...this.sendsPost]) n.disconnect();
+    for (const n of [this.input, this.mainSend, ...this.sendsPreEq, ...this.sendsPre, ...this.sendsPost, ...this.sendsGroup]) n.disconnect();
     this.gate.port.onmessage = null;
     this.comp.port.onmessage = null;
   }

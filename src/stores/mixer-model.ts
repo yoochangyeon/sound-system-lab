@@ -94,11 +94,34 @@ export interface ChannelState {
   sends: SendState[]; // Aux 개수만큼
 }
 
+/**
+ * 버스 종류. monitor: 무대 모니터(모노, 메인으로 안 간다), group: 서브그룹(스테레오, 채널 팬 뒤에서 받아 메인으로),
+ * main: 메인 L/R. 실제 콘솔의 믹스 버스처럼 같은 틀에 종류만 다르다.
+ */
+export type BusKind = 'monitor' | 'group' | 'main';
+
 export interface BusState {
   name: string;
+  kind: BusKind;
   faderDb: number;
   mute: boolean;
   geq: number[]; // 31밴드 게인(dB)
+  /** 버스 처리: PEQ → 컴프 → GEQ 순서 */
+  peq: PeqState;
+  comp: CompState;
+  /** 그룹을 메인으로 보낼지(모니터·메인은 쓰지 않는다) */
+  mainAssign: boolean;
+}
+
+/** 매트릭스: 메인과 그룹을 다시 섞어 따로 내보낸다(로비 스피커, 방송 송출). 입력 채널은 직접 보낼 수 없다. */
+export interface MatrixState {
+  name: string;
+  faderDb: number;
+  mute: boolean;
+  /** 메인에서 받는 양 */
+  fromMainDb: number;
+  /** 버스(그룹)마다 받는 양. 그룹이 아닌 버스는 무시한다 */
+  fromBusDb: number[];
 }
 
 export interface InputState {
@@ -115,8 +138,8 @@ export interface HowlState {
   freq: number;
 }
 
-/** 'main' 메인, number 모니터(Aux) 번호(0부터), 'reference' 정답 믹스(원곡 믹스) */
-export type ListenTarget = 'main' | number | 'reference';
+/** 'main' 메인, number 버스 번호(0부터), 'reference' 정답 믹스(원곡 믹스), 'matrix-n' 매트릭스 */
+export type ListenTarget = 'main' | number | 'reference' | `matrix-${number}`;
 
 export interface MixerState {
   inputs: InputState[];
@@ -124,7 +147,9 @@ export interface MixerState {
   patch: (number | null)[];
   channels: ChannelState[];
   main: BusState;
+  /** 믹스 버스(모니터·그룹). 채널의 sends[i]가 auxes[i]로 간다 */
   auxes: BusState[];
+  matrix: MatrixState[];
   listen: ListenTarget;
   howl: HowlState;
   /** 스테레오 링크: links[k]면 채널 2k와 2k+1이 같이 움직인다(팬 제외) */
@@ -142,6 +167,26 @@ export function defaultKey(): KeyState {
   return { source: 'self', filter: 'off', freq: 1000, listen: false };
 }
 
+export function defaultComp(): CompState {
+  return {
+    on: false,
+    mode: 'comp',
+    thresholdDb: -20,
+    ratio: 3,
+    kneeDb: 2,
+    attackMs: 10,
+    releaseMs: 150,
+    makeupDb: 0,
+    detector: 'peak',
+    mixPct: 100,
+    key: defaultKey(),
+  };
+}
+
+export function defaultPeq(): PeqState {
+  return { on: true, bands: DEFAULT_PEQ_BANDS.map((b) => ({ ...b })) };
+}
+
 export function defaultChannel(name: string, auxCount: number): ChannelState {
   return {
     name,
@@ -157,20 +202,8 @@ export function defaultChannel(name: string, auxCount: number): ChannelState {
       releaseMs: 150,
       key: defaultKey(),
     },
-    peq: { on: true, bands: DEFAULT_PEQ_BANDS.map((b) => ({ ...b })) },
-    comp: {
-      on: false,
-      mode: 'comp',
-      thresholdDb: -20,
-      ratio: 3,
-      kneeDb: 2,
-      attackMs: 10,
-      releaseMs: 150,
-      makeupDb: 0,
-      detector: 'peak',
-      mixPct: 100,
-      key: defaultKey(),
-    },
+    peq: defaultPeq(),
+    comp: defaultComp(),
     faderDb: 0,
     mute: false,
     pan: 0,
@@ -180,7 +213,15 @@ export function defaultChannel(name: string, auxCount: number): ChannelState {
 }
 
 export function defaultBus(name: string): BusState {
-  return { name, faderDb: 0, mute: false, geq: flatGeq() };
+  return defaultBusOf(name, 'monitor');
+}
+
+export function defaultBusOf(name: string, kind: BusKind): BusState {
+  return { name, kind, faderDb: 0, mute: false, geq: flatGeq(), peq: defaultPeq(), comp: defaultComp(), mainAssign: kind === 'group' };
+}
+
+export function defaultMatrix(name: string, busCount: number): MatrixState {
+  return { name, faderDb: 0, mute: false, fromMainDb: 0, fromBusDb: Array.from({ length: busCount }, () => -Infinity) };
 }
 
 export interface MixerShape {
@@ -188,6 +229,10 @@ export interface MixerShape {
   auxes: number;
   inputs: InputState[];
   auxNames?: string[];
+  /** 버스 종류(기본 모두 monitor) */
+  auxKinds?: BusKind[];
+  /** 매트릭스 이름들(기본 없음) */
+  matrixNames?: string[];
 }
 
 /** 채널 n개, Aux m개짜리 기본 상태. 입력 i는 채널 i에 꽂힌다. */
@@ -199,8 +244,9 @@ export function defaultMixerState(shape: MixerShape): MixerState {
     channels: Array.from({ length: shape.channels }, (_, i) =>
       defaultChannel(shape.inputs[i]?.label ?? `CH ${i + 1}`, shape.auxes),
     ),
-    main: defaultBus('Main'),
-    auxes: auxNames.map((n) => defaultBus(n)),
+    main: defaultBusOf('Main', 'main'),
+    auxes: auxNames.map((n, i) => defaultBusOf(n, shape.auxKinds?.[i] ?? 'monitor')),
+    matrix: (shape.matrixNames ?? []).map((n) => defaultMatrix(n, shape.auxes)),
     listen: 'main',
     howl: { active: false, channel: 0, aux: 0, freq: 2500 },
     links: Array.from({ length: Math.floor(shape.channels / 2) }, () => false),

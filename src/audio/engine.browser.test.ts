@@ -73,7 +73,7 @@ describe('엔진: 채널 스트립', () => {
     const ctx = new OfflineAudioContext({ numberOfChannels: 1, length: SR / 4, sampleRate: SR });
     await ensureWorklets(ctx);
     const { ChannelStrip } = await import('./channel-strip');
-    const strip = new ChannelStrip(ctx, 0);
+    const strip = new ChannelStrip(ctx, []);
     strip.preamp.gain.value = 10; // +20 dB
     const src = new AudioBufferSourceNode(ctx, { buffer: sineBuffer(ctx, 440, -3, 0.25) });
     src.connect(strip.input);
@@ -277,5 +277,95 @@ describe('엔진: Aux 센드', () => {
   it('듣기를 Aux로 바꾸면 센드가 없는 채널은 들리지 않는다', async () => {
     const out = await renderMixer({ freq: 1000, db: -20, shape, prepare: ({ store }) => store.getState().actions.setListen(0) });
     expect(tailRmsDb(out)).toBeLessThan(-90);
+  });
+});
+
+describe('엔진: 그룹·매트릭스·버스 처리', () => {
+  const grp = {
+    shape: { channels: 1, auxes: 2, auxKinds: ['monitor', 'group'] as ('monitor' | 'group')[], matrixNames: ['로비'] },
+  };
+
+  it('메인 할당을 끄고 그룹으로 보내면 그룹을 거쳐 같은 크기로 메인에 나온다', async () => {
+    const direct = await renderMixer({ freq: 1000, db: -20, ...grp });
+    const viaGroup = await renderMixer({
+      freq: 1000,
+      db: -20,
+      ...grp,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setMainAssign(0, false);
+        a.setSend(0, 1, { levelDb: 0 });
+      },
+    });
+    expect(tailRmsDb(viaGroup)).toBeCloseTo(tailRmsDb(direct), 1);
+  });
+
+  it('그룹은 채널 팬을 따른다(왼쪽 끝이면 오른쪽 출력이 없다)', async () => {
+    const out = await renderMixer({
+      freq: 1000,
+      db: -20,
+      ...grp,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setMainAssign(0, false);
+        a.setSend(0, 1, { levelDb: 0 });
+        a.setPan(0, -1);
+      },
+    });
+    expect(tailRmsDb(out, 0)).toBeGreaterThan(-30);
+    expect(tailRmsDb(out, 1)).toBeLessThan(-90);
+  });
+
+  it('매트릭스는 메인을 받아 따로 들을 수 있고, 모니터 버스는 받지 않는다', async () => {
+    const main = await renderMixer({ freq: 1000, db: -20, ...grp });
+    const mtx = await renderMixer({
+      freq: 1000,
+      db: -20,
+      ...grp,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setMatrix(0, { fromMainDb: -6 });
+        a.setListen('matrix-0');
+      },
+    });
+    expect(tailRmsDb(main) - tailRmsDb(mtx)).toBeCloseTo(6, 0);
+    const monitorOnly = await renderMixer({
+      freq: 1000,
+      db: -20,
+      ...grp,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setSend(0, 0, { levelDb: 0 });
+        a.setMatrix(0, { fromMainDb: -Infinity, fromBus: { bus: 0, db: 0 } });
+        a.setListen('matrix-0');
+      },
+    });
+    expect(tailRmsDb(monitorOnly)).toBeLessThan(-90);
+  });
+
+  it('메인 컴프가 메인 출력을 누른다', async () => {
+    const ref = await renderMixer({ freq: 1000, db: -6 });
+    const comp = await renderMixer({
+      freq: 1000,
+      db: -6,
+      prepare: ({ store }) => store.getState().actions.setBusComp('main', { on: true, thresholdDb: -30, ratio: 4, kneeDb: 0, attackMs: 1 }),
+    });
+    expect(tailRmsDb(ref) - tailRmsDb(comp)).toBeGreaterThan(5);
+  });
+
+  it('버스 GEQ를 올렸다가 다시 평평하게 하면 원래 크기로 돌아온다(GEQ 건너뛰기)', async () => {
+    const ref = await renderMixer({ freq: 1000, db: -20 });
+    const boosted = await renderMixer({ freq: 1000, db: -20, prepare: ({ store }) => store.getState().actions.setGeqBand('main', 17, 6) });
+    const back = await renderMixer({
+      freq: 1000,
+      db: -20,
+      prepare: ({ store }) => {
+        const a = store.getState().actions;
+        a.setGeqBand('main', 17, 6);
+        a.resetGeq('main');
+      },
+    });
+    expect(tailRmsDb(boosted) - tailRmsDb(ref)).toBeGreaterThan(4);
+    expect(tailRmsDb(back)).toBeCloseTo(tailRmsDb(ref), 1);
   });
 });

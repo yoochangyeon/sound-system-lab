@@ -225,3 +225,50 @@ describe('좁은 프로필', () => {
     expect(st.getState().channels[0].comp.thresholdDb).toBe(0);
   });
 });
+
+describe('그룹과 매트릭스', () => {
+  function groupStore() {
+    return createMixerStore(
+      defaultMixerState({ channels: 2, auxes: 2, inputs, auxKinds: ['monitor', 'group'], matrixNames: ['로비'] }),
+      GENERIC_PROFILE,
+    );
+  }
+
+  it('메인 할당을 꺼도 그룹을 거쳐 메인에 닿는다', () => {
+    const st = groupStore();
+    const a = st.getState().actions;
+    a.setMainAssign(0, false);
+    expect(channelReachesMain(snapshot(st), 0)).toBe(false);
+    a.setSend(0, 1, { levelDb: 0 });
+    expect(channelReachesMain(snapshot(st), 0)).toBe(true);
+    a.setBusMainAssign(1, false);
+    expect(channelReachesMain(snapshot(st), 0)).toBe(false);
+    expect(mainPathProblems(snapshot(st), 0)).toContain('main-assign-off');
+  });
+
+  it('모니터 버스로 보내는 것은 메인 경로가 아니다', () => {
+    const st = groupStore();
+    const a = st.getState().actions;
+    a.setMainAssign(0, false);
+    a.setSend(0, 0, { levelDb: 0 });
+    expect(channelReachesMain(snapshot(st), 0)).toBe(false);
+  });
+
+  it('매트릭스 센드는 범위로 잘리고 맨 아래면 −∞', () => {
+    const st = groupStore();
+    const a = st.getState().actions;
+    a.setMatrix(0, { fromBus: { bus: 1, db: 30 }, fromMainDb: -200 });
+    const m = st.getState().matrix[0];
+    expect(m.fromBusDb[1]).toBe(10);
+    expect(m.fromMainDb).toBe(-Infinity);
+  });
+
+  it('버스 컴프·PEQ도 범위로 잘린다', () => {
+    const st = groupStore();
+    const a = st.getState().actions;
+    a.setBusComp('main', { on: true, ratio: 500 });
+    a.setBusPeqBand(1, 0, { gainDb: 40 });
+    expect(st.getState().main.comp.ratio).toBe(20);
+    expect(st.getState().auxes[1].peq.bands[0].gainDb).toBe(15);
+  });
+});

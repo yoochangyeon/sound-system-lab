@@ -1,10 +1,11 @@
 // 믹서 엔진: 저장소 상태를 구독해 Web Audio 그래프로 옮긴다.
-// 입력(스템) → 패치 → 채널 스트립 → 메인/Aux 버스 → 듣기 선택 → 안전 리미터 → 출력.
+// 입력(스템) → 패치 → 채널 스트립 → 버스(모니터·그룹) → 메인 → 매트릭스 → 듣기 선택 → 안전 리미터 → 출력.
+// 그룹은 채널의 팬 뒤 스테레오를 받아 메인으로 보내고(mainAssign), 매트릭스는 메인과 그룹을 받는다.
 // 하울링 톤은 하울링 설정이 켜졌을 때 해당 Aux의 RTA와 최종 출력에 섞인다(듣기 선택과 상관없음).
 // 소스는 채널에 연결된 것만 불러온다(#45). 재생 중에 새로 연결되면 지금 루프 위치에 맞춰 이어서 튼다.
 // 정답 믹스(원곡 믹스)는 따로 불러 같은 시각에 맞춰 돌리고, 듣기를 '정답 믹스'로 고를 때만 들린다.
 
-import { Bus } from './bus';
+import { Bus, MatrixBus } from './bus';
 import { ChannelStrip } from './channel-strip';
 import { loadSample } from './context';
 import { HOWL_FLOOR_DB, howlStep } from './dsp/feedback';
@@ -30,6 +31,10 @@ export class MixerEngine {
   readonly strips: ChannelStrip[];
   readonly main: Bus;
   readonly auxes: Bus[];
+  /** 그룹 → 메인 할당 */
+  readonly busMain: GainNode[];
+  readonly matrix: MatrixBus[];
+  readonly listenMatrix: GainNode[];
   readonly inputNodes: GainNode[];
   readonly listenMain: GainNode;
   readonly listenAux: GainNode[];
@@ -57,13 +62,16 @@ export class MixerEngine {
     private opts: EngineOptions,
   ) {
     const s = store.getState();
-    const auxCount = s.auxes.length;
+    const kinds = s.auxes.map((b) => b.kind);
     this.inputNodes = s.inputs.map(
       () => new GainNode(ctx, { channelCount: 1, channelCountMode: 'explicit', channelInterpretation: 'speakers' }),
     );
-    this.strips = s.channels.map(() => new ChannelStrip(ctx, auxCount));
+    this.strips = s.channels.map(() => new ChannelStrip(ctx, kinds));
     this.main = new Bus(ctx, 2);
-    this.auxes = s.auxes.map(() => new Bus(ctx, 1));
+    this.auxes = kinds.map((k) => new Bus(ctx, k === 'group' ? 2 : 1));
+    this.busMain = kinds.map(() => new GainNode(ctx, { gain: 0 }));
+    this.matrix = s.matrix.map(() => new MatrixBus(ctx, this.main.output, this.auxes.map((b) => b.output)));
+    this.listenMatrix = this.matrix.map(() => new GainNode(ctx, { gain: 0 }));
     this.listenMix = new GainNode(ctx, { channelCount: 2, channelCountMode: 'explicit' });
     this.listenMain = new GainNode(ctx, { gain: 1 });
     this.listenAux = this.auxes.map(() => new GainNode(ctx, { gain: 0 }));
@@ -82,7 +90,10 @@ export class MixerEngine {
       st.sendsPreEq.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsPre.forEach((g, a) => g.connect(this.auxes[a].input));
       st.sendsPost.forEach((g, a) => g.connect(this.auxes[a].input));
+      st.sendsGroup.forEach((g, a) => g.connect(this.auxes[a].input));
     });
+    this.auxes.forEach((b, a) => b.output.connect(this.busMain[a]).connect(this.main.input));
+    this.matrix.forEach((m, i) => m.output.connect(this.listenMatrix[i]).connect(this.listenMix));
     this.main.output.connect(this.listenMain).connect(this.listenMix);
     this.auxes.forEach((b, a) => b.output.connect(this.listenAux[a]).connect(this.listenMix));
     this.howlOsc.connect(this.howlGain);
@@ -215,6 +226,7 @@ export class MixerEngine {
     if (this.howlTimer) clearInterval(this.howlTimer);
     this.howlOsc.stop();
     this.strips.forEach((s) => s.disconnect());
+    [this.main, ...this.auxes].forEach((b) => b.disconnect());
     this.listenMix.disconnect();
     this.limiter.disconnect();
   }
@@ -224,7 +236,8 @@ export class MixerEngine {
   private applyAll(s: MixerState): void {
     s.channels.forEach((c, i) => this.strips[i]?.apply(c, this.strips));
     this.main.apply(s.main);
-    s.auxes.forEach((b, i) => this.auxes[i]?.apply(b));
+    s.auxes.forEach((b, i) => this.applyBus(b, i));
+    this.applyMatrix(s);
     this.applyListen(s);
     this.applyHowlTone(s);
   }
@@ -236,7 +249,8 @@ export class MixerEngine {
       });
     }
     if (next.main !== prev.main) this.main.apply(next.main);
-    if (next.auxes !== prev.auxes) next.auxes.forEach((b, i) => b !== prev.auxes[i] && this.auxes[i]?.apply(b));
+    if (next.auxes !== prev.auxes) next.auxes.forEach((b, i) => b !== prev.auxes[i] && this.applyBus(b, i));
+    if (next.matrix !== prev.matrix) this.applyMatrix(next);
     if (next.patch !== prev.patch) {
       this.wirePatch(next);
       // 새로 연결된 소스를 불러와 지금 위치에 맞춰 튼다.
@@ -253,6 +267,16 @@ export class MixerEngine {
     if (next.howl !== prev.howl) this.applyHowlTone(next);
   }
 
+  private applyBus(b: MixerState['auxes'][number], i: number): void {
+    this.auxes[i]?.apply(b);
+    this.busMain[i]?.gain.setTargetAtTime(b.kind === 'group' && b.mainAssign ? 1 : 0, this.ctx.currentTime, RAMP);
+  }
+
+  private applyMatrix(s: MixerState): void {
+    const isGroup = s.auxes.map((b) => b.kind === 'group');
+    s.matrix.forEach((m, i) => this.matrix[i]?.apply(m, isGroup));
+  }
+
   private wirePatch(s: MixerState): void {
     s.patch.forEach((input, ch) => {
       const old = this.patchWiring[ch];
@@ -267,6 +291,7 @@ export class MixerEngine {
     const t = this.ctx.currentTime;
     this.listenMain.gain.setTargetAtTime(s.listen === 'main' ? 1 : 0, t, RAMP);
     this.listenAux.forEach((g, a) => g.gain.setTargetAtTime(s.listen === a ? 1 : 0, t, RAMP));
+    this.listenMatrix.forEach((g, i) => g.gain.setTargetAtTime(s.listen === `matrix-${i}` ? 1 : 0, t, RAMP));
     this.refGain.gain.setTargetAtTime(s.listen === 'reference' && this.refBuffer ? dbToGain(this.refTrimDb) : 0, t, RAMP);
   }
 
@@ -316,6 +341,15 @@ export class MixerEngine {
   busPeakDb(bus: BusRef): number {
     const b = bus === 'main' ? this.main : this.auxes[bus];
     return b ? this.readPeak(b.analyser) : -Infinity;
+  }
+
+  matrixPeakDb(i: number): number {
+    const m = this.matrix[i];
+    return m ? this.readPeak(m.analyser) : -Infinity;
+  }
+
+  busCompGrDb(bus: BusRef): number {
+    return (bus === 'main' ? this.main : this.auxes[bus])?.compGrDb ?? 0;
   }
 
   private freqScratch = new Float32Array(4096);

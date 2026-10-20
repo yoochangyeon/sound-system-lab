@@ -1,14 +1,15 @@
-// PEQ+HPF 위젯(#8). 밴드 4개(로우셸프, 피킹 2, 하이셸프)와 HPF를 돌리면 소리와 응답 곡선이 바로 바뀐다.
-import { useMemo, useRef } from 'react';
+// PEQ+HPF 위젯(#8, 2차 개편 #35). HPF 스위치·차단 주파수, 밴드 탭 4개 → 주파수·게인. Q는 '더 자세히'.
+import { useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import { channelEqResponseDb } from '../../stores/derived';
-import { Knob } from '../ui/Knob';
+import { More, Slider, Switch, Tabs } from '../ui/controls';
 import { ResponseGraph } from '../ui/CurveGraph';
 import { Meter } from '../ui/Meter';
 import { WidgetShell } from './WidgetShell';
 import { createWidgetStore } from './widget-store';
 
-const BAND_NAMES = ['저음 셸프', '중저음', '중고음', '고음 셸프'];
+const BAND_NAMES = ['저음', '중저음', '중고음', '고음'];
+const BAND_HINTS = ['이 주파수 아래 전체(셸프)', '종 모양으로 한 대역만', '종 모양으로 한 대역만', '이 주파수 위 전체(셸프)'];
 const BAND_DEFAULT_FREQ = [120, 500, 2500, 8000];
 
 export interface PeqWidgetProps {
@@ -24,6 +25,7 @@ export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
   const ranges = useStore(store, (s) => s.profile.ranges);
   const a = useStore(store, (s) => s.actions);
   const savedHpf = useRef(false);
+  const [band, setBand] = useState(1);
 
   const bypassed = !ch.peq.on && !ch.preamp.hpfOn;
   const toggleBypass = () => {
@@ -38,83 +40,76 @@ export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
   };
 
   const response = useMemo(() => (f: number) => channelEqResponseDb(ch, f), [ch]);
+  const b = ch.peq.bands[band];
 
   return (
-    <WidgetShell title="PEQ + HPF" accent="var(--fn-eq)" store={store} bypassed={bypassed} onBypass={toggleBypass}>
+    <WidgetShell title="EQ (HPF + PEQ)" accent="var(--fn-eq)" store={store} bypassed={bypassed} onBypass={toggleBypass}>
       {({ engine, status }) => (
         <>
-          <div className="sim-row" style={{ alignItems: 'stretch' }}>
-            <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-              <ResponseGraph response={response} />
+          <div className="sim-visual">
+            <div className="grow">
+              <ResponseGraph response={response} height={130} />
             </div>
-            <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={120} label="출력" />
+            <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={118} label="출력" />
           </div>
+
           <div className="sim-group" style={{ ['--accent-fn' as string]: 'var(--fn-preamp)' }}>
             <div className="sim-group-title">
-              <span>HPF (저음 자르기)</span>
-              <button
-                type="button"
-                className={`sim-btn is-small${ch.preamp.hpfOn ? ' is-active' : ''}`}
-                aria-pressed={ch.preamp.hpfOn}
-                onClick={() => a.setPreamp(0, { hpfOn: !ch.preamp.hpfOn })}
-              >
-                {ch.preamp.hpfOn ? '켜짐' : '꺼짐'}
-              </button>
+              <span>HPF · 저음 자르기</span>
+              <Switch on={ch.preamp.hpfOn} onChange={(on) => a.setPreamp(0, { hpfOn: on })} color="var(--fn-eq)" />
             </div>
-            <div className="sim-row">
-              <Knob
-                label="차단 주파수"
-                value={ch.preamp.hpfFreq}
-                range={ranges.hpfFreq}
-                onChange={(v) => a.setPreamp(0, { hpfFreq: v })}
-                color="var(--fn-preamp)"
-                defaultValue={80}
-                disabled={!ch.preamp.hpfOn}
+            <Slider
+              label="차단 주파수"
+              hint="이 주파수 아래를 깎는다"
+              value={ch.preamp.hpfFreq}
+              range={ranges.hpfFreq}
+              onChange={(v) => a.setPreamp(0, { hpfFreq: v })}
+              defaultValue={80}
+              disabled={!ch.preamp.hpfOn}
+            />
+          </div>
+
+          <div className="sim-group">
+            <div className="sim-group-title">
+              <span>PEQ · 대역 다듬기</span>
+            </div>
+            <Tabs label="밴드" items={BAND_NAMES.map((n, i) => ({ id: i, label: n }))} value={band} onChange={setBand} />
+            <div className="sim-sliders" style={{ marginTop: 8 }}>
+              <Slider
+                label="주파수"
+                hint={BAND_HINTS[band]}
+                value={b.freq}
+                range={ranges.eqFreq}
+                onChange={(v) => a.setPeqBand(0, band, { freq: v })}
+                defaultValue={BAND_DEFAULT_FREQ[band]}
+                disabled={!ch.peq.on}
+              />
+              <Slider
+                label="올리기·내리기"
+                hint="0보다 작으면 깎는다"
+                value={b.gainDb}
+                range={ranges.eqGain}
+                onChange={(v) => a.setPeqBand(0, band, { gainDb: v })}
+                defaultValue={0}
+                disabled={!ch.peq.on}
               />
             </div>
           </div>
-          <div className="sim-row">
-            {ch.peq.bands.map((b, i) => (
-              <div className="sim-group" key={i} style={{ flex: '1 1 140px' }}>
-                <div className="sim-group-title">
-                  <span>
-                    {i + 1}. {BAND_NAMES[i]}
-                  </span>
-                </div>
-                <div className="sim-row">
-                  <Knob
-                    label="주파수"
-                    value={b.freq}
-                    range={ranges.eqFreq}
-                    onChange={(v) => a.setPeqBand(0, i, { freq: v })}
-                    defaultValue={BAND_DEFAULT_FREQ[i]}
-                    size={48}
-                    disabled={!ch.peq.on}
-                  />
-                  <Knob
-                    label="게인"
-                    value={b.gainDb}
-                    range={ranges.eqGain}
-                    onChange={(v) => a.setPeqBand(0, i, { gainDb: v })}
-                    defaultValue={0}
-                    size={48}
-                    disabled={!ch.peq.on}
-                  />
-                  {b.type === 'peaking' && (
-                    <Knob
-                      label="Q (폭)"
-                      value={b.q}
-                      range={ranges.eqQ}
-                      onChange={(v) => a.setPeqBand(0, i, { q: v })}
-                      defaultValue={1}
-                      size={48}
-                      disabled={!ch.peq.on}
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+
+          {b.type === 'peaking' && (
+            <More label="더 자세히: Q(폭)">
+              <Slider
+                label="Q (폭)"
+                hint="클수록 좁은 대역만, 작을수록 넓게"
+                value={b.q}
+                range={ranges.eqQ}
+                onChange={(v) => a.setPeqBand(0, band, { q: v })}
+                defaultValue={1}
+                format={(v) => v.toFixed(1)}
+                disabled={!ch.peq.on}
+              />
+            </More>
+          )}
         </>
       )}
     </WidgetShell>

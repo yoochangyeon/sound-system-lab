@@ -1,4 +1,4 @@
-// GEQ 위젯(#12). 보컬 마이크 → 모니터(Aux) 경로에 31밴드 GEQ를 걸고, 하울링 데모로
+// GEQ 위젯(#12, 2차 개편 #35: 밝은 카드). 보컬 마이크 → 모니터(Aux) 경로에 31밴드 GEQ를 걸고, 하울링 데모로
 // RTA에서 튀어나온 주파수를 찾아 그 밴드만 깎아 멈추게 한다.
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
@@ -58,7 +58,7 @@ export default function GeqWidget({ defaultStem = 'vocals' }: { defaultStem?: st
 
   return (
     <WidgetShell
-      title="GEQ 31밴드 · 모니터"
+      title="GEQ · 모니터 하울링"
       accent="var(--fn-bus)"
       store={store}
       footer={
@@ -66,7 +66,7 @@ export default function GeqWidget({ defaultStem = 'vocals' }: { defaultStem?: st
           ? loop > 0
             ? 'RTA에서 빨갛게 튀어나온 막대를 찾아, 같은 주파수의 GEQ 밴드를 아래로 내려 보세요.'
             : `잡았습니다. 하울링 주파수는 ${formatHz(howl.freq)}Hz였습니다. 그 밴드만 깎았기 때문에 다른 소리는 거의 그대로입니다.`
-          : '지금은 보컬 마이크가 무대 모니터로 나가는 소리를 듣고 있다. ‘하울링 데모’를 누르면 모니터에서 하울링이 시작된다.'
+          : '지금은 보컬 마이크가 무대 모니터로 나가는 소리를 듣고 있다. ‘하울링 일으키기’를 누르면 모니터에서 하울링이 시작된다.'
       }
     >
       {({ engine, status }) => (
@@ -74,22 +74,26 @@ export default function GeqWidget({ defaultStem = 'vocals' }: { defaultStem?: st
           <div className="sim-row is-center">
             <button
               type="button"
-              className={`sim-btn${howl.active ? ' is-on' : ''}`}
+              className={`sim-btn${howl.active ? ' is-on' : ' is-primary'}`}
               onClick={() => (howl.active ? a.setHowl({ active: false }) : startHowl())}
               disabled={status !== 'playing'}
             >
-              {howl.active ? '하울링 데모 끝내기' : '하울링 데모 시작'}
+              {howl.active ? '하울링 끝내기' : '하울링 일으키기'}
             </button>
             <button type="button" className="sim-btn" onClick={() => a.resetGeq(0)}>
-              GEQ 평평하게
+              평평하게
             </button>
             <HowlStatus engine={engine} active={status === 'playing' && howl.active} />
-            {status !== 'playing' && <span className="sim-stat">먼저 ▶ 재생을 누른다</span>}
+            {status !== 'playing' && <span className="sim-stat">먼저 ▶ 들어 보기를 누른다</span>}
           </div>
-          <Rta read={() => engine?.rta(0) ?? []} active={status === 'playing'} height={110} />
-          <ResponseGraph response={response} color="var(--fn-bus)" range={16} height={90} />
+          <div className="sim-visual" style={{ flexDirection: 'column', gap: 6 }}>
+            <span className="sim-stat">RTA · 지금 나는 소리</span>
+            <Rta read={() => engine?.rta(0) ?? []} active={status === 'playing'} height={110} />
+            <span className="sim-stat">GEQ 모양</span>
+            <ResponseGraph response={response} color="var(--fn-bus)" range={16} height={80} />
+          </div>
           <GeqSliders gains={geq} range={range} onChange={(b, db) => a.setGeqBand(0, b, db)} />
-          <span className="sim-stat">밴드 {GEQ_FREQS.length}개 · 슬라이더를 더블클릭하면 0 dB</span>
+          <span className="sim-stat">밴드 {GEQ_FREQS.length}개 · 옆으로 밀어 보기 · 더블클릭하면 0 dB</span>
         </>
       )}
     </WidgetShell>

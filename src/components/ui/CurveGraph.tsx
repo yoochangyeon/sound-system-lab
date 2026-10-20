@@ -48,21 +48,21 @@ export function ResponseGraph({ response, range = 18, color = 'var(--fn-eq)', ma
   return (
     <div ref={box} style={{ width: '100%' }}>
     <svg className="sim-graph" width={W} height={height} viewBox={`0 0 ${W} ${height}`} role="img" aria-label="주파수 응답 곡선">
-      <rect width={W} height={height} fill="#0c0d10" />
+      <rect width={W} height={height} fill="#fff" />
       {GRID_F.map((f) => (
         <g key={f}>
-          <line x1={fx(f)} x2={fx(f)} y1={0} y2={height} stroke="#262a31" />
-          <text x={fx(f) + 2} y={height - 3} fill="#6b7080" fontSize="9">
+          <line x1={fx(f)} x2={fx(f)} y1={0} y2={height} stroke="#eef0f2" />
+          <text x={fx(f) + 2} y={height - 3} fill="#8b95a1" fontSize="10">
             {f >= 1000 ? `${f / 1000}k` : f}
           </text>
         </g>
       ))}
       {[-12, -6, 6, 12].map((d) => (
-        <line key={d} x1={0} x2={W} y1={height / 2 - (d / range) * (height / 2 - 6)} y2={height / 2 - (d / range) * (height / 2 - 6)} stroke="#1d2027" />
+        <line key={d} x1={0} x2={W} y1={height / 2 - (d / range) * (height / 2 - 6)} y2={height / 2 - (d / range) * (height / 2 - 6)} stroke="#f2f4f6" />
       ))}
-      <line x1={0} x2={W} y1={height / 2} y2={height / 2} stroke="#3a3f49" />
-      {marker && <line x1={fx(marker)} x2={fx(marker)} y1={0} y2={height} stroke="#ef4444" strokeDasharray="3 3" />}
-      <path d={path} stroke={color} strokeWidth={2} fill="none" />
+      <line x1={0} x2={W} y1={height / 2} y2={height / 2} stroke="#d1d6db" />
+      {marker && <line x1={fx(marker)} x2={fx(marker)} y1={0} y2={height} stroke="#f04452" strokeDasharray="3 3" />}
+      <path d={path} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" />
     </svg>
     </div>
   );
@@ -88,17 +88,17 @@ export function TransferGraph({ transfer, thresholdDb, current, color = 'var(--f
   }, [transfer]);
   return (
     <svg className="sim-graph sim-graph-square" viewBox={`0 0 ${S} ${S}`} role="img" aria-label="입력-출력 전달 곡선">
-      <rect width={S} height={S} fill="#0c0d10" />
-      <line x1={0} y1={S} x2={S} y2={0} stroke="#2a2e36" strokeDasharray="3 3" />
-      <line x1={map(thresholdDb)} x2={map(thresholdDb)} y1={0} y2={S} stroke="#3a3f49" />
-      <path d={path} stroke={color} strokeWidth={2} fill="none" />
+      <rect width={S} height={S} fill="#fff" />
+      <line x1={0} y1={S} x2={S} y2={0} stroke="#e5e8eb" strokeDasharray="3 3" />
+      <line x1={map(thresholdDb)} x2={map(thresholdDb)} y1={0} y2={S} stroke="#d1d6db" />
+      <path d={path} stroke={color} strokeWidth={2.5} fill="none" />
       {current !== undefined && Number.isFinite(current) && (
-        <circle cx={map(current)} cy={S - map(transfer(current))} r={4} fill="#e9eaee" />
+        <circle cx={map(current)} cy={S - map(transfer(current))} r={4} fill="#191f28" />
       )}
-      <text x={4} y={12} fill="#6b7080" fontSize="9">
+      <text x={4} y={12} fill="#8b95a1" fontSize="10">
         출력
       </text>
-      <text x={S - 26} y={S - 4} fill="#6b7080" fontSize="9">
+      <text x={S - 26} y={S - 4} fill="#8b95a1" fontSize="10">
         입력
       </text>
     </svg>

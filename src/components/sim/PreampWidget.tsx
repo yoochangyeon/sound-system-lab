@@ -1,8 +1,8 @@
-// 프리엠프 위젯(#9). 게인을 너무 올리면 입력 미터에 클리핑이 켜지고 실제로 깨진 소리가 난다.
+// 프리엠프 위젯(#9, 2차 개편 #35). 게인 슬라이더 하나. 너무 올리면 입력 미터에 클리핑이 켜지고 실제로 깨진 소리가 난다.
 import { useMemo } from 'react';
 import { useStore } from 'zustand';
 import { inputPeakDb } from '../../stores/derived';
-import { Knob } from '../ui/Knob';
+import { Slider } from '../ui/controls';
 import { Meter } from '../ui/Meter';
 import { fmtDb } from '../ui/scale';
 import { WidgetShell } from './WidgetShell';
@@ -16,7 +16,11 @@ export default function PreampWidget({ defaultStem = 'drums' }: { defaultStem?: 
   const estPeak = useStore(store, (s) => inputPeakDb(s, 0));
 
   const verdict =
-    estPeak >= 0 ? { cls: 'is-warn', text: '클리핑: 소리가 깨진다. 게인을 내린다.' } : estPeak < -24 ? { cls: '', text: '너무 작다: 잡음에 묻히기 쉽다. 게인을 올린다.' } : { cls: 'is-on', text: '적당하다: 피크에 여유(헤드룸)가 있다.' };
+    estPeak >= 0
+      ? { cls: 'is-warn', text: '클리핑: 소리가 깨진다' }
+      : estPeak < -18
+        ? { cls: '', text: '너무 작다: 잡음에 묻힌다' }
+        : { cls: 'is-on', text: '알맞다: 여유가 있다' };
 
   return (
     <WidgetShell
@@ -26,25 +30,27 @@ export default function PreampWidget({ defaultStem = 'drums' }: { defaultStem?: 
       footer="미터 맨 위 빨간 칸이 켜지면 0 dBFS를 넘은 것이다. 한 번 깨진 소리는 뒤에서 페이더를 내려도 돌아오지 않는다."
     >
       {({ engine, status }) => (
-        <div className="sim-row is-center" style={{ gap: 18 }}>
-          <Knob
+        <>
+          <div className="sim-visual">
+            <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={status === 'playing'} height={132} width={16} label="입력" />
+            <div className="grow" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10 }}>
+              <span className={`sim-lamp ${verdict.cls}`}>{verdict.text}</span>
+              <span className="sim-stat">
+                가장 큰 순간(예상 피크) <strong>{Number.isFinite(estPeak) ? fmtDb(estPeak).replace(' dB', ' dBFS') : '—'}</strong>
+              </span>
+              <span className="sim-stat">목표: −18 ~ −6 dBFS</span>
+            </div>
+          </div>
+          <Slider
             label="게인"
+            hint="마이크 신호를 얼마나 키울지"
             value={ch.preamp.gainDb}
             range={ranges.gain}
             onChange={(v) => a.setPreamp(0, { gainDb: v })}
             color="var(--fn-preamp)"
-            size={72}
             defaultValue={0}
           />
-          <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={status === 'playing'} height={150} width={16} label="입력" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180, flex: '1 1 180px' }}>
-            <span className={`sim-lamp ${verdict.cls}`}>{verdict.text}</span>
-            <span className="sim-stat">
-              이 음원의 예상 피크: <strong>{Number.isFinite(estPeak) ? fmtDb(estPeak).replace(' dB', ' dBFS') : '—'}</strong>
-            </span>
-            <span className="sim-stat">권장: 피크 −18 ~ −6 dBFS</span>
-          </div>
-        </div>
+        </>
       )}
     </WidgetShell>
   );

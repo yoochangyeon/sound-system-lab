@@ -119,8 +119,9 @@ const nextTitle = next ? next.data.title : '실습실에서 미션 풀기';
       finish.hidden = !last;
       history.replaceState(null, '', index === 0 ? location.pathname : `#${index + 1}`);
       if (scroll) window.scrollTo({ top: 0 });
-      // 카드가 바뀌면 숨어 있던 그래프가 폭을 다시 잰다.
+      // 카드가 바뀌면 숨어 있던 그래프가 폭을 다시 재고, 재생 중인 위젯은 멈춘다.
       window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new Event('lesson-card'));
     };
 
     prevBtn.addEventListener('click', () => show(index - 1));

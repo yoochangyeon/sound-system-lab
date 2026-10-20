@@ -31,8 +31,6 @@ export function Rta({ read, active = true, height = 120, first = 0, last = GEQ_F
     const n = last - first + 1;
     const bw = width / n;
     g.clearRect(0, 0, width, height);
-    g.fillStyle = '#0c0d10';
-    g.fillRect(0, 0, width, height);
     let maxDb = -Infinity;
     for (let i = first; i <= last; i++) maxDb = Math.max(maxDb, bands[i] ?? MIN);
     for (let i = first; i <= last; i++) {
@@ -43,11 +41,11 @@ export function Rta({ read, active = true, height = 120, first = 0, last = GEQ_F
       const hh = (Math.max(0, Math.min(1, (s - MIN) / (MAX - MIN))) * (height - 14)) | 0;
       const x = (i - first) * bw;
       const loud = s > maxDb - 3 && s > -40;
-      g.fillStyle = loud ? '#ef4444' : '#22c55e';
+      g.fillStyle = loud ? '#f04452' : '#1bc47d';
       g.fillRect(x + 1, height - 12 - hh, Math.max(1, bw - 2), hh);
     }
-    g.fillStyle = '#9a9ea8';
-    g.font = '9px system-ui';
+    g.fillStyle = '#8b95a1';
+    g.font = '10px Pretendard Variable, system-ui';
     g.textAlign = 'center';
     for (let i = first; i <= last; i += 3) g.fillText(formatHz(GEQ_FREQS[i]), (i - first + 0.5) * bw, height - 2);
   }, active);

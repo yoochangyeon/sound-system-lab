@@ -1,8 +1,8 @@
-// 게이트 위젯(#11). 드럼 킷 트랙(킥·스네어가 나뉘지 않은 한 트랙)에 게이트를 걸어
-// 타격 사이의 잔향·잡음이 줄어드는 것을 듣는다. 열림/닫힘 표시와 GR 미터.
+// 게이트 위젯(#11, 2차 개편 #35). 드럼 킷 트랙(킥·스네어가 나뉘지 않은 한 트랙)에 게이트를 걸어
+// 타격 사이의 잔향·잡음이 줄어드는 것을 듣는다. 스레숄드만 보이고 나머지는 '더 자세히'.
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { Knob } from '../ui/Knob';
+import { More, Slider } from '../ui/controls';
 import { Meter } from '../ui/Meter';
 import { useFrame } from '../ui/useFrame';
 import type { MixerEngine } from '../../audio/engine';
@@ -19,7 +19,7 @@ function GateLamp({ engine, active }: { engine: MixerEngine | null; active: bool
       setOpen(v);
     }
   }, active);
-  return <span className={`sim-lamp ${active && open ? 'is-on' : ''}`}>{active ? (open ? '열림 (소리 통과)' : '닫힘 (줄이는 중)') : '재생하면 표시'}</span>;
+  return <span className={`sim-lamp ${active && open ? 'is-on' : ''}`}>{active ? (open ? '열림: 소리 통과' : '닫힘: 줄이는 중') : '재생하면 문 상태가 보인다'}</span>;
 }
 
 export default function GateWidget({ defaultStem = 'drums' }: { defaultStem?: string }) {
@@ -49,19 +49,23 @@ export default function GateWidget({ defaultStem = 'drums' }: { defaultStem?: st
     >
       {({ engine, status }) => (
         <>
-          <div className="sim-row is-center" style={{ gap: 14 }}>
-            <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={status === 'playing'} height={130} label="입력" />
-            <Meter read={() => engine?.gateGrDb(0) ?? 0} active={status === 'playing'} height={130} min={-60} reduction label="GR" />
-            <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={130} label="출력" />
-            <GateLamp engine={engine} active={status === 'playing' && g.on} />
+          <div className="sim-visual" style={{ alignItems: 'center' }}>
+            <div className="sim-meters">
+              <Meter read={() => engine?.inputPeakDb(0) ?? -Infinity} active={status === 'playing'} height={120} label="입력" />
+              <Meter read={() => engine?.gateGrDb(0) ?? 0} active={status === 'playing'} height={120} min={-60} reduction label="GR" />
+              <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={120} label="출력" />
+            </div>
+            <div className="grow" style={{ display: 'flex', justifyContent: 'center' }}>
+              <GateLamp engine={engine} active={status === 'playing' && g.on} />
+            </div>
           </div>
-          <div className="sim-row">
-            <Knob label="스레숄드" value={g.thresholdDb} range={ranges.gateThreshold} onChange={(v) => set({ thresholdDb: v })} color={color} defaultValue={-40} />
-            <Knob label="레인지" value={g.rangeDb} range={ranges.gateRange} onChange={(v) => set({ rangeDb: v })} color={color} defaultValue={40} />
-            <Knob label="어택" value={g.attackMs} range={ranges.gateAttack} onChange={(v) => set({ attackMs: v })} color={color} defaultValue={1} />
-            <Knob label="홀드" value={g.holdMs} range={ranges.gateHold} onChange={(v) => set({ holdMs: v })} color={color} defaultValue={50} />
-            <Knob label="릴리스" value={g.releaseMs} range={ranges.gateRelease} onChange={(v) => set({ releaseMs: v })} color={color} defaultValue={150} />
-          </div>
+          <Slider label="스레숄드" hint="이보다 작은 소리면 문을 닫는다" value={g.thresholdDb} range={ranges.gateThreshold} onChange={(v) => set({ thresholdDb: v })} color={color} defaultValue={-40} />
+          <More label="더 자세히: 레인지·어택·홀드·릴리스">
+            <Slider label="레인지" hint="닫혔을 때 얼마나 줄일지" value={g.rangeDb} range={ranges.gateRange} onChange={(v) => set({ rangeDb: v })} color={color} defaultValue={40} />
+            <Slider label="어택" hint="문이 열리는 데 걸리는 시간" value={g.attackMs} range={ranges.gateAttack} onChange={(v) => set({ attackMs: v })} color={color} defaultValue={1} />
+            <Slider label="홀드" hint="작아진 뒤에도 문을 열어 두는 시간" value={g.holdMs} range={ranges.gateHold} onChange={(v) => set({ holdMs: v })} color={color} defaultValue={50} />
+            <Slider label="릴리스" hint="문이 닫히는 데 걸리는 시간" value={g.releaseMs} range={ranges.gateRelease} onChange={(v) => set({ releaseMs: v })} color={color} defaultValue={150} />
+          </More>
         </>
       )}
     </WidgetShell>

@@ -23,6 +23,7 @@ import {
   type PeqState,
   type OscState,
   type SceneSnapshot,
+  type SceneState,
   type SoloMode,
 } from './mixer-model';
 
@@ -71,6 +72,8 @@ export interface MixerActions {
   /** 씬 i를 불러온다. 리콜 세이프 채널과 솔로는 그대로 둔다 */
   recallScene(i: number): void;
   setSafe(ch: number, on: boolean): void;
+  /** 저장해 둔 씬 목록을 넣는다(새로고침 뒤 불러오기). 채널 수가 다른 스냅샷은 버린다. */
+  setScenes(scenes: SceneState[]): void;
   setOsc(p: Partial<OscState>): void;
   setMatrix(i: number, p: { faderDb?: number; mute?: boolean; fromMainDb?: number; fromBus?: { bus: number; db: number } }): void;
   setPatch(ch: number, input: number | null): void;
@@ -375,6 +378,15 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
           safes[ch] = on;
           return { safes };
         }),
+      setScenes: (scenes) =>
+        set((s) => ({
+          scenes: s.scenes.map((cur, i) => {
+            const x = scenes[i];
+            if (!x) return cur;
+            const ok = x.snapshot === null || x.snapshot.channels?.length === s.channels.length;
+            return ok ? { name: x.name, snapshot: x.snapshot } : cur;
+          }),
+        })),
       setOsc: (p) =>
         set((s) => ({
           osc: {

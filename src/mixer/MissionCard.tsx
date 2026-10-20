@@ -13,9 +13,11 @@ export interface MissionCardProps {
   missionId: string | null;
   onChange: (id: string | null) => void;
   onFocusChannel: (ch: number) => void;
+  /** 미션이 전체 보기를 필요로 하면 연다 */
+  onNeedFull?: () => void;
 }
 
-export function MissionCard({ store, missions: MISSIONS, missionId, onChange, onFocusChannel }: MissionCardProps) {
+export function MissionCard({ store, missions: MISSIONS, missionId, onChange, onFocusChannel, onNeedFull }: MissionCardProps) {
   const mission = useMemo(() => MISSIONS.find((m) => m.id === missionId) ?? null, [MISSIONS, missionId]);
   const [hintsShown, setHintsShown] = useState(0);
   const [succeeded, setSucceeded] = useState(false);
@@ -43,6 +45,7 @@ export function MissionCard({ store, missions: MISSIONS, missionId, onChange, on
     a.apply(mission.initial);
     start.current = snapshot(store);
     onFocusChannel(mission.focusChannel);
+    if (mission.view === 'full') onNeedFull?.();
   }, [mission, store]);
 
   const result = mission && start.current ? mission.judge(snapshot(store), start.current) : null;

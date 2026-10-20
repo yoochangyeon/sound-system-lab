@@ -77,6 +77,10 @@ export function fmtUnit(v: number, unit: string): string {
       return fmtMs(v);
     case ':1':
       return fmtRatio(v);
+    case 's':
+      return `${v.toFixed(1)} s`;
+    case '%':
+      return `${Math.round(v)}%`;
     default:
       return `${+v.toFixed(2)}`;
   }

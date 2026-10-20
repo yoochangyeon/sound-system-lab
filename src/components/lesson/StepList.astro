@@ -1,0 +1,70 @@
+---
+// 번호가 붙은 따라 하기. items는 한 줄씩.
+interface Props {
+  items: string[];
+  title?: string;
+}
+const { items, title } = Astro.props;
+---
+
+<div class="steps">
+  {title && <p class="title">{title}</p>}
+  <ol>
+    {
+      items.map((t, i) => (
+        <li>
+          <span class="no">{i + 1}</span>
+          <span class="text" set:html={t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')} />
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .steps {
+    margin: 0 0 16px;
+  }
+  .title {
+    margin: 0 0 8px !important;
+    font-weight: 800;
+    color: var(--text) !important;
+  }
+  ol {
+    list-style: none;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  li {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 0 0 14px;
+    margin: 0 !important;
+  }
+  li:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 30px;
+    bottom: 2px;
+    width: 2px;
+    background: var(--line);
+  }
+  .no {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .text {
+    padding-top: 2px;
+    color: var(--text-2);
+  }
+</style>

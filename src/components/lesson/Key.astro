@@ -1,0 +1,55 @@
+---
+// 한 줄 핵심. tone: info(파랑) · warn(빨강) · good(초록)
+interface Props {
+  label?: string;
+  tone?: 'info' | 'warn' | 'good';
+}
+const { label = '핵심', tone = 'info' } = Astro.props;
+---
+
+<div class:list={['key', `is-${tone}`]}>
+  <span class="label">{label}</span>
+  <div class="body"><slot /></div>
+</div>
+
+<style>
+  .key {
+    margin: 0 0 16px;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+  }
+  .key.is-warn {
+    background: var(--red-soft);
+  }
+  .key.is-good {
+    background: var(--green-soft);
+  }
+  .label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .is-warn .label {
+    color: var(--red);
+  }
+  .is-good .label {
+    color: var(--green);
+  }
+  .body :global(p) {
+    margin: 0;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .body :global(p + p),
+  .body :global(ul) {
+    margin-top: 6px;
+  }
+  .body :global(ul) {
+    margin-bottom: 0;
+  }
+</style>

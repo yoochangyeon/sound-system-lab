@@ -1,0 +1,229 @@
+/* 카드형 레슨 화면(기획서 S02). */
+.lesson-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+}
+.lesson-top-in {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 680px;
+  height: 56px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+.lesson-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: var(--text);
+}
+.lesson-back:hover {
+  background: var(--bg-grey);
+}
+.lesson-top-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lesson-count {
+  color: var(--faint);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.lesson-progress {
+  height: 3px;
+  background: var(--bg-grey);
+}
+.lesson-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.3s ease;
+}
+
+.lesson {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 20px 20px 140px;
+}
+.lesson-intro {
+  margin-bottom: 20px;
+}
+.lesson-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+.lesson-intro h1 {
+  margin: 12px 0 6px;
+  font-size: clamp(26px, 7vw, 32px);
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+.lesson-summary {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* 본문 글자 */
+.lesson-body h2 {
+  margin: 8px 0 14px;
+  font-size: 24px;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+.lesson-body h3 {
+  margin: 20px 0 8px;
+  font-size: 19px;
+}
+.lesson-body p {
+  margin: 0 0 14px;
+  color: var(--text-2);
+}
+.lesson-body strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.lesson-body ul,
+.lesson-body ol {
+  margin: 0 0 14px;
+  padding-left: 1.2em;
+  color: var(--text-2);
+}
+.lesson-body li {
+  margin-bottom: 6px;
+}
+.lesson-body table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: 15px;
+  display: block;
+  overflow-x: auto;
+}
+.lesson-body th,
+.lesson-body td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.lesson-body tr:last-child td {
+  border-bottom: 0;
+}
+.lesson-body th {
+  background: var(--bg-grey);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.lesson-body a {
+  font-weight: 600;
+}
+
+/* 카드 나누기: 스크립트가 켜지면 한 장씩 */
+.lesson-body hr {
+  margin: 40px 0;
+  border: 0;
+  border-top: 8px solid var(--bg-grey);
+}
+.has-steps .lesson-body .is-off,
+.has-steps .lesson-body hr {
+  display: none !important;
+}
+.has-steps .lesson-pager {
+  display: none;
+}
+.step-in {
+  animation: step-in 0.28s ease both;
+}
+@keyframes step-in {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .step-in {
+    animation: none;
+  }
+}
+
+/* 아래 버튼 */
+.lesson-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background: linear-gradient(to top, #fff 70%, rgba(255, 255, 255, 0));
+  padding: 20px 0 calc(12px + env(safe-area-inset-bottom));
+}
+.lesson-nav-in {
+  display: flex;
+  gap: 8px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.lesson-prev {
+  flex: 0 0 96px;
+}
+.lesson-next {
+  flex: 1;
+}
+.lesson-next[hidden] {
+  display: none;
+}
+
+/* 스크립트가 없을 때 */
+.lesson-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-width: 680px;
+  margin: -100px auto 48px;
+  padding: 0 20px;
+}
+.lesson-pager a {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--bg-grey);
+  color: var(--text);
+  text-decoration: none;
+}
+.lesson-pager small {
+  color: var(--faint);
+}
+.lesson-pager .is-next {
+  text-align: right;
+}

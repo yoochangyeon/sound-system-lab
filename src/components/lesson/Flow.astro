@@ -1,0 +1,129 @@
+---
+// 신호 흐름도(세로). 노드마다 아이콘·이름·한 줄 설명. mark로 몇 개를 강조한다.
+// 노드 이름 뒤 '|'로 갈래(예: 메인|모니터)를 나란히 그릴 수 있다.
+import Icon from './Icon.astro';
+
+interface Node {
+  icon: string;
+  name: string;
+  desc?: string;
+  /** 같은 줄에 나란히 놓을 갈래 */
+  branch?: { icon: string; name: string; desc?: string }[];
+}
+interface Props {
+  nodes: Node[];
+  /** 강조할 노드 이름들 */
+  mark?: string[];
+  /** 번호를 붙여 '확인 순서'로 보여 준다 */
+  numbered?: boolean;
+}
+const { nodes, mark = [], numbered = false } = Astro.props;
+---
+
+<ol class:list={['flow', { numbered }]}>
+  {
+    nodes.map((n, i) => (
+      <li class:list={['row', { last: i === nodes.length - 1 }]}>
+        {(n.branch ?? [n]).length > 1 || n.branch ? (
+          <div class="branch">
+            {[n, ...(n.branch ?? [])].map((b) => (
+              <div class:list={['node', { on: mark.includes(b.name) }]}>
+                <span class="ic"><Icon name={b.icon} /></span>
+                <span class="tx">
+                  <strong>{b.name}</strong>
+                  {b.desc && <small>{b.desc}</small>}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class:list={['node', { on: mark.includes(n.name) }]}>
+            <span class="ic">{numbered ? <b>{i + 1}</b> : <Icon name={n.icon} />}</span>
+            <span class="tx">
+              <strong>{n.name}</strong>
+              {n.desc && <small>{n.desc}</small>}
+            </span>
+          </div>
+        )}
+        {i < nodes.length - 1 && (
+          <span class="arrow" aria-hidden="true">
+            <svg viewBox="0 0 12 16" width="12" height="16"><path d="M6 1v12M1.5 9L6 14l4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+        )}
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .flow {
+    list-style: none;
+    margin: 0 0 16px !important;
+    padding: 16px !important;
+    border-radius: var(--radius-l);
+    background: var(--bg-grey);
+  }
+  .row {
+    margin: 0 !important;
+  }
+  .branch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .node {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: #fff;
+    border: 2px solid transparent;
+  }
+  .node.on {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .ic {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .ic b {
+    font-size: 17px;
+  }
+  .on .ic {
+    background: var(--accent);
+    color: #fff;
+  }
+  .tx {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .tx strong {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+  .tx small {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .arrow {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0;
+    color: var(--line-2);
+  }
+  .branch .node {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+</style>

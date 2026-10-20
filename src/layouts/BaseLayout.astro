@@ -5,119 +5,141 @@ import { SITE_NAME } from '../lib/release';
 interface Props {
   title: string;
   description?: string;
+  /** 레슨처럼 자기 상단 바를 쓰는 화면은 사이트 머리·꼬리를 숨긴다 */
+  bare?: boolean;
+  /** 본문 최대 폭 */
+  width?: 'narrow' | 'wide';
 }
-const { title, description } = Astro.props;
+const { title, description, bare = false, width = 'narrow' } = Astro.props;
 ---
 
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     {description && <meta name="description" content={description} />}
     <title>{title} · {SITE_NAME}</title>
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="/">{SITE_NAME}</a>
-      <nav>
-        <a href="/">커리큘럼</a>
-        <a href="/lab/">실습실</a>
-      </nav>
-    </header>
-    <main><slot /></main>
-    <footer class="site-footer">
-      <a href="/credits/">음원 출처</a>
-      <span>무료 학습 사이트 · 로그인 없음</span>
-    </footer>
+    {
+      !bare && (
+        <header class="site-header">
+          <div class="site-header-in">
+            <a class="brand" href="/">
+              <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22">
+                  <rect x="3" y="9" width="3" height="6" rx="1.5" fill="currentColor" />
+                  <rect x="8.5" y="5" width="3" height="14" rx="1.5" fill="currentColor" />
+                  <rect x="14" y="7" width="3" height="10" rx="1.5" fill="currentColor" />
+                  <rect x="19.5" y="10" width="3" height="4" rx="1.5" fill="currentColor" />
+                </svg>
+              </span>
+              {SITE_NAME}
+            </a>
+            <nav>
+              <a href="/">코스</a>
+              <a href="/lab/">실습실</a>
+            </nav>
+          </div>
+        </header>
+      )
+    }
+    <main class:list={['site-main', `is-${width}`, { 'is-bare': bare }]}><slot /></main>
+    {
+      !bare && (
+        <footer class="site-footer">
+          <a href="/credits/">음원 출처</a>
+          <span>무료 학습 사이트 · 로그인 없음</span>
+        </footer>
+      )
+    }
   </body>
 </html>
 
 <style is:global>
-  * {
-    box-sizing: border-box;
-  }
-  html {
-    -webkit-text-size-adjust: 100%;
-  }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    line-height: 1.7;
-    overflow-x: hidden;
-  }
-  main {
-    max-width: 760px;
+  .site-main {
     margin: 0 auto;
-    padding: 8px 16px 48px;
+    padding: 8px 20px 64px;
   }
-  a {
-    color: var(--accent);
+  .site-main.is-narrow {
+    max-width: 680px;
   }
-  h1,
-  h2,
-  h3 {
-    line-height: 1.35;
+  .site-main.is-wide {
+    max-width: 1120px;
   }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    display: block;
-    overflow-x: auto;
-    font-size: 0.95em;
-  }
-  th,
-  td {
-    border: 1px solid var(--line);
-    padding: 6px 10px;
-    text-align: left;
-    vertical-align: top;
-  }
-  th {
-    background: #f3f1ec;
-  }
-  code {
-    font-family: var(--mono);
-    font-size: 0.9em;
-  }
-  img,
-  svg {
-    max-width: 100%;
+  .site-main.is-bare {
+    padding: 0;
+    max-width: none;
   }
   .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+  }
+  .site-header-in {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    max-width: 760px;
+    max-width: 1120px;
+    height: 60px;
     margin: 0 auto;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--line);
+    padding: 0 20px;
   }
   .brand {
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 18px;
     color: var(--text);
     text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+  .brand-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+  }
+  .brand-mark svg {
+    width: 20px;
+    height: 20px;
   }
   .site-header nav {
     display: flex;
-    gap: 14px;
+    gap: 4px;
   }
   .site-header nav a {
+    padding: 8px 12px;
+    border-radius: var(--radius-s);
     color: var(--muted);
+    font-weight: 600;
+    font-size: 15px;
     text-decoration: none;
+  }
+  .site-header nav a:hover {
+    background: var(--bg-grey);
   }
   .site-footer {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 16px;
-    max-width: 760px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 20px 16px 40px;
-    border-top: 1px solid var(--line);
+    padding: 24px 20px 48px;
+    color: var(--faint);
+    font-size: 14px;
+  }
+  .site-footer a {
     color: var(--muted);
-    font-size: 0.9rem;
   }
 </style>

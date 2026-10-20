@@ -1,0 +1,41 @@
+---
+// 용어 한 줄 풀이 카드.
+interface Props {
+  name: string;
+  en?: string;
+}
+const { name, en } = Astro.props;
+---
+
+<div class="term">
+  <div class="name">
+    {name}
+    {en && <small>{en}</small>}
+  </div>
+  <div class="def"><slot /></div>
+</div>
+
+<style>
+  .term {
+    margin: 0 0 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fff;
+  }
+  .name {
+    font-weight: 800;
+    font-size: 17px;
+  }
+  .name small {
+    margin-left: 6px;
+    color: var(--faint);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .def :global(p) {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+</style>

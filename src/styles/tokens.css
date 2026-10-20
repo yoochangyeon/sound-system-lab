@@ -1,37 +1,122 @@
-/* 공용 디자인 토큰 (기획서 10장).
-   레슨 본문은 시스템 테마와 상관없이 밝은 바탕, 장비 패널(위젯·콘솔)은 항상 어두운 바탕이다. */
+/* 공용 디자인 토큰 (기획서 10장, 2차 개편: 토스식 밝은 화면).
+   레슨·위젯·믹서 모두 같은 밝은 톤이다. */
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+
 :root {
   color-scheme: light;
 
-  /* 레슨 */
-  --bg: #fbfaf7;
+  /* 바탕과 글자 */
+  --bg: #ffffff;
+  --bg-grey: #f2f4f6;
   --surface: #ffffff;
-  --text: #1d1d1f;
-  --muted: #5d5d63;
-  --line: #e4e2dc;
-  --accent: #2563eb;
-  --accent-soft: #e8efff;
+  --surface-2: #f9fafb;
+  --text: #191f28;
+  --text-2: #333d4b;
+  --muted: #4e5968;
+  --faint: #8b95a1;
+  --line: #e5e8eb;
+  --line-2: #d1d6db;
 
-  /* 장비 패널 */
-  --panel-bg: #15171b;
-  --panel-surface: #1f2228;
-  --panel-raised: #2a2e36;
-  --panel-line: #3a3f49;
-  --panel-text: #e9eaee;
-  --panel-muted: #9a9ea8;
+  /* 강조 */
+  --accent: #3182f6;
+  --accent-press: #1b64da;
+  --accent-soft: #e8f3ff;
+  --red: #f04452;
+  --red-soft: #fff0f1;
+  --green: #0a9f5c;
+  --green-soft: #e5f8ee;
+  --yellow: #ffb400;
+  --yellow-soft: #fff6e0;
 
   /* 기능별 색 */
-  --fn-eq: #3b82f6; /* EQ 파랑 */
-  --fn-dyn: #f59e0b; /* 다이내믹스(컴프·게이트) 주황 */
-  --fn-preamp: #a1a7b3; /* 프리엠프 회색 */
-  --fn-bus: #22c55e; /* 버스·Aux 초록 */
+  --fn-eq: #3182f6; /* EQ 파랑 */
+  --fn-dyn: #fe8c00; /* 다이내믹스(컴프·게이트) 주황 */
+  --fn-preamp: #6b7684; /* 프리엠프 회색 */
+  --fn-bus: #0a9f5c; /* 모니터·버스 초록 */
 
   /* 미터: 초록 → 노랑 → 빨강 */
-  --meter-green: #22c55e;
-  --meter-yellow: #eab308;
-  --meter-red: #ef4444;
+  --meter-green: #1bc47d;
+  --meter-yellow: #ffc342;
+  --meter-red: #f04452;
+  --meter-bg: #e9ecef;
 
-  --radius: 10px;
-  --font: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  /* 1차 장비 패널 변수 이름을 밝은 값으로 이어 쓴다(그래프·미터 공용) */
+  --panel-bg: var(--surface);
+  --panel-surface: var(--bg-grey);
+  --panel-raised: #ffffff;
+  --panel-line: var(--line);
+  --panel-text: var(--text);
+  --panel-muted: var(--faint);
+
+  --radius-s: 10px;
+  --radius: 16px;
+  --radius-l: 24px;
+  --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: var(--accent);
+}
+button {
+  font-family: inherit;
+}
+img,
+svg {
+  max-width: 100%;
+}
+
+/* 버튼 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn:active {
+  transform: scale(0.98);
+  background: var(--accent-press);
+}
+.btn.is-soft {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.btn.is-grey {
+  background: var(--bg-grey);
+  color: var(--text-2);
+}
+.btn[disabled],
+.btn.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }

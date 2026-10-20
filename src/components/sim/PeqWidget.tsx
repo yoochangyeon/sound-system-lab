@@ -1,4 +1,4 @@
-// PEQ+HPF 위젯(#8, 2차 개편 #35). HPF 스위치·차단 주파수, 밴드 탭 4개 → 주파수·게인. Q는 '더 자세히'.
+// PEQ+HPF·LPF 위젯(#8, 2차 개편 #35, LPF #40). HPF·LPF 스위치·차단 주파수, 밴드 탭 4개 → 주파수·게인. Q는 '더 자세히'.
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import { channelEqResponseDb } from '../../stores/derived';
@@ -24,18 +24,18 @@ export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
   const ch = useStore(store, (s) => s.channels[0]);
   const ranges = useStore(store, (s) => s.profile.ranges);
   const a = useStore(store, (s) => s.actions);
-  const savedHpf = useRef(false);
+  const saved = useRef({ hpf: false, lpf: false });
   const [band, setBand] = useState(1);
 
-  const bypassed = !ch.peq.on && !ch.preamp.hpfOn;
+  const bypassed = !ch.peq.on && !ch.preamp.hpfOn && !ch.preamp.lpfOn;
   const toggleBypass = () => {
     if (bypassed) {
       a.setPeqOn(0, true);
-      a.setPreamp(0, { hpfOn: savedHpf.current });
+      a.setPreamp(0, { hpfOn: saved.current.hpf, lpfOn: saved.current.lpf });
     } else {
-      savedHpf.current = ch.preamp.hpfOn;
+      saved.current = { hpf: ch.preamp.hpfOn, lpf: ch.preamp.lpfOn };
       a.setPeqOn(0, false);
-      a.setPreamp(0, { hpfOn: false });
+      a.setPreamp(0, { hpfOn: false, lpfOn: false });
     }
   };
 
@@ -43,7 +43,7 @@ export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
   const b = ch.peq.bands[band];
 
   return (
-    <WidgetShell title="EQ (HPF + PEQ)" accent="var(--fn-eq)" store={store} bypassed={bypassed} onBypass={toggleBypass}>
+    <WidgetShell title="EQ (필터 + PEQ)" accent="var(--fn-eq)" store={store} bypassed={bypassed} onBypass={toggleBypass}>
       {({ engine, status }) => (
         <>
           <div className="sim-visual">
@@ -53,10 +53,10 @@ export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
             <Meter read={() => engine?.faderPeakDb(0) ?? -Infinity} active={status === 'playing'} height={118} label="출력" />
           </div>
 
-          <div className="sim-group" style={{ ['--accent-fn' as string]: 'var(--fn-preamp)' }}>
+          <div className="sim-group">
             <div className="sim-group-title">
               <span>HPF · 저음 자르기</span>
-              <Switch on={ch.preamp.hpfOn} onChange={(on) => a.setPreamp(0, { hpfOn: on })} color="var(--fn-eq)" />
+              <Switch on={ch.preamp.hpfOn} onChange={(on) => a.setPreamp(0, { hpfOn: on })} />
             </div>
             <Slider
               label="차단 주파수"
@@ -66,6 +66,22 @@ export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
               onChange={(v) => a.setPreamp(0, { hpfFreq: v })}
               defaultValue={80}
               disabled={!ch.preamp.hpfOn}
+            />
+          </div>
+
+          <div className="sim-group">
+            <div className="sim-group-title">
+              <span>LPF · 고음 자르기</span>
+              <Switch on={ch.preamp.lpfOn} onChange={(on) => a.setPreamp(0, { lpfOn: on })} />
+            </div>
+            <Slider
+              label="차단 주파수"
+              hint="이 주파수 위를 깎는다"
+              value={ch.preamp.lpfFreq}
+              range={ranges.lpfFreq}
+              onChange={(v) => a.setPreamp(0, { lpfFreq: v })}
+              defaultValue={12000}
+              disabled={!ch.preamp.lpfOn}
             />
           </div>
 

@@ -1,8 +1,9 @@
 ---
 title: 설교 목소리가 웅웅거리고 답답할 때
 chapter: processing
-order: 2
-summary: HPF로 필요 없는 저음을 자르고 PEQ로 먹먹한 대역을 덜어 설교 말씀을 또렷하게 만든다.
+order: 3
+summary: 앞 레슨의 손잡이를 모아, HPF로 저음을 자르고 PEQ로 먹먹한 대역을 덜어 설교 말씀을 또렷하게 만든다.
+topics: ["HPF", "LPF", "PEQ", "먹먹한 대역"]
 draft: false
 ---
 
@@ -24,12 +25,14 @@ import Quiz from '../../../components/lesson/Quiz';
 
 ---
 
-## 도구 두 가지
-
-<Term name="HPF" en="하이패스 필터">정한 주파수보다 낮은 소리를 깎고 높은 소리만 통과시킨다. "저음 자르기".</Term>
-<Term name="PEQ" en="파라메트릭 EQ">주파수, 올리고 내릴 양, 폭을 직접 정해 원하는 대역만 다듬는다.</Term>
+## 앞 레슨에서 익힌 손잡이
 
 <EqShapes />
+
+<Term name="HPF · LPF">아래쪽·위쪽 자르기. 설교 웅웅은 **아래쪽** 문제라 HPF를 쓴다.</Term>
+<Term name="PEQ" en="파라메트릭 EQ">주파수, 올리기·내리기, Q(폭)를 직접 정해 원하는 대역만 다듬는다.</Term>
+
+헷갈리면 [EQ의 손잡이 하나씩 들어 보기](/lessons/02-processing/02-eq-basics/)로 돌아가 다시 들어 본다.
 
 ---
 
@@ -93,6 +96,14 @@ HPF를 켜도 답답하면 200~500 Hz가 많은 경우가 흔하다. 목소리�
 {/* 출처: https://protocol.esta.org/articles/microphone-placement-and-equalization-for-speech-intelligibility (2 kHz 이상 대역이 말의 명료도에 결정적), 확인 2026-10-20 */}
 
 <Key tone="warn" label="기억하기">대부분은 올리기보다 **먼저 깎는 쪽**이 안전하다. 슬라이더를 더블클릭하면 처음 값으로 돌아간다.</Key>
+
+---
+
+## LPF는 이번엔 꺼 둔다
+
+위젯의 LPF를 켜고 차단 주파수를 4 kHz 아래로 내려 본다. 말의 또렷한 부분까지 깎여 오히려 더 답답해진다.
+
+<Key label="그래서">설교가 웅웅거릴 때는 LPF가 아니라 HPF와 200~500 Hz를 본다. LPF는 위쪽 "쉬익" 잡음이 거슬릴 때 높은 곳에서 살짝만 쓴다.</Key>
 
 ---
 

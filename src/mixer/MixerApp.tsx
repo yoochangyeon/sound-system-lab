@@ -240,6 +240,13 @@ function EqTab({ store, engine, playing, ch }: Ctx & { ch: number }) {
       </div>
       <div className="sim-group">
         <div className="sim-group-title">
+          <span>LPF · 고음 자르기</span>
+          <Switch on={c.preamp.lpfOn} onChange={(on) => a.setPreamp(ch, { lpfOn: on })} />
+        </div>
+        <Slider label="차단 주파수" value={c.preamp.lpfFreq} range={r.lpfFreq} onChange={(v) => a.setPreamp(ch, { lpfFreq: v })} disabled={!c.preamp.lpfOn} />
+      </div>
+      <div className="sim-group">
+        <div className="sim-group-title">
           <span>PEQ · 대역 다듬기</span>
           <Switch on={c.peq.on} onChange={(on) => a.setPeqOn(ch, on)} />
         </div>

@@ -13,5 +13,10 @@ export default defineConfig({
   redirects: {
     '/lab/x32': '/lab/',
     '/lab/dlive': '/lab/',
+    // #40: 2장에 EQ 기초 레슨을 넣어 번호가 한 칸씩 밀렸다.
+    '/lessons/02-processing/02-peq-hpf': '/lessons/02-processing/03-peq-hpf/',
+    '/lessons/02-processing/03-geq-feedback': '/lessons/02-processing/04-geq-feedback/',
+    '/lessons/02-processing/04-compressor': '/lessons/02-processing/05-compressor/',
+    '/lessons/02-processing/05-gate': '/lessons/02-processing/06-gate/',
   },
 });

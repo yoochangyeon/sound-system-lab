@@ -57,7 +57,7 @@ export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
     ...s,
     channels: s.channels.map((x) => ({
       ...x,
-      preamp: { ...x.preamp, gainDb: c('gain', x.preamp.gainDb), hpfFreq: c('hpfFreq', x.preamp.hpfFreq) },
+      preamp: { ...x.preamp, gainDb: c('gain', x.preamp.gainDb), hpfFreq: c('hpfFreq', x.preamp.hpfFreq), lpfFreq: c('lpfFreq', x.preamp.lpfFreq) },
       gate: {
         ...x.gate,
         thresholdDb: c('gateThreshold', x.gate.thresholdDb),
@@ -119,6 +119,7 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
             ...p,
             ...(p.gainDb !== undefined && { gainDb: c('gain', p.gainDb) }),
             ...(p.hpfFreq !== undefined && { hpfFreq: c('hpfFreq', p.hpfFreq) }),
+            ...(p.lpfFreq !== undefined && { lpfFreq: c('lpfFreq', p.lpfFreq) }),
           },
         })),
       setGate: (ch, p) =>

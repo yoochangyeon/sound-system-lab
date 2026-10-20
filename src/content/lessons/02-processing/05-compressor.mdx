@@ -1,8 +1,9 @@
 ---
 title: 인도자 목소리가 작았다 컸다 할 때
 chapter: processing
-order: 4
+order: 5
 summary: 컴프레서로 큰 소리만 눌러 인도자 목소리의 크기 차이를 줄이고, GR 미터로 얼마나 눌리는지 본다.
+topics: ["스레숄드", "레이시오", "어택·릴리스", "GR", "메이크업"]
 draft: false
 ---
 
@@ -14,6 +15,7 @@ import StepList from '../../../components/lesson/StepList.astro';
 import Numbers from '../../../components/lesson/Numbers.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import CompWidget from '../../../components/sim/CompWidget';
+import TryOne from '../../../components/sim/TryOne';
 import Quiz from '../../../components/lesson/Quiz';
 
 <Situation scene="찬양 한 곡 안에서">
@@ -34,7 +36,31 @@ import Quiz from '../../../components/lesson/Quiz';
 
 ---
 
-## 직접 들어 보기: 눌리는 것 보기
+## 하나씩 들어 보기 ①: 스레숄드
+
+다른 손잡이는 고정하고 스레숄드만 움직인다. 0 dB에서 시작한다.
+
+<TryOne client:only="react" kind="threshold" />
+
+---
+
+## 하나씩 들어 보기 ②: 레이시오
+
+스레숄드는 −30 dB에 두고 레이시오만 1:1부터 올린다.
+
+<TryOne client:only="react" kind="ratio" />
+
+---
+
+## 하나씩 들어 보기 ③: 어택
+
+드럼으로 들어 본다. 어택을 길게 하면 "탁" 하는 첫머리가 눌리기 전에 지나간다.
+
+<TryOne client:only="react" kind="attack" />
+
+---
+
+## 이제 모두 함께: 전체 컴프레서
 
 <CompWidget client:only="react" />
 

@@ -1,0 +1,123 @@
+---
+title: EQ의 손잡이 하나씩 들어 보기
+chapter: processing
+order: 2
+summary: HPF, LPF, 주파수, 올리기·내리기, Q, 셸프를 하나씩만 움직이며 각각이 소리를 어떻게 바꾸는지 귀로 익힌다.
+topics: ["HPF", "LPF", "주파수", "Q(폭)", "셸프"]
+draft: false
+---
+
+import Situation from '../../../components/lesson/Situation.astro';
+import Key from '../../../components/lesson/Key.astro';
+import EqShapes from '../../../components/lesson/EqShapes.astro';
+import Term from '../../../components/lesson/Term.astro';
+import Compare from '../../../components/lesson/Compare.astro';
+import FrequencyMap from '../../../components/lesson/FrequencyMap.astro';
+import TryOne from '../../../components/sim/TryOne';
+import Quiz from '../../../components/lesson/Quiz';
+
+<Situation scene="EQ 화면을 처음 연 날">
+  주파수, 게인, Q, HPF, LPF… 손잡이가 너무 많아 어디부터 만질지 모르겠다.
+</Situation>
+
+<Key>EQ의 손잡이는 여섯 가지뿐이다. 이 레슨은 **한 번에 하나만** 움직여 소리를 들어 본다. 다음 레슨의 전체 EQ가 쉬워진다.</Key>
+
+---
+
+## EQ가 만드는 모양 네 가지
+
+<EqShapes />
+
+<Term name="필터" en="HPF · LPF">한쪽 끝을 잘라 낸다. HPF는 아래쪽, LPF는 위쪽.</Term>
+<Term name="셸프">기준 주파수 위나 아래 **전체**를 계단처럼 올리거나 내린다.</Term>
+<Term name="피킹" en="PEQ 밴드">한 대역만 **종 모양**으로 올리거나 내린다. 주파수·올리기·Q 세 손잡이가 있다.</Term>
+
+---
+
+## HPF: 아래쪽 자르기
+
+**HPF**(하이패스 필터)는 정한 주파수보다 낮은 소리를 깎는다. 높은 소리(high)만 통과(pass)시킨다는 뜻이다.
+
+<TryOne client:only="react" kind="hpf" />
+
+---
+
+## LPF: 위쪽 자르기
+
+**LPF**(로우패스 필터)는 반대로 정한 주파수보다 **높은** 소리를 깎는다. 낮은 소리(low)만 통과(pass)시킨다.
+
+<TryOne client:only="react" kind="lpf" />
+
+베이스·킥처럼 높은 소리가 거의 필요 없는 채널에서, 위쪽 잡음과 새어 든 다른 악기 소리를 줄일 때 쓰기도 한다.
+
+---
+
+## 이름이 헷갈리면
+
+<Compare
+  items={[
+    { title: 'HPF = 저음 자르기', text: '높은 소리가 통과. 웅웅·바닥 울림·숨 "펑"을 줄인다', tag: 'High Pass' },
+    { title: 'LPF = 고음 자르기', text: '낮은 소리가 통과. 쉬익·치익 같은 위쪽을 줄인다', tag: 'Low Pass' },
+  ]}
+/>
+
+<Key label="외우는 법">이름은 **통과시키는 쪽**이다. 자르는 쪽은 그 반대다.</Key>
+
+---
+
+## 주파수: 어디를 만질까
+
+피킹 밴드의 **주파수**는 종 모양의 가운데를 어디에 둘지다. 1장의 주파수 지도를 떠올린다.
+
+<FrequencyMap mark={['muddy', 'warm', 'clear']} voice={false} />
+
+<TryOne client:only="react" kind="freq" />
+
+---
+
+## 올리기·내리기: 얼마나
+
+**게인**(올리기·내리기)은 그 주파수를 몇 dB 올리거나 깎을지다. 0이면 아무 일도 없다.
+
+<TryOne client:only="react" kind="boost" />
+
+<Key tone="warn" label="먼저 깎기">올리면 하울링이 쉬워지고 헤드룸이 준다. 같은 결과라면 깎는 쪽이 안전하다.</Key>
+
+---
+
+## Q: 얼마나 넓게
+
+**Q**는 종 모양의 폭이다. 숫자가 **클수록 좁고**, 작을수록 넓다.
+
+<TryOne client:only="react" kind="q" />
+
+<Compare
+  items={[
+    { title: 'Q 크게(좁게)', text: '거슬리는 한 음, 하울링 주파수만 콕 집어 깎을 때', tag: '뾰족' },
+    { title: 'Q 작게(넓게)', text: '"따뜻하게", "밝게"처럼 전체 색을 살짝 바꿀 때', tag: '완만' },
+  ]}
+/>
+
+---
+
+## 셸프: 한쪽 전체를 계단처럼
+
+<TryOne client:only="react" kind="shelf" />
+
+종 모양과 달리 기준 아래(또는 위) **전체**가 함께 오르내린다. 그래서 셸프에는 Q 손잡이가 없다.
+
+---
+
+## 정리
+
+<Compare
+  items={[
+    { title: 'HPF · LPF', text: '필요 없는 아래·위를 잘라 낸다', tag: '자르기' },
+    { title: '주파수 · 올리기 · Q', text: '한 대역을 어디서, 얼마나, 얼마나 넓게', tag: '다듬기' },
+    { title: '셸프', text: '한쪽 전체를 계단처럼', tag: '기울이기' },
+  ]}
+/>
+
+<Quiz client:load q="LPF를 켜고 차단 주파수를 내리면 심벌의 '치익' 소리가 줄어든다." answer={true} explain="LPF는 차단 주파수보다 높은 소리를 깎는다. 차단 주파수를 내릴수록 높은 소리가 더 많이 사라진다." />
+
+<Quiz client:load q="Q 값이 클수록 넓은 대역을 한꺼번에 바꾼다." answer={false} explain="Q가 클수록 좁다. 넓게 바꾸려면 Q를 작게 한다." />

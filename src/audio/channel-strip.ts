@@ -1,5 +1,5 @@
 // 입력 채널 하나의 신호 경로.
-// 입력 → 프리엠프 게인 → 디지털 클리핑 → [입력 미터] → HPF → 게이트 → PEQ → 컴프
+// 입력 → 프리엠프 게인 → 디지털 클리핑 → [입력 미터] → HPF → LPF → 게이트 → PEQ → 컴프
 //   → 페이더·뮤트 → [페이더 미터] → 팬 → 메인 할당 → 메인 버스
 //   ↘ Aux 센드(pre: 컴프 뒤, post: 페이더 뒤)
 
@@ -23,6 +23,7 @@ export class ChannelStrip {
   readonly clipper: WaveShaperNode;
   readonly inputMeter: AnalyserNode;
   readonly hpf: BiquadFilterNode;
+  readonly lpf: BiquadFilterNode;
   readonly gate: AudioWorkletNode;
   readonly peq: Peq;
   readonly comp: AudioWorkletNode;
@@ -47,6 +48,7 @@ export class ChannelStrip {
     this.clipper = new WaveShaperNode(ctx, { ...mono, curve: clipCurve() });
     this.inputMeter = new AnalyserNode(ctx, { fftSize: 1024 });
     this.hpf = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 80, Q: BUTTERWORTH_Q_DB });
+    this.lpf = new BiquadFilterNode(ctx, { ...mono, type: 'allpass', frequency: 20000, Q: BUTTERWORTH_Q_DB });
     this.gate = new AudioWorkletNode(ctx, 'dynamics', {
       numberOfInputs: 1,
       numberOfOutputs: 1,
@@ -69,7 +71,7 @@ export class ChannelStrip {
 
     this.input.connect(this.preamp).connect(this.clipper);
     this.clipper.connect(this.inputMeter);
-    this.clipper.connect(this.hpf).connect(this.gate).connect(this.peq.input);
+    this.clipper.connect(this.hpf).connect(this.lpf).connect(this.gate).connect(this.peq.input);
     this.peq.output.connect(this.comp).connect(this.fader).connect(this.panner).connect(this.mainSend);
     this.fader.connect(this.faderMeter);
     this.sendsPre.forEach((g) => this.comp.connect(g));
@@ -99,6 +101,10 @@ export class ChannelStrip {
     ramp(this.hpf.frequency, s.preamp.hpfOn ? s.preamp.hpfFreq : 20);
     // allpass일 때 Q는 선형이므로 크기에는 영향이 없다. highpass는 dB 단위 Q로 버터워스.
     ramp(this.hpf.Q, s.preamp.hpfOn ? BUTTERWORTH_Q_DB : 0.7);
+    const lpfType: BiquadFilterType = s.preamp.lpfOn ? 'lowpass' : 'allpass';
+    if (this.lpf.type !== lpfType) this.lpf.type = lpfType;
+    ramp(this.lpf.frequency, s.preamp.lpfOn ? s.preamp.lpfFreq : 20000);
+    ramp(this.lpf.Q, s.preamp.lpfOn ? BUTTERWORTH_Q_DB : 0.7);
 
     set(this.gate, 'threshold', s.gate.thresholdDb);
     set(this.gate, 'range', s.gate.rangeDb);

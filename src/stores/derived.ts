@@ -13,16 +13,22 @@ export function hpfFilter(ch: ChannelState): BiquadParams | null {
   return ch.preamp.hpfOn ? { type: 'highpass', freq: ch.preamp.hpfFreq, gainDb: 0, q: BUTTERWORTH_Q_DB } : null;
 }
 
+export function lpfFilter(ch: ChannelState): BiquadParams | null {
+  return ch.preamp.lpfOn ? { type: 'lowpass', freq: ch.preamp.lpfFreq, gainDb: 0, q: BUTTERWORTH_Q_DB } : null;
+}
+
 export function peqFilters(ch: ChannelState): BiquadParams[] {
   if (!ch.peq.on) return [];
   return ch.peq.bands.map((b) => ({ type: b.type, freq: b.freq, gainDb: b.gainDb, q: b.q }));
 }
 
-/** 채널 EQ(HPF + PEQ) 합성 응답(dB). */
+/** 채널 EQ(HPF + LPF + PEQ) 합성 응답(dB). */
 export function channelEqResponseDb(ch: ChannelState, f: number): number {
   let total = 0;
   const hpf = hpfFilter(ch);
   if (hpf) total += biquadResponseDb(hpf, f);
+  const lpf = lpfFilter(ch);
+  if (lpf) total += biquadResponseDb(lpf, f);
   for (const p of peqFilters(ch)) total += biquadResponseDb(p, f);
   return total;
 }

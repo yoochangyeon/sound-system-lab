@@ -15,6 +15,7 @@ export interface Range {
 export type ParamKey =
   | 'gain'
   | 'hpfFreq'
+  | 'lpfFreq'
   | 'gateThreshold'
   | 'gateRange'
   | 'gateAttack'
@@ -45,6 +46,7 @@ export const GENERIC_PROFILE: DeviceProfile = {
   ranges: {
     gain: { min: -12, max: 60, step: 0.5, unit: 'dB' },
     hpfFreq: { min: 20, max: 400, step: 1, unit: 'Hz', log: true },
+    lpfFreq: { min: 1000, max: 20000, step: 10, unit: 'Hz', log: true },
     gateThreshold: { min: -80, max: 0, step: 0.5, unit: 'dB' },
     gateRange: { min: 3, max: 60, step: 1, unit: 'dB' },
     gateAttack: { min: 0, max: 120, step: 0.5, unit: 'ms' },

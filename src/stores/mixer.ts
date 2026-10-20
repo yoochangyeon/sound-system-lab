@@ -50,9 +50,46 @@ export interface MixerStore extends MixerState {
 
 export type MixerStoreApi = StoreApi<MixerStore>;
 
-/** 기종 프로필과 초기 상태를 받아 저장소를 만든다. */
+/** 상태의 모든 파라미터를 프로필 범위로 자른다(예: dLive 스타일의 최소 게인). */
+export function clampState(s: MixerState, profile: DeviceProfile): MixerState {
+  const c = (key: Parameters<typeof clampParam>[1], v: number) => clampParam(profile, key, v);
+  return {
+    ...s,
+    channels: s.channels.map((x) => ({
+      ...x,
+      preamp: { ...x.preamp, gainDb: c('gain', x.preamp.gainDb), hpfFreq: c('hpfFreq', x.preamp.hpfFreq) },
+      gate: {
+        ...x.gate,
+        thresholdDb: c('gateThreshold', x.gate.thresholdDb),
+        rangeDb: c('gateRange', x.gate.rangeDb),
+        attackMs: c('gateAttack', x.gate.attackMs),
+        holdMs: c('gateHold', x.gate.holdMs),
+        releaseMs: c('gateRelease', x.gate.releaseMs),
+      },
+      peq: {
+        ...x.peq,
+        bands: x.peq.bands.map((b) => ({ ...b, freq: c('eqFreq', b.freq), gainDb: c('eqGain', b.gainDb), q: c('eqQ', b.q) })),
+      },
+      comp: {
+        ...x.comp,
+        thresholdDb: c('compThreshold', x.comp.thresholdDb),
+        ratio: c('ratio', x.comp.ratio),
+        kneeDb: c('knee', x.comp.kneeDb),
+        attackMs: c('compAttack', x.comp.attackMs),
+        releaseMs: c('compRelease', x.comp.releaseMs),
+        makeupDb: c('makeup', x.comp.makeupDb),
+      },
+      faderDb: c('fader', x.faderDb),
+      sends: x.sends.map((sd) => ({ ...sd, levelDb: c('send', sd.levelDb) })),
+    })),
+    main: { ...s.main, faderDb: c('fader', s.main.faderDb), geq: s.main.geq.map((g) => c('geqGain', g)) },
+    auxes: s.auxes.map((b) => ({ ...b, faderDb: c('fader', b.faderDb), geq: b.geq.map((g) => c('geqGain', g)) })),
+  };
+}
+
+/** 기종 프로필과 초기 상태를 받아 저장소를 만든다. 초기 상태는 프로필 범위로 자른다. */
 export function createMixerStore(initial: MixerState, profile: DeviceProfile = GENERIC_PROFILE): MixerStoreApi {
-  const base = structuredClone(initial);
+  const base = clampState(structuredClone(initial), profile);
   return createStore<MixerStore>()((set, get) => {
     const c = (key: Parameters<typeof clampParam>[1], v: number) => clampParam(get().profile, key, v);
 
@@ -160,7 +197,7 @@ export function createMixerStore(initial: MixerState, profile: DeviceProfile = G
         }),
       setListen: (target) => set({ listen: target }),
       setHowl: (p) => set((s) => ({ howl: { ...s.howl, ...p } })),
-      apply: (patch) => set(() => deepMerge(structuredClone(base), patch)),
+      apply: (patch) => set(() => clampState(deepMerge(structuredClone(base), patch), get().profile)),
       reset: () => set(() => structuredClone(base)),
     };
 

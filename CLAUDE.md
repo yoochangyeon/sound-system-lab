@@ -83,14 +83,14 @@ npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts).
 
 ## 배포
 
-- 공개 주소: https://unmute-please.vercel.app (2026-10-20 사이트 이름 변경, #47). 옛 주소 `sound-system-lab.vercel.app`은 프로젝트 도메인으로 남겨 두고 `vercel.json` 호스트 리다이렉트로 301을 보낸다. 주소를 바꾸면 `astro.config.mjs`의 `SITE`와 `public/robots.txt`도 같이 고친다.
-- Vercel 프로젝트: https://vercel.com/changyeon1/sound-system-lab (팀 changyeon1). Git 연동 없이 CLI로 직접 배포한다. 빌드 설정은 `vercel.json`(Astro, `dist`)이 정한다.
+- 공개 주소: https://unmute-please.vercel.app (2026-10-20 사이트 이름 변경, #47). 옛 주소 `sound-system-lab.vercel.app`은 프로젝트에서 뺐다(넘겨 주지 않고 404). 주소를 바꾸면 `astro.config.mjs`의 `SITE`와 `public/robots.txt`도 같이 고친다.
+- Vercel 프로젝트: https://vercel.com/changyeon1/unmute-please (팀 changyeon1, 2026-10-20 sound-system-lab에서 이름 변경). Git 연동 없이 CLI로 직접 배포한다. 빌드 설정은 `vercel.json`(Astro, `dist`)이 정한다.
 - 2026-10-20 공개(#23). 배포 명령(저장소 루트에서):
   `/Users/a-/Repository/claude-course/tools/env/node_modules/.bin/vercel deploy --prod --yes --scope changyeon1`
 - 레슨 파일을 새로 만들거나 이름을 바꾼 배포는 `--force`를 붙인다. Vercel이 되살린 빌드 캐시의 콘텐츠 저장소가 옛 레슨 목록을 들고 있어 새 레슨이 404가 된 적이 있다(2026-10-20, #40).
 - 확인용 프리뷰는 `--prod` 없이 배포한다. 프리뷰는 Vercel 인증으로 보호된다(비로그인 302). 내용 확인은 `vercel curl / --deployment <프리뷰 URL> --scope changyeon1`.
 - `vercel link`가 만드는 `.env.local`(단기 토큰)은 지운다. 로그인이 풀렸으면 사용자에게 `cd /Users/a-/Repository/claude-course/tools/env && npx vercel login`을 부탁한다.
-- 배포 뒤 공개 주소에서 페이지가 200으로 열리는지, `/.env.local`·`/CLAUDE.md`가 404인지, 옛 주소가 새 주소로 301 되는지 확인한다.
+- 배포 뒤 공개 주소에서 페이지가 200으로 열리는지, `/.env.local`·`/CLAUDE.md`가 404인지 확인한다.
 
 ## Agent skills
 

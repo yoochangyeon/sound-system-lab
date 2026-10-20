@@ -82,8 +82,13 @@
   order: 3;
   min-width: 0;
 }
-.mx-area-out {
+.mx-area-tools {
   order: 4;
+  min-width: 0;
+}
+.mx-area-out {
+  order: 5;
+  min-width: 0;
 }
 @media (min-width: 960px) {
   .mx-grid {
@@ -438,4 +443,82 @@
   margin: 0 0 6px;
   font-size: 16px;
   color: var(--green);
+}
+
+/* ---- 4차: 전체 보기 ---- */
+.mx-view {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mx-solo-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: #b07a00;
+  font-size: 13px;
+  font-weight: 700;
+}
+.mx-tags {
+  min-height: 16px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mx-toggle.is-solo.is-on {
+  background: var(--yellow);
+  color: #fff;
+}
+.mx-dot.is-solo {
+  background: var(--yellow);
+}
+.mx-send {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.mx-fx {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mx-beats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.mx-scene {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-s);
+  background: var(--bg-grey);
+}
+.mx-scene strong {
+  flex: 1 1 auto;
+  font-weight: 800;
+}
+/* 탭이 많은 줄(전체 보기 채널 상세 7개 등)은 휴대폰에서 가로로 민다 */
+.mx .sim-tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mx .sim-tabs::-webkit-scrollbar {
+  display: none;
+}
+.mx .sim-tabs > button {
+  flex-shrink: 0;
 }

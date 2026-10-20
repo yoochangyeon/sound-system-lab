@@ -15,6 +15,8 @@ export interface Mission {
   situation: string;
   /** 이 미션에서 주로 볼 채널(콘솔이 시작할 때 선택한다) */
   focusChannel: number;
+  /** 'full'이면 쉬운 믹서를 전체 보기로 연다(4차 기능을 쓰는 미션) */
+  view?: 'basic' | 'full';
   /** 콘솔 기본 상태에 덮어쓸 부분 */
   initial: DeepPartial<MixerState>;
   /** 판정: 지금 상태와 미션 시작 상태를 받는다 */

@@ -53,11 +53,14 @@ describe.each(PROFILES)('미션 판정 — $name', (profile) => {
 });
 
 describe('기본 믹스', () => {
-  it('채널 8개·모니터 2개, 하울링은 꺼져 있고, 설교 채널만 뮤트, 나머지는 메인까지 간다', () => {
+  it('채널 8개·모니터 2개(+그룹·FX), 하울링은 꺼져 있고, 설교 채널만 뮤트, 나머지는 메인까지 간다', () => {
     const s = mixerDefaultState();
     expect(s.howl.active).toBe(false);
     expect(s.channels.length).toBe(8);
-    expect(s.auxes.length).toBe(2);
+    expect(s.auxes.filter((b) => b.kind === 'monitor').length).toBe(2);
+    expect(s.auxes.slice(0, 2).every((b) => b.kind === 'monitor')).toBe(true);
+    // 그룹·FX로는 처음에 아무것도 보내지 않는다(기본 소리는 4차 전과 같다).
+    s.channels.forEach((c) => c.sends.slice(2).forEach((sd) => expect(sd.levelDb).toBe(-Infinity)));
     expect(s.inputs.every((i) => i.stemId)).toBe(true);
     s.channels.forEach((c, i) => {
       expect(c.mute).toBe(c.name === '설교');

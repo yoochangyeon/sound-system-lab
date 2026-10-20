@@ -40,7 +40,7 @@ export function lpfFilter(ch: ChannelState): BiquadParams | null {
   return ch.preamp.lpfOn ? { type: 'lowpass', freq: ch.preamp.lpfFreq, gainDb: 0, q: BUTTERWORTH_Q_DB } : null;
 }
 
-export function peqFilters(ch: ChannelState): BiquadParams[] {
+export function peqFilters(ch: Pick<ChannelState, 'peq'>): BiquadParams[] {
   if (!ch.peq.on) return [];
   return ch.peq.bands.map((b) => ({ type: b.type, freq: b.freq, gainDb: b.gainDb, q: b.q }));
 }
@@ -63,7 +63,7 @@ export function sendEqResponseDb(s: MixerState, ch: number, aux: number, f: numb
 }
 
 /** PEQ만의 응답(HPF 제외). */
-export function peqResponseDb(ch: ChannelState, f: number): number {
+export function peqResponseDb(ch: Pick<ChannelState, 'peq'>, f: number): number {
   let total = 0;
   for (const p of peqFilters(ch)) total += biquadResponseDb(p, f);
   return total;

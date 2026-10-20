@@ -353,12 +353,15 @@ export interface MixerShape {
 /** 채널 n개, Aux m개짜리 기본 상태. 입력 i는 채널 i에 꽂힌다. */
 export function defaultMixerState(shape: MixerShape): MixerState {
   const auxNames = shape.auxNames ?? Array.from({ length: shape.auxes }, (_, i) => `Aux ${i + 1}`);
+  // 이펙트 센드는 보통 페이더 뒤(post)에서 뽑는다. 페이더를 내리면 잔향도 같이 줄어야 자연스럽다.
+  const tapOf = (i: number) => (shape.auxKinds?.[i] === 'fx' ? ('post' as const) : ('pre' as const));
   return {
     inputs: shape.inputs.map((x) => ({ ...x })),
     patch: Array.from({ length: shape.channels }, (_, i) => (i < shape.inputs.length ? i : null)),
-    channels: Array.from({ length: shape.channels }, (_, i) =>
-      defaultChannel(shape.inputs[i]?.label ?? `CH ${i + 1}`, shape.auxes),
-    ),
+    channels: Array.from({ length: shape.channels }, (_, i) => {
+      const c = defaultChannel(shape.inputs[i]?.label ?? `CH ${i + 1}`, shape.auxes);
+      return { ...c, sends: c.sends.map((sd, a) => ({ ...sd, tap: tapOf(a) })) };
+    }),
     main: defaultBusOf('Main', 'main'),
     auxes: auxNames.map((n, i) => defaultBusOf(n, shape.auxKinds?.[i] ?? 'monitor', shape.auxFx?.[i])),
     matrix: (shape.matrixNames ?? []).map((n) => defaultMatrix(n, shape.auxes)),

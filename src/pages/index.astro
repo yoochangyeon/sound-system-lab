@@ -1,34 +1,82 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ComingSoon from '../components/ComingSoon.astro';
+import { COMING_SOON, SITE_NAME } from '../lib/release';
+import { CHAPTERS, lessonHref, sortedLessons } from '../lib/lessons';
 
-const chapters = [
-  { key: 'basics', label: '1장. 음향 기초' },
-  { key: 'processing', label: '2장. 신호 처리' },
-  { key: 'consoles', label: '3장. 디지털 믹서 실습' },
-] as const;
-
-const lessons = (await getCollection('lessons')).sort((a, b) => a.data.order - b.data.order);
+const lessons = await sortedLessons();
 ---
 
-<BaseLayout title="커리큘럼">
-  <h1>음향 시스템 랩</h1>
-  <p>EQ, 컴프레서, 게이트를 직접 만지며 소리가 바뀌는 것을 듣는다.</p>
-  {
-    chapters.map((ch) => (
-      <section>
-        <h2>{ch.label}</h2>
-        <ul>
-          {lessons
-            .filter((l) => l.data.chapter === ch.key)
-            .map((l) => (
-              <li>
-                <a href={`/lessons/${l.id}/`}>{l.data.title}</a>
-                {l.data.draft && ' (작성 중)'}
-              </li>
-            ))}
-        </ul>
+{
+  COMING_SOON ? (
+    <ComingSoon />
+  ) : (
+    <BaseLayout title="커리큘럼" description="EQ, 컴프레서, 게이트를 직접 만지며 소리가 바뀌는 것을 듣는 방송실 음향 학습 사이트">
+      <section class="hero">
+        <h1>{SITE_NAME}</h1>
+        <p>
+          주일 예배 중에 하울링이 나거나 설교가 웅웅거릴 때 무엇을 만져야 할까요? 노브를 직접 돌리고 소리가 바뀌는 것을 들으며
+          배웁니다. 마지막에는 실제 콘솔과 비슷한 화면에서 문제를 풀어 봅니다.
+        </p>
+        <a class="lab-link" href="/lab/">
+          실습실 바로 가기 →
+        </a>
       </section>
-    ))
+      {CHAPTERS.map((ch) => {
+        const items = lessons.filter((l) => l.data.chapter === ch.key);
+        return (
+          <section class="chapter">
+            <h2>{ch.label}</h2>
+            {items.length === 0 ? (
+              <p class="empty">준비 중</p>
+            ) : (
+              <ol>
+                {items.map((l) => (
+                  <li>
+                    <a href={lessonHref(l)}>{l.data.title}</a>
+                    {l.data.draft && <span class="draft"> (작성 중)</span>}
+                    <p class="summary">{l.data.summary}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        );
+      })}
+    </BaseLayout>
+  )
+}
+
+<style>
+  .hero {
+    padding: 12px 0 8px;
   }
-</BaseLayout>
+  .hero h1 {
+    margin-bottom: 0.3em;
+  }
+  .lab-link {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    background: var(--panel-bg);
+    color: var(--panel-text);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .chapter ol {
+    padding-left: 1.3em;
+  }
+  .chapter li {
+    margin-bottom: 0.6em;
+  }
+  .summary {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  .draft,
+  .empty {
+    color: var(--muted);
+  }
+</style>

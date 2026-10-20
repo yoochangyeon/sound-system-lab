@@ -1,18 +1,105 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { COMING_SOON } from '../../lib/release';
+import { chapterOf, lessonHref, sortedLessons, type Lesson } from '../../lib/lessons';
 
 export async function getStaticPaths() {
-  const lessons = await getCollection('lessons');
-  return lessons.map((lesson) => ({ params: { id: lesson.id }, props: { lesson } }));
+  // 공개 전 프로덕션 빌드에서는 레슨 페이지를 만들지 않는다.
+  if (COMING_SOON) return [];
+  const lessons = await sortedLessons();
+  return lessons.map((lesson, i) => ({
+    params: { id: lesson.id },
+    props: { lesson, prev: lessons[i - 1] ?? null, next: lessons[i + 1] ?? null },
+  }));
 }
 
-const { lesson } = Astro.props;
+interface Props {
+  lesson: Lesson;
+  prev: Lesson | null;
+  next: Lesson | null;
+}
+const { lesson, prev, next } = Astro.props;
 const { Content } = await render(lesson);
+const chapter = chapterOf(lesson);
 ---
 
-<BaseLayout title={lesson.data.title}>
-  <h1>{lesson.data.title}</h1>
-  <p>{lesson.data.summary}</p>
-  <Content />
+<BaseLayout title={lesson.data.title} description={lesson.data.summary}>
+  <nav class="crumbs" aria-label="현재 위치">
+    <a href="/">홈</a> › <span>{chapter.label}</span>
+  </nav>
+  <article>
+    <h1>{lesson.data.title}</h1>
+    <p class="summary">{lesson.data.summary}</p>
+    <Content />
+  </article>
+  <nav class="pager" aria-label="이전·다음 레슨">
+    {
+      prev ? (
+        <a class="prev" href={lessonHref(prev)}>
+          <small>◀ 이전 · {chapterOf(prev).short}</small>
+          <span>{prev.data.title}</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next ? (
+        <a class="next" href={lessonHref(next)}>
+          <small>다음 · {chapterOf(next).short} ▶</small>
+          <span>{next.data.title}</span>
+        </a>
+      ) : (
+        <a class="next" href="/lab/">
+          <small>다음 ▶</small>
+          <span>실습실에서 콘솔 만져 보기</span>
+        </a>
+      )
+    }
+  </nav>
 </BaseLayout>
+
+<style>
+  .crumbs {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .crumbs a {
+    color: var(--muted);
+  }
+  .summary {
+    color: var(--muted);
+    margin-top: -0.4em;
+  }
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 40px;
+  }
+  .pager a {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    text-decoration: none;
+    color: var(--text);
+    min-width: 0;
+  }
+  .pager small {
+    color: var(--muted);
+  }
+  .pager .next {
+    text-align: right;
+  }
+  @media (max-width: 480px) {
+    .pager {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

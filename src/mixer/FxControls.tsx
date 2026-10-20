@@ -46,7 +46,7 @@ export function FxControls({
       <Tabs label="이펙트 종류" items={FX_TYPES} value={fx.type} onChange={(type) => onChange({ type })} />
       {fx.type === 'reverb' && (
         <>
-          {s('잔향 길이', 'decayS', 'fxDecay', '소리가 60 dB 작아지기까지. 예배당이면 1.5~2초')}
+          {s('잔향 길이', 'decayS', 'fxDecay', '소리가 60 dB 작아지기까지. 길수록 넓은 공간처럼 들린다')}
           {s('프리딜레이', 'preDelayMs', 'fxPreDelay', '원음과 잔향 사이 틈. 늘리면 가사가 또렷하다')}
         </>
       )}

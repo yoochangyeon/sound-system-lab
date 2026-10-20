@@ -1,5 +1,5 @@
 ---
-// 실습실 미션 4종 카드. 누르면 그 미션이 고른 상태로 쉬운 믹서가 열린다.
+// 실습실 미션 카드(기본 4종 + 4차 4종). 누르면 그 미션이 고른 상태로 쉬운 믹서가 열린다.
 import { MISSIONS } from '../../missions';
 
 const LOOK: Record<string, string> = {
@@ -7,6 +7,10 @@ const LOOK: Record<string, string> = {
   sermon: '리드 보컬 채널(설교 대신)의 EQ·컴프 탭',
   gain: '채널마다 입력 탭의 게인과 입력 미터',
   'no-sound': '일렉 기타 채널의 입력 연결, 끄기, 메인 보내기',
+  'dry-vocal': '전체 보기: 리드 보컬 센드 탭의 FX, 출력 FX 탭의 리턴',
+  'dca-band': '전체 보기: 채널 설정 탭의 DCA, 콘솔 기능의 DCA',
+  'find-noise': '전체 보기: 채널 줄의 솔로(PFL), 입력 탭의 연결된 입력',
+  'scene-sermon': '전체 보기: 리드 보컬 설정 탭의 리콜 세이프, 콘솔 기능의 씬',
 };
 ---
 

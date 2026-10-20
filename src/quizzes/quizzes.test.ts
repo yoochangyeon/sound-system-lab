@@ -48,7 +48,7 @@ describe('실전 퀴즈 데이터', () => {
     for (const q of qs) expect(text).toContain(`<CaseQuiz client:load id="${q.id}"`);
   });
 
-  it('레슨 원고를 모두 읽었다', () => expect(lessons.length).toBe(13));
+  it('레슨 원고를 모두 읽었다', () => expect(lessons.length).toBe(21));
 
   it('원고가 부르는 퀴즈 id는 모두 데이터에 있다', () => {
     for (const { text } of lessons)

@@ -53,6 +53,7 @@ export default function CompWidget() {
             <Slider label="릴리스" hint="작아진 뒤 누르기를 풀기까지" value={c.releaseMs} range={ranges.compRelease} onChange={(v) => set({ releaseMs: v })} color={color} defaultValue={150} />
             <Slider label="메이크업" hint="눌러서 작아진 만큼 다시 올리기" value={c.makeupDb} range={ranges.makeup} onChange={(v) => set({ makeupDb: v })} color={color} defaultValue={0} />
             <Slider label="니" hint="누르기 시작하는 경계를 얼마나 부드럽게" value={c.kneeDb} range={ranges.knee} onChange={(v) => set({ kneeDb: v })} color={color} defaultValue={2} />
+            <Slider label="Mix(병렬 압축)" hint="100%면 눌린 소리만, 낮추면 원음과 섞는다" value={c.mixPct} range={ranges.mix} onChange={(v) => set({ mixPct: v })} color={color} defaultValue={100} />
             <div>
               <span className="sim-stat">검출 방식</span>
               <Tabs

@@ -28,3 +28,6 @@ pnpm-debug.log*
 # Claude Code 작업 트리
 .claude/worktrees/
 .vitest/
+
+# QA 에이전트 실행 결과
+qa-reports/

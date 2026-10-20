@@ -15,9 +15,9 @@ export interface PeqWidgetProps {
   defaultStem?: string;
 }
 
-export default function PeqWidget({ defaultStem = 'vocals' }: PeqWidgetProps) {
+export default function PeqWidget({ defaultStem = 'sermon' }: PeqWidgetProps) {
   const store = useMemo(
-    () => createWidgetStore({ stems: ['vocals', 'sermon', 'guitar-main', 'bass', 'drums'], defaultStem }),
+    () => createWidgetStore({ stems: ['sermon', 'vocals', 'guitar-main', 'bass', 'drums'], defaultStem }),
     [defaultStem],
   );
   const ch = useStore(store, (s) => s.channels[0]);

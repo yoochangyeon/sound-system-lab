@@ -3,7 +3,7 @@ title: 채널마다 소리 크기가 들쭉날쭉할 때
 chapter: processing
 order: 1
 summary: 프리엠프 게인을 채널마다 맞춰, 페이더를 비슷한 자리에 두고도 고른 소리를 만든다.
-topics: ["게인", "입력 미터", "헤드룸"]
+topics: ["게인", "입력 미터"]
 draft: false
 ---
 
@@ -15,6 +15,7 @@ import StepList from '../../../components/lesson/StepList.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import PreampWidget from '../../../components/sim/PreampWidget';
 import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="주일 아침 리허설 뒤">
   드럼 페이더는 바닥 근처, 건반 페이더는 끝까지 올라가 있다. 그런데 건반은 잘 안 들리고 "쉬익" 잡음이 섞인다. 드럼은 세게 칠 때마다 살짝 깨진다.
@@ -107,3 +108,27 @@ import Quiz from '../../../components/lesson/Quiz';
 />
 
 <Quiz client:load q="게인은 모든 채널을 같은 값으로 맞추는 것이 원칙이다." answer={false} explain="악기와 마이크마다 들어오는 크기가 달라서, 입력 미터를 보며 채널마다 따로 맞춘다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="pre-faders-uneven" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="pre-keys-math" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="pre-escape-handover" />

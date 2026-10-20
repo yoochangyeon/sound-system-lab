@@ -3,7 +3,7 @@ title: 예배 중 '삐-' 하울링이 날 때
 chapter: processing
 order: 4
 summary: RTA로 하울링 주파수를 찾고, 모니터 GEQ에서 그 밴드만 깎아 멈추게 한다.
-topics: ["RTA", "GEQ", "링아웃"]
+topics: ["RTA", "GEQ"]
 draft: false
 ---
 
@@ -16,6 +16,7 @@ import StepList from '../../../components/lesson/StepList.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import GeqWidget from '../../../components/sim/GeqWidget';
 import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="찬양이 무르익을 무렵" quote="삐————" who="인도자 쪽 모니터">
   급하게 모니터 전체를 내리면 하울링은 멈추지만, 인도자는 자기 목소리가 안 들린다며 손짓을 한다.
@@ -110,3 +111,27 @@ import Quiz from '../../../components/lesson/Quiz';
 <Key tone="warn" label="먼저">스피커·마이크 자리, 마이크 거리, 쓰지 않는 마이크 끄기가 먼저다. 자리가 잘못되면 깎아도 다른 주파수에서 또 운다.</Key>
 
 <Quiz client:load q="하울링이 나면 모니터 GEQ 슬라이더를 전부 내리는 것이 가장 좋다." answer={false} explain="전부 내리면 멈추긴 하지만 모니터 소리 자체가 작아진다. RTA로 찾은 한 밴드만 필요한 만큼 깎는다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="geq-which-output" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="geq-screech" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="geq-escape-ringout" />

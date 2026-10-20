@@ -3,7 +3,7 @@ title: 마이크 소리는 어디를 거쳐 스피커로 나가나
 chapter: basics
 order: 1
 summary: 마이크에서 스피커까지 소리가 지나가는 길을 순서대로 따라가 본다.
-topics: ["신호 흐름", "버스", "메인·모니터"]
+topics: ["신호 흐름", "메인·모니터"]
 draft: false
 ---
 
@@ -13,6 +13,7 @@ import Flow from '../../../components/lesson/Flow.astro';
 import Term from '../../../components/lesson/Term.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="예배 10분 전" who="목사님" quote="마이크가 안 나오는데요?">
   페이더를 끝까지 올려도 조용하다. 무작정 이것저것 누르면 더 꼬인다.
@@ -102,3 +103,27 @@ import Quiz from '../../../components/lesson/Quiz';
 <Key>늘 앞 단계부터 맞추고 뒤로 간다. 다음 레슨에서 첫 단계인 게인을 다룬다.</Key>
 
 <Quiz client:load q="입력 미터가 움직이는데 스피커에서 소리가 안 난다. 마이크 배터리부터 바꿔야 한다." answer={false} explain="미터가 움직인다면 신호는 콘솔까지 왔다. 문제는 뒤쪽(뮤트, 페이더, 메인 보내기, 출력)에 있다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="flow-monitor-only" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="flow-meter-dead" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="flow-escape-pulpit" />

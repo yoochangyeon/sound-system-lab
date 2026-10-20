@@ -3,7 +3,7 @@ title: 처음 보는 믹서 앞에서 어디부터 봐야 할까
 chapter: consoles
 order: 1
 summary: 쉬운 믹서로 디지털 믹서의 큰 구조(채널, 채널 상세, 모니터, 메인)를 익히고, 실제 콘솔에서는 어디에 있는지 짚는다.
-topics: ["채널 선택", "끄기·메인", "모니터 보내기"]
+topics: ["채널 선택", "모니터 보내기"]
 draft: false
 ---
 
@@ -15,6 +15,7 @@ import Compare from '../../../components/lesson/Compare.astro';
 import StepList from '../../../components/lesson/StepList.astro';
 import Term from '../../../components/lesson/Term.astro';
 import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="다른 교회 수련회 지원">
   방송실 콘솔이 우리 교회 것과 다르다. 화면도 버튼 이름도 낯설다.
@@ -112,3 +113,27 @@ import Quiz from '../../../components/lesson/Quiz';
 <Key>처음 보는 믹서면 ① 선택된 채널 ② 끄기·메인·페이더 ③ 모니터는 모니터 쪽에서, 이 순서로 찾는다.</Key>
 
 <Quiz client:load q="채널의 '메인'이 꺼져 있어도 페이더를 올리면 메인 스피커로 나온다." answer={false} explain="메인 보내기가 꺼져 있으면 페이더를 올려도 메인으로 가지 않는다. '소리 안 나는 채널' 미션에서 직접 확인한다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="tour-first-look" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="tour-guitar-silent" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="tour-escape-sends" />

@@ -3,7 +3,7 @@ title: EQ의 손잡이 하나씩 들어 보기
 chapter: processing
 order: 2
 summary: HPF, LPF, 주파수, 올리기·내리기, Q, 셸프를 하나씩만 움직이며 각각이 소리를 어떻게 바꾸는지 귀로 익힌다.
-topics: ["HPF", "LPF", "주파수", "Q(폭)", "셸프"]
+topics: ["HPF·LPF", "Q(폭)"]
 draft: false
 ---
 
@@ -15,6 +15,7 @@ import Compare from '../../../components/lesson/Compare.astro';
 import FrequencyMap from '../../../components/lesson/FrequencyMap.astro';
 import TryOne from '../../../components/sim/TryOne';
 import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="EQ 화면을 처음 연 날">
   주파수, 게인, Q, HPF, LPF… 손잡이가 너무 많아 어디부터 만질지 모르겠다.
@@ -121,3 +122,27 @@ import Quiz from '../../../components/lesson/Quiz';
 <Quiz client:load q="LPF를 켜고 차단 주파수를 내리면 심벌의 '치익' 소리가 줄어든다." answer={true} explain="LPF는 차단 주파수보다 높은 소리를 깎는다. 차단 주파수를 내릴수록 높은 소리가 더 많이 사라진다." />
 
 <Quiz client:load q="Q 값이 클수록 넓은 대역을 한꺼번에 바꾼다." answer={false} explain="Q가 클수록 좁다. 넓게 바꾸려면 Q를 작게 한다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="eqb-kick-cymbal" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="eqb-q-width" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="eqb-escape-four-knobs" />

@@ -39,6 +39,13 @@ const first = lessons[0];
                   <span class="lesson-text">
                     <strong>{l.data.title}</strong>
                     <small>{l.data.summary}</small>
+                    {l.data.topics.length > 0 && (
+                      <span class="tags" aria-label="다루는 요소">
+                        {l.data.topics.map((t) => (
+                          <span class={`tag is-${ch.no}`}>{t}</span>
+                        ))}
+                      </span>
+                    )}
                   </span>
                   <span class="chev" aria-hidden="true">›</span>
                 </a>
@@ -211,6 +218,34 @@ const first = lessons[0];
     font-size: 14px;
     line-height: 1.45;
     margin-top: 2px;
+  }
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .tag {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+  .tag.is-1 {
+    color: var(--accent);
+    border-color: #cfe2ff;
+  }
+  .tag.is-2 {
+    color: #d97400;
+    border-color: #ffe0b8;
+  }
+  .tag.is-3 {
+    color: var(--green);
+    border-color: #c4ecd6;
   }
   .chev {
     color: var(--faint);

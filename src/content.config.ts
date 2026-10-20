@@ -10,6 +10,8 @@ const lessons = defineCollection({
     chapter: z.enum(['basics', 'processing', 'consoles']),
     order: z.number(),
     summary: z.string(),
+    /** 홈 레슨 카드에 보이는 핵심 요소 태그(기획서 S01) */
+    topics: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
   }),
 });

@@ -17,6 +17,9 @@ export interface PreampState {
   gainDb: number;
   hpfOn: boolean;
   hpfFreq: number;
+  /** LPF(로우패스 필터): 이 주파수 위를 깎는다 */
+  lpfOn: boolean;
+  lpfFreq: number;
 }
 
 export interface GateState {
@@ -106,7 +109,7 @@ export const DEFAULT_PEQ_BANDS: PeqBandState[] = [
 export function defaultChannel(name: string, auxCount: number): ChannelState {
   return {
     name,
-    preamp: { gainDb: 0, hpfOn: false, hpfFreq: 80 },
+    preamp: { gainDb: 0, hpfOn: false, hpfFreq: 80, lpfOn: false, lpfFreq: 12000 },
     gate: { on: false, thresholdDb: -40, rangeDb: 40, attackMs: 1, holdMs: 50, releaseMs: 150 },
     peq: { on: true, bands: DEFAULT_PEQ_BANDS.map((b) => ({ ...b })) },
     comp: {

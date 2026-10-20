@@ -16,6 +16,10 @@ describe('Biquad 주파수 응답', () => {
     expect(biquadResponseDb(hpf, 100)).toBeCloseTo(-3.01, 1);
     expect(biquadResponseDb(hpf, 50)).toBeLessThan(-11.5);
     expect(Math.abs(biquadResponseDb(hpf, 5000))).toBeLessThan(0.05);
+    const lpf = { type: 'lowpass' as const, freq: 2000, gainDb: 0, q: BUTTERWORTH_Q_DB };
+    expect(biquadResponseDb(lpf, 2000)).toBeCloseTo(-3.01, 1);
+    expect(biquadResponseDb(lpf, 4000)).toBeLessThan(-11.5);
+    expect(Math.abs(biquadResponseDb(lpf, 100))).toBeLessThan(0.05);
   });
 
   it('shelf의 양 끝은 설정 게인에 수렴한다', () => {

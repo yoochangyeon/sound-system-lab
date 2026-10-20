@@ -29,6 +29,22 @@ describe('엔진: 채널 스트립', () => {
     expect(tailRmsDb(off)).toBeCloseTo(-20 - 3 - 3.01, 0);
   });
 
+  it('LPF를 켜면 차단 주파수 위 사인이 크게 줄고, 아래 사인은 그대로다', async () => {
+    const off = await renderMixer({ freq: 8000, db: -20 });
+    const on = await renderMixer({
+      freq: 8000,
+      db: -20,
+      prepare: ({ store }) => store.getState().actions.setPreamp(0, { lpfOn: true, lpfFreq: 2000 }),
+    });
+    expect(tailRmsDb(off) - tailRmsDb(on)).toBeGreaterThan(20);
+    const low = await renderMixer({
+      freq: 200,
+      db: -20,
+      prepare: ({ store }) => store.getState().actions.setPreamp(0, { lpfOn: true, lpfFreq: 2000 }),
+    });
+    expect(tailRmsDb(low)).toBeCloseTo(-20 - 3 - 3.01, 0);
+  });
+
   it('PEQ를 끄면(바이패스) 깎은 설정이 있어도 원래 레벨이다', async () => {
     const ref = await renderMixer({ freq: 1000, db: -20 });
     const bypassed = await renderMixer({

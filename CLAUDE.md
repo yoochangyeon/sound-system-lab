@@ -81,7 +81,7 @@ npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts).
   - 프리뷰: `/Users/a-/Repository/claude-course/tools/env/node_modules/.bin/vercel deploy --yes --scope changyeon1`
   - 프로덕션('준비 중' 갱신이 필요할 때만, 사용자가 직접): 위 명령에 `--prod`
   - 로컬에서 '준비 중' 빌드 확인: `FORCE_COMING_SOON=1 npx astro build`
-  - 프리뷰 배포의 Vercel 인증 보호 여부: 확인 필요(첫 프리뷰 배포 때 확인해 여기에 적는다)
+  - 프리뷰 배포는 Vercel 인증으로 보호된다(2026-10-20 확인: 비로그인 요청은 302로 로그인 화면). 내용 확인은 `vercel curl / --deployment <프리뷰 URL> --scope changyeon1`. 다른 사람에게 보여 주려면 Vercel 대시보드에서 공유 링크를 만든다
 - **공개(#23) 때 되돌린다**: `astro.config.mjs`의 '준비 중' 조건을 지우고, 배포 명령을 다시 `--prod`로 쓴다.
 - `vercel link`가 만드는 `.env.local`(단기 토큰)은 지운다. 로그인이 풀렸으면 사용자에게 `cd /Users/a-/Repository/claude-course/tools/env && npx vercel login`을 부탁한다.
 - 배포 뒤 공개 주소에서 페이지가 200으로 열리는지, `/.env.local`·`/CLAUDE.md`가 404인지 확인한다.

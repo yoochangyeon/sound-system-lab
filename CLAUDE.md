@@ -27,6 +27,8 @@
 
 | 경로 | 내용 |
 |---|---|
+| `docs/prd.md` | 서비스 기획서(대상, 범위, 화면, 미션, 디자인 가이드). 기획이 바뀌면 이 문서를 먼저 고치고 개발 스펙(GitHub 이슈)을 맞춘다 |
+| `docs/agents/` | supermatt 스킬 설정(이슈 트래커, 라벨, 외부 피어) |
 | `src/content/lessons/<장>/` | 강의 원고(MDX). 장: `01-basics`, `02-processing`, `03-consoles`. 스키마는 `src/content.config.ts` |
 | `src/audio/` | 오디오 엔진(프레임워크 무관 TS). UI 코드를 넣지 않는다 |
 | `src/audio/dsp/` | 샘플 단위 처리 순수 함수(검출기, 게인 계산 등). Web Audio에 의존하지 않아 Vitest로 바로 검사한다 |
@@ -35,6 +37,8 @@
 | `src/components/sim/` | 처리기 하나씩 만지는 React 위젯(PEQ, GEQ, Comp, Gate…). MDX에서 `client:only="react"`로 불러 쓴다 |
 | `src/consoles/<기기>/` | 콘솔 화면 재현 시뮬레이터. `sim/` 위젯과 `audio/` 엔진을 조합한다 |
 | `public/audio/` | 실습용 음원(드럼·보컬 스템 등) |
+
+파일·폴더 이름은 영문 소문자와 하이픈(kebab-case)으로 짓는다. 한글 파일명은 쓰지 않는다. 내용(본문·제목)은 한국어로 쓴다.
 
 ## 오디오 엔진 원칙
 
@@ -75,3 +79,21 @@ npm test         # Vitest
   `/Users/a-/Repository/claude-course/tools/env/node_modules/.bin/vercel deploy --prod --yes --scope changyeon1`
 - `vercel link`가 만드는 `.env.local`(단기 토큰)은 지운다. 로그인이 풀렸으면 사용자에게 `cd /Users/a-/Repository/claude-course/tools/env && npx vercel login`을 부탁한다.
 - 배포 뒤 공개 주소에서 페이지가 200으로 열리는지, `/.env.local`·`/CLAUDE.md`가 404인지 확인한다.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues(`yoochangyeon/sound-system-lab`)에 둔다. `docs/agents/issue-tracker.md` 참고.
+
+### Triage labels
+
+기본 라벨 7개를 이름 그대로 쓴다. `docs/agents/triage-labels.md` 참고.
+
+### Domain docs
+
+single-context: 루트 `GLOSSARY.md` 하나, ADR은 첫 결정이 생기면 `docs/adr/`에 둔다. `docs/agents/domain.md` 참고.
+
+### External peers
+
+host-only: code-review·jury가 외부 CLI(Claude·Codex 등)를 부르지 않는다. `docs/agents/cross-model.json` 참고.

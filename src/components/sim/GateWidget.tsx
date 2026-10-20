@@ -2,7 +2,7 @@
 // 치지 않는 사이에 새어 든 다른 드럼 소리(블리드)가 줄어드는 것을 듣는다. 스레숄드만 보이고 나머지는 '더 자세히'.
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { More, Slider } from '../ui/controls';
+import { More, Slider, Tabs } from '../ui/controls';
 import { Meter } from '../ui/Meter';
 import { useFrame } from '../ui/useFrame';
 import type { MixerEngine } from '../../audio/engine';
@@ -22,7 +22,8 @@ function GateLamp({ engine, active }: { engine: MixerEngine | null; active: bool
   return <span className={`sim-lamp ${active && open ? 'is-on' : ''}`}>{active ? (open ? '열림: 소리 통과' : '닫힘: 줄이는 중') : '재생하면 문 상태가 보인다'}</span>;
 }
 
-export default function GateWidget() {
+/** modes면 게이트·익스팬더 모드 고르기와 비율을 보인다(익스팬더 레슨). */
+export default function GateWidget({ modes = false }: { modes?: boolean }) {
   const store = useMemo(
     () =>
       createWidgetStore({
@@ -58,6 +59,22 @@ export default function GateWidget() {
               <GateLamp engine={engine} active={status === 'playing' && g.on} />
             </div>
           </div>
+          {modes && (
+            <>
+              <Tabs
+                label="모드"
+                items={[
+                  { id: 'gate' as const, label: '게이트 · 뚝 닫기' },
+                  { id: 'exp' as const, label: '익스팬더 · 서서히 줄이기' },
+                ]}
+                value={g.mode === 'duck' ? 'gate' : g.mode}
+                onChange={(mode) => set({ mode })}
+              />
+              {g.mode === 'exp' && (
+                <Slider label="비율" hint="1:2면 스레숄드 아래 1 dB마다 2 dB씩 작아진다" value={g.expRatio} range={ranges.expRatio} onChange={(v) => set({ expRatio: v })} color={color} defaultValue={2} />
+              )}
+            </>
+          )}
           <Slider label="스레숄드" hint="이보다 작은 소리면 문을 닫는다" value={g.thresholdDb} range={ranges.gateThreshold} onChange={(v) => set({ thresholdDb: v })} color={color} defaultValue={-40} />
           <More label="더 자세히: 레인지·어택·홀드·릴리스">
             <Slider label="레인지" hint="닫혔을 때 얼마나 줄일지" value={g.rangeDb} range={ranges.gateRange} onChange={(v) => set({ rangeDb: v })} color={color} defaultValue={40} />

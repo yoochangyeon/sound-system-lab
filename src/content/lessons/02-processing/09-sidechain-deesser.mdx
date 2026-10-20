@@ -1,0 +1,184 @@
+---
+title: 설교 시작하면 반주가 알아서 작아지게 하려면
+chapter: processing
+order: 9
+summary: 사이드체인(키)으로 다른 채널 소리를 듣고 반주를 줄이는 덕킹과, '스·츠'만 듣고 누르는 디에서를 직접 만져 본다.
+topics: ["사이드체인", "디에서"]
+draft: false
+---
+
+import Situation from '../../../components/lesson/Situation.astro';
+import Key from '../../../components/lesson/Key.astro';
+import Term from '../../../components/lesson/Term.astro';
+import StepList from '../../../components/lesson/StepList.astro';
+import Compare from '../../../components/lesson/Compare.astro';
+import Flow from '../../../components/lesson/Flow.astro';
+import SidechainWidget from '../../../components/sim/SidechainWidget';
+import DeEsserWidget from '../../../components/sim/DeEsserWidget';
+import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
+
+<Situation scene="대표 기도 시간" who="반주자" quote="기도 시작하면 제가 알아서 줄일게요.">
+  그런데 기도가 시작돼도 반주가 그대로라 첫 문장이 묻혔다. 말이 나올 때마다 반주 페이더를 손으로 내리기도 바쁘다.
+</Situation>
+
+<Key>다른 채널 소리를 듣고 움직이게 하면, 말이 나올 때 반주가 **저절로** 내려간다.</Key>
+
+---
+
+## 무엇을 듣고 움직이나: 키
+
+컴프와 게이트는 보통 **자기 채널 소리**를 듣고 움직인다. 듣는 소리를 다른 채널로 바꿀 수 있다.
+
+<Compare
+  items={[
+    { title: '보통', text: '반주 채널의 컴프·게이트가 반주 소리를 듣는다', tag: '자기 소리' },
+    { title: '사이드체인', text: '반주 채널의 처리기가 목소리 채널을 듣고 반주를 움직인다', tag: '다른 채널 소리', tone: 'good' },
+  ]}
+/>
+
+<Term name="사이드체인" en="키">처리기가 '듣는' 소리를 따로 정하는 길. 그 소리를 **키**라고 부른다.</Term>
+
+---
+
+## 덕킹: 말하면 반주가 내려간다
+
+목소리를 키로 듣고, 목소리가 커지면 반주를 줄이는 것을 **덕킹**이라고 한다. 광고 시간 배경음악, 기도 중 반주에 쓴다.
+
+<Flow
+  nodes={[
+    { icon: 'mic', name: '목소리 채널', desc: '키: 말이 나오는지 알려 준다' },
+    { icon: 'gate', name: '반주 채널의 덕킹', desc: '키가 스레숄드를 넘으면 레인지만큼 줄인다' },
+    { icon: 'main', name: '메인', desc: '말이 또렷하고, 말이 끝나면 반주가 돌아온다' },
+  ]}
+  mark={['반주 채널의 덕킹']}
+/>
+
+{/* 출처: https://www.soundonsound.com/node/4917277 (Sound On Sound "Using Your DAW's Gates & Expanders": 덕킹은 다른 신호가 있을 때 한 신호의 레벨이 내려가는 것, DJ 목소리와 음악이 대표 예), https://en.wikipedia.org/wiki/Dynamic_range_compression (사이드체인 입력으로 말할 때 음악 볼륨을 자동으로 낮추는 덕킹), 확인 2026-10-20 */}
+
+---
+
+## 직접 해 보기: 사이드체인 덕킹
+
+채널 1이 반주(위에서 고른 소스), 채널 2가 목소리(리드 보컬)다. 반주 채널의 게이트가 덕킹 모드로 목소리를 듣고 있다.
+
+<SidechainWidget client:only="react" />
+
+<StepList
+  items={[
+    '**들어 보기**. 노래가 나올 때마다 **반주 줄임** 미터가 내려간다',
+    '**목소리도 메인으로 듣기**를 끄면 반주만 들린다. 반주가 내려갔다 올라오는 것이 잘 들린다',
+    '**줄이는 양(레인지)**을 0에서 올리며 얼마나 내려가는지 듣는다',
+    '**스레숄드**를 0 쪽으로 올리면 큰 목소리에서만 줄어든다',
+  ]}
+/>
+
+---
+
+## 더 자세히: 내려가고 돌아오는 시간
+
+위젯의 **더 자세히**를 연다. 게이트에서 본 이름이지만 덕킹에서는 반주가 움직이는 시간이다.
+
+<Term name="어택">목소리가 나온 뒤 반주를 줄이기까지 걸리는 시간.</Term>
+<Term name="홀드">말 사이 짧은 쉼에는 반주를 내린 채로 두는 시간. 짧으면 반주가 들썩거린다.</Term>
+<Term name="릴리스">말이 끝난 뒤 반주가 원래 크기로 돌아오는 시간.</Term>
+
+---
+
+## 키 필터: 한 대역만 듣게
+
+키 소리를 필터에 한 번 거른 뒤 듣게 할 수 있다. 처리기가 그 대역이 셀 때만 움직인다.
+
+<Term name="키 필터">키를 로우컷·하이컷·대역 필터로 거른다. 소리 자체가 아니라 '듣는 귀'만 바꾼다.</Term>
+<Term name="키 듣기">처리기가 듣는 소리(필터를 지난 소리)만 들어 본다. 필터 주파수를 맞출 때 쓴다.</Term>
+
+---
+
+## 디에서: '스·츠'만 잡는 컴프
+
+보컬의 '스·츠'가 귀를 찌를 때가 있다. 이 소리를 **치찰음**이라 한다. 컴프가 높은 대역만 듣게 하면 치찰음이 셀 때만 누른다. 이것이 **디에서**다.
+
+<Key>치찰음은 목소리마다 다르다. 디에서는 흔히 6~9 kHz 근처를 듣게 한다.</Key>
+
+{/* 출처: https://en.wikipedia.org/wiki/Dynamic_range_compression (사이드체인에 EQ를 건 컴프는 6~9 kHz 대역의 치찰음을 줄이는 디에서가 된다), https://en.wikipedia.org/wiki/De-essing (치찰음은 목소리에 따라 2~10 kHz 어디든 있다), 확인 2026-10-20 */}
+
+---
+
+## 직접 해 보기: 디에서
+
+컴프의 키 필터가 약 6.5 kHz 대역 필터로 맞춰져 있다.
+
+<DeEsserWidget client:only="react" />
+
+<StepList
+  items={[
+    '**키 듣기**를 켜고 **주파수**를 움직여 "스·츠"가 가장 크게 들리는 곳을 찾는다',
+    '**키 듣기**를 끄고 원래 목소리로 돌아온다',
+    '**스레숄드**를 내리며 "스" 소리에서만 **GR**이 움직이는 자리를 찾는다',
+    '**처리 켜짐** 스위치로 전후를 비교한다',
+  ]}
+/>
+
+---
+
+## 이 디에서는 목소리 전체를 잠깐 누른다
+
+이 위젯은 치찰음이 셀 때 그 순간 **목소리 전체**를 누른다. 짧게 눌렀다 바로 풀어야 티가 덜 난다. 스레숄드를 너무 낮추면 눌린 티가 난다.
+
+<Compare
+  items={[
+    { title: '이 위젯의 방식', text: '높은 대역을 듣고, 누를 때는 목소리 전체를 잠깐 누른다', tag: '광대역' },
+    { title: '다른 방식', text: '치찰음 대역만 떼어 누르고 나머지 대역은 그대로 둔다', tag: '대역 분리' },
+  ]}
+/>
+
+{/* 출처: https://en.wikipedia.org/wiki/De-essing (광대역 디에서는 사이드체인을 필터로 걸러 치찰음에 반응하고 전체 대역을 줄인다, 스레숄드가 낮으면 소리가 어색해질 수 있다. 대역 분리 방식은 치찰음 대역만 컴프한다), 확인 2026-10-20 */}
+
+---
+
+## 쉬운 믹서와 X32 계열에서는
+
+쉬운 믹서는 **전체 보기**에서 채널 상세를 연다. **게이트** 탭 모드 **덕킹**, 그리고 게이트·컴프 탭의 **더 자세히: 사이드체인(키)** 항목에서 키 소스·키 필터·키 듣기를 고른다.
+
+X32 계열에도 키 소스(Key Source)와 키 필터(Key Filter)가 있고, 키를 솔로로 들을 수 있다. 게이트 모드 이름에 DUCK이 보이는데, 정확한 동작은 확인이 더 필요하다.
+
+{/* 출처: docs/research/console-params.md(확인 2026-10-20) "X32 기본 기능 조사": 키 소스 Key Source(자기 채널 OFF, 다른 입력·Aux·FX 리턴·버스)[B1 p.43, B2], 키 필터 Key Filter와 키 솔로[B2, B1 p.43], 게이트 모드 EXP2·EXP3·EXP4·GATE·DUCK(DUCK은 덕커로 보이나 뜻은 확인 필요)[B2] */}
+
+---
+
+## 현장에서는
+
+<StepList
+  items={[
+    '덕킹은 **줄일 채널**(반주)에 걸고, 키를 **말하는 채널**로 고른다',
+    '레인지는 작게 시작해 말이 묻히지 않을 만큼만 늘린다',
+    '반주가 들썩이면 홀드·릴리스를 늘린다',
+    '디에서는 **키 듣기**로 주파수부터 찾고, 그다음 스레숄드를 잡는다',
+  ]}
+/>
+
+<Quiz client:load q="반주를 목소리로 덕킹하려면, 목소리 채널에 게이트를 걸고 키를 반주로 고른다." answer={false} explain="반대다. 줄어들 쪽은 반주이므로 반주 채널에 덕킹을 걸고, 키(듣는 소리)를 목소리 채널로 고른다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="dyn-duck-announce" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="dyn-deess-find" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="dyn-escape-prayer" />

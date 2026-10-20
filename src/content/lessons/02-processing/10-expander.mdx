@@ -1,0 +1,156 @@
+---
+title: 게이트는 너무 뚝 끊길 때
+chapter: processing
+order: 10
+summary: 익스팬더로 작은 소리를 비율만큼 서서히 줄이고, 게이트와 어떻게 다른지 같은 소스로 번갈아 듣는다.
+topics: ["익스팬더", "레인지"]
+draft: false
+---
+
+import Situation from '../../../components/lesson/Situation.astro';
+import Key from '../../../components/lesson/Key.astro';
+import Term from '../../../components/lesson/Term.astro';
+import StepList from '../../../components/lesson/StepList.astro';
+import Compare from '../../../components/lesson/Compare.astro';
+import Numbers from '../../../components/lesson/Numbers.astro';
+import GateWidget from '../../../components/sim/GateWidget';
+import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
+
+<Situation scene="찬양 인도자 마이크" who="인도자" quote="멘트 끝이 툭툭 끊겨요.">
+  드럼 소리가 새어 드는 게 싫어 인도자 마이크에 게이트를 걸었다. 블리드는 줄었는데, 작게 부른 끝음이 문 닫히듯 잘린다.
+</Situation>
+
+<Key>**익스팬더**는 작은 소리를 한 번에 끊지 않고, 작아질수록 조금씩 더 줄인다.</Key>
+
+---
+
+## 게이트와 익스팬더
+
+둘 다 스레숄드보다 **작은** 소리를 줄인다. 줄이는 모양이 다르다.
+
+<Compare
+  items={[
+    { title: '게이트', text: '스레숄드 아래로 내려가면 레인지만큼 한 번에 줄인다', tag: '뚝 닫기' },
+    { title: '익스팬더', text: '스레숄드 아래로 내려간 만큼 비율에 따라 더 줄인다', tag: '서서히 줄이기', tone: 'good' },
+  ]}
+/>
+
+{/* 출처: https://lewitt-audio.com/blog/what-is-a-noise-gate-expander (게이트는 작은 소리를 갑자기 끊어 부자연스러울 수 있고, 익스팬더는 스레숄드 아래를 비율에 따라 서서히 줄여 자연스럽다), https://www.soundonsound.com/node/4917277 (익스팬더는 게이트와 비슷하지만 스레숄드 아래를 없애지 않고 줄인다), 확인 2026-10-20 */}
+
+---
+
+## 비율 읽기
+
+<Term name="비율">스레숄드 아래로 1 dB 내려갈 때 출력이 몇 dB 내려가는지. 1:2면 2 dB, 1:4면 4 dB 내려간다.</Term>
+
+<Numbers
+  items={[
+    { value: '1:2', label: '1 dB 아래 → 2 dB 아래', tone: 'green' },
+    { value: '1:4', label: '1 dB 아래 → 4 dB 아래', tone: 'blue' },
+  ]}
+/>
+
+비율이 클수록 게이트에 가까워진다.
+
+{/* 출처: https://www.soundonsound.com/node/4917277 (1:2 익스팬더는 입력이 스레숄드 아래로 1 dB 내려갈 때마다 출력이 2 dB씩 내려간다), 확인 2026-10-20 */}
+
+---
+
+## 레인지가 바닥을 정한다
+
+익스팬더도 끝없이 줄이지는 않는다. 이 사이트의 위젯과 쉬운 믹서에서는 **레인지**만큼 줄인 뒤 더 내려가지 않는다.
+
+<Term name="레인지">가장 많이 줄이는 양. 작게 두면 블리드가 살짝 남아 더 자연스럽다.</Term>
+
+---
+
+## 직접 해 보기: 게이트 대 익스팬더
+
+소스는 **탐 마이크**로 시작한다. 같은 스레숄드에서 모드만 바꿔 듣는다.
+
+<GateWidget client:only="react" modes />
+
+<StepList
+  items={[
+    '**게이트** 탭에서 들어 보기. 탐 사이에서 블리드가 뚝 끊긴다',
+    '**익스팬더** 탭으로 바꾼다. 블리드가 서서히 줄어든다',
+    '**비율**을 1.5에서 4로 올린다. 올릴수록 게이트처럼 줄어든다',
+    '**GR** 미터를 본다. 익스팬더는 소리가 작을수록 깊이 내려간다',
+  ]}
+/>
+
+---
+
+## 컴프레서와 방향이 반대다
+
+<Compare
+  items={[
+    { title: '컴프레서', text: '스레숄드 위의 큰 소리를 누른다. 크기 차이가 줄어든다', tag: '위를 누른다' },
+    { title: '익스팬더', text: '스레숄드 아래의 작은 소리를 더 작게 한다. 크기 차이가 커진다', tag: '아래를 더 줄인다' },
+  ]}
+/>
+
+{/* 출처: https://en.wikipedia.org/wiki/Dynamic_range_compression (익스팬션은 다이내믹 레인지를 늘리고, 다운워드 익스팬션은 스레숄드 아래 작은 소리를 더 작게 한다), 확인 2026-10-20 */}
+
+---
+
+## 어디에 무엇을
+
+<Compare
+  items={[
+    { title: '탐 같은 드럼 마이크', text: '칠 때만 열리면 된다. 게이트가 잘 맞는다', tag: '게이트' },
+    { title: '보컬·말소리 마이크', text: '끝음이 잘리면 바로 티가 난다. 익스팬더로 서서히 줄인다', tag: '익스팬더', tone: 'good' },
+  ]}
+/>
+
+{/* 출처: https://lewitt-audio.com/blog/what-is-a-noise-gate-expander (보컬이 뚝뚝 끊기지 않게 하려면 익스팬더가 낫다, 탐 마이크처럼 한 드럼을 받는 마이크의 블리드에는 게이트가 잘 맞는다), 확인 2026-10-20 */}
+
+---
+
+## 쉬운 믹서와 X32 계열에서는
+
+쉬운 믹서는 **전체 보기**에서 채널 상세 **게이트** 탭 모드를 **익스팬더**로 바꾸면 **비율**이 나온다. **컴프** 탭에도 컴프·익스팬더 모드가 있다.
+
+X32 계열의 게이트 모드에는 EXP2·EXP3·EXP4·GATE가 있고, 컴프 모드에는 COMP·EXP가 있다. EXP2~EXP4는 이름으로 보아 1:2~1:4 익스팬더로 보인다(확인 필요).
+
+{/* 출처: docs/research/console-params.md(확인 2026-10-20) "X32 기본 기능 조사": 게이트 모드 EXP2·EXP3·EXP4·GATE·DUCK(EXP는 1:2~1:4 익스팬더로 보이나 뜻은 확인 필요)[B2], 컴프 모드 COMP/EXP[B1 p.44, B2] */}
+
+---
+
+## 현장에서는
+
+<StepList
+  items={[
+    '말소리·보컬 마이크에는 게이트보다 **익스팬더**를 먼저 떠올린다',
+    '비율은 1:2처럼 낮게 시작한다',
+    '레인지는 작게 두고 필요한 만큼만 늘린다',
+    '가장 작게 부른 끝음이 남는지 리허설 때 확인한다',
+  ]}
+/>
+
+<Quiz client:load q="익스팬더는 스레숄드보다 큰 소리를 비율만큼 누른다." answer={false} explain="그건 컴프레서다. 익스팬더는 스레숄드보다 작은 소리를 비율만큼 더 작게 한다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="dyn-exp-choppy" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="dyn-exp-ratio" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="dyn-escape-leader" />

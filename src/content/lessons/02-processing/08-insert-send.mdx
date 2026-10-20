@@ -1,0 +1,187 @@
+---
+title: 이펙트는 채널에 걸까, 따로 보낼까
+chapter: processing
+order: 8
+summary: 채널에 끼우는 Insert와 복사해 보내고 돌려받는 Send/Return의 차이를 알고, 리버브는 센드로 여러 채널이 나눠 쓴다.
+topics: ["Insert", "Send/Return"]
+draft: false
+---
+
+import Situation from '../../../components/lesson/Situation.astro';
+import Key from '../../../components/lesson/Key.astro';
+import Term from '../../../components/lesson/Term.astro';
+import StepList from '../../../components/lesson/StepList.astro';
+import Numbers from '../../../components/lesson/Numbers.astro';
+import Compare from '../../../components/lesson/Compare.astro';
+import Flow from '../../../components/lesson/Flow.astro';
+import FxRoutingWidget from '../../../components/sim/FxRoutingWidget';
+import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
+
+<Situation scene="찬양팀 보컬 네 명">
+  네 명 모두에게 같은 울림을 주고 싶다. 채널마다 리버브를 하나씩 끼우려니 이펙트 자리가 모자라고, 넷의 울림을 따로따로 맞추기도 번거롭다.
+</Situation>
+
+<Key>이펙트를 거는 길은 두 가지다. 채널에 **끼우는 Insert**, 따로 **보내고 돌려받는 Send/Return**.</Key>
+
+---
+
+## Insert: 채널에 끼운다
+
+<Flow
+  nodes={[
+    { icon: 'mic', name: '채널' },
+    { icon: 'box', name: '이펙트(Insert)', desc: '채널 소리 전체가 여기를 지나간다' },
+    { icon: 'fader', name: '채널 페이더' },
+    { icon: 'main', name: '메인' },
+  ]}
+  mark={['이펙트(Insert)']}
+/>
+
+<Term name="Insert" en="인서트">채널 길 중간에 이펙트를 끼운다. 채널 소리 전체가 이펙트를 지나간 뒤 다음으로 간다.</Term>
+
+---
+
+## Insert는 채널 하나만 손볼 때
+
+GEQ, 컴프레서, 디에서(보컬의 "스" 소리만 줄이는 처리기)처럼 **그 채널만** 다듬는 처리기를 끼운다.
+
+<Term name="Mix">Insert로 리버브 같은 이펙트를 끼우면, 이펙트 소리와 원음의 비율을 Mix로 정한다. 높일수록 원음이 줄어든다.</Term>
+
+{/* 출처: https://en.wikipedia.org/wiki/Insert_(effects_processing) (인서트로 게이트·컴프·EQ를 직렬로 끼운다, 그 채널만의 리버브도 가능), https://en.wikipedia.org/wiki/Aux-send (컴프 같은 다이내믹 처리기는 보통 인서트로 건다), 확인 2026-10-20 */}
+
+---
+
+## Send/Return: 복사해 보내고 돌려받는다
+
+<Flow
+  nodes={[
+    { icon: 'mic', name: '보컬 1~4 채널' },
+    { icon: 'fader', name: '채널 페이더' },
+    { icon: 'wave', name: '원음', desc: '그대로 메인으로', branch: [{ icon: 'bus', name: 'FX 버스 → 리버브', desc: '넷의 복사본이 모인다' }] },
+    { icon: 'main', name: '메인', desc: '원음 + FX 리턴' },
+  ]}
+  mark={['FX 버스 → 리버브']}
+/>
+
+리버브 **하나**에 네 채널이 같이 보낸다. 원음은 손대지 않는다.
+
+---
+
+## 세 가지 이름
+
+<Term name="Send" en="센드">채널 소리의 복사본을 버스로 보내는 양. 채널마다 따로 정한다.</Term>
+<Term name="FX 버스">이펙트로 갈 소리를 모으는 버스. 모니터 버스와 같은 구조인데, 끝에 스피커 대신 이펙트가 있다.</Term>
+<Term name="Return" en="리턴">이펙트를 거친 소리가 믹서로 돌아오는 자리. 자기 페이더가 있어 잔향 전체 크기를 한 번에 정한다.</Term>
+
+{/* 출처: https://en.wikipedia.org/wiki/Aux-send (Aux 센드는 채널 소리를 다른 곳으로 보내는 출력, 이펙트를 거친 소리는 Aux 리턴 입력으로 돌아와 이펙트 루프가 된다), 확인 2026-10-20 */}
+
+---
+
+## 둘을 나란히
+
+<Compare
+  items={[
+    { title: 'Insert', text: '채널마다 하나씩. 원음까지 이펙트를 지나가고 Mix로 섞는다', tag: 'GEQ · 컴프 · 디에서' },
+    { title: 'Send/Return', text: '이펙트 하나를 여러 채널이 나눠 쓴다. 원음은 그대로, 리턴으로 잔향만 섞는다', tag: '리버브 · 딜레이' },
+  ]}
+/>
+
+{/* 출처: https://violetrecording.com/how-to-use-reverb-live/ (라이브 리버브는 채널마다 인서트하지 않고 Aux 센드 이펙트로 쓴다), https://en.wikipedia.org/wiki/Aux-send (센드 이펙트는 리버브·딜레이 같은 시간 계열이 흔하다), 확인 2026-10-20 */}
+
+---
+
+## 들어 보기: Insert와 Send
+
+<FxRoutingWidget client:only="react" />
+
+<StepList
+  items={[
+    '**Insert** 탭에서 들어 보기. **Mix**를 올리면 원음이 줄고 잔향이 커진다',
+    '**Send** 탭으로 바꾼다. **보내는 양**은 잔향만 늘리고 줄인다. 원음은 그대로다',
+    '**채널 페이더**를 내린다. Insert와 **페이더 뒤(post)**는 잔향도 같이 줄어든다',
+    '**페이더 앞(pre)**으로 바꾸고 다시 내린다. 원음은 사라지는데 잔향만 남는다',
+  ]}
+/>
+
+---
+
+## FX 센드는 보통 페이더 뒤
+
+<Compare
+  items={[
+    { title: 'FX 센드 · 페이더 뒤(post)', text: '보컬 페이더를 내리면 잔향도 같이 준다. 원음과 잔향의 비율이 유지된다', tone: 'good' },
+    { title: 'FX 센드 · 페이더 앞(pre)', text: '페이더를 내려도 잔향만 남아 울린다', tone: 'bad' },
+    { title: '모니터 센드', text: '반대로 페이더 앞(pre)을 많이 쓴다. 메인 믹스를 바꿔도 무대 소리가 흔들리지 않는다', tag: '참고' },
+  ]}
+/>
+
+{/* 출처: https://en.wikipedia.org/wiki/Aux-send (페이더 앞 센드는 채널 페이더의 영향을 받지 않는다, 리버브·딜레이 같은 이펙트는 보통 페이더 뒤 센드, 모니터는 페이더 앞 센드), https://violetrecording.com/how-to-use-reverb-live/ (Aux 센드를 post-fade로 두어 리버브가 채널 페이더를 따르게 한다), 확인 2026-10-20 */}
+
+---
+
+## 실제 콘솔에서는: X32 계열
+
+<Numbers
+  items={[
+    { value: '8개', label: 'FX 슬롯', tone: 'blue' },
+    { value: '1~4', label: '센드 · 인서트 둘 다', tone: 'green' },
+    { value: '5~8', label: '인서트만', tone: 'grey' },
+  ]}
+/>
+
+센드로 쓴 FX 1~4는 **FX 리턴**(1L~4R)으로 돌아온다. 기본 설정에서는 **Bus 13~16**이 FX 1~4로 소리를 보낸다. GEQ도 FX 슬롯에 인서트로 건다.
+
+{/* 출처: docs/research/console-params.md(확인 2026-10-20) X32 기본 기능 조사(4차 확장 근거): FX 슬롯 8개, 1~4는 센드·인서트, 5~8은 인서트 전용, FX 리턴 FX 1L~4R, 기본 Bus 13~16 → FX 1~4. GEQ는 FX 슬롯 인서트([B1]) */}
+
+---
+
+## 쉬운 믹서에서는
+
+<StepList
+  items={[
+    '[실습실](/lab/)을 열고 위쪽 **보기**를 **전체**로 바꾼다',
+    '채널 상세의 **인서트** 탭: 켜고 Mix로 섞는다. 그 채널에만 걸린다',
+    '채널 상세의 **센드** 탭: FX 버스로 보내는 양을 정한다',
+    '출력의 **FX** 탭: 리턴(돌아오는 소리) 크기와 이펙트 설정을 만진다',
+  ]}
+/>
+
+---
+
+## 현장에서는
+
+<StepList
+  items={[
+    '여러 채널이 같이 쓰는 리버브·딜레이는 **Send/Return**으로 건다',
+    '한 채널만 다듬는 처리기는 **Insert**로 끼운다',
+    'FX 센드는 **페이더 뒤(post)**인지 확인한다',
+    '잔향 전체가 크거나 작으면 채널마다 만지지 말고 **리턴**부터 본다',
+  ]}
+/>
+
+<Quiz client:load q="Send/Return으로 리버브를 걸면 원음도 리버브를 지나가므로, 보내는 양을 올릴수록 원음이 줄어든다." answer={false} explain="Send는 복사본을 보낸다. 원음은 그대로 메인으로 가고, 돌아온 잔향만 더해진다. 원음이 줄어드는 것은 Insert의 Mix다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="fx-shared-reverb" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="fx-ghost-reverb" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="fx-escape-handover" />

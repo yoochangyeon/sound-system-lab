@@ -23,6 +23,19 @@ import { SONGS } from '../audio/library';
               </td>
             </tr>
             <tr>
+              <th>만든 사람</th>
+              <td>
+                {song.artist}
+                {song.credit.artistUrl && (
+                  <>
+                    {' '}
+                    (<a href={song.credit.artistUrl}>밴드 페이지</a>)
+                  </>
+                )}
+                . {song.credit.thanks} <a href={song.credit.listingUrl}>라이브러리 항목</a>
+              </td>
+            </tr>
+            <tr>
               <th>이용 조건</th>
               <td>
                 {song.terms.summary} <a href={song.terms.url}>자세히</a>

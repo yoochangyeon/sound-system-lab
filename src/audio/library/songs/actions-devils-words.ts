@@ -15,11 +15,19 @@ export const ACTIONS_DEVILS_WORDS: Song = {
   loopSeconds: 40.421,
   excerpt: { fromSec: 102.527, toSec: 142.948, bars: 32, note: '합창 한 마디 앞부터 32마디' },
   source: { name: "Cambridge-MT 'Mixing Secrets' Free Multitrack Download Library", url: 'https://cambridge-mt.com/ms3/mtk/' },
+  // 조건 확인(2026-10-20): 원본 Readme와 Cambridge-MT 라이브러리·FAQ(현재 사이트는 보안 확인 페이지라
+  // Internet Archive 사본으로 읽음: 라이브러리 2025-01-02, FAQ 2025-07-15). 무료·교육 목적, 상업 이용 금지.
+  // FAQ: 수업 과제와 오디오 시연은 "Absolutely", 튜토리얼은 "entirely not-for-profit"이면 된다. 상업 교재로 묶는 것은 금지.
+  // 이 사이트는 무료·광고 없음·비영리 교육용이라 이 범위 안이다. 링크는 ZIP이 아니라 라이브러리 항목(#Actions)으로 건다.
   terms: {
-    summary: '교육 목적으로만 제공. 저작권자의 명시적 허락 없이 상업적으로 쓸 수 없다(원본 Readme).',
-    url: 'https://cambridge-mt.com/ms3/mtk-faq/',
+    summary: '무료, 교육 목적으로만 제공. 저작권자의 명시적 허락 없이 상업적으로 쓸 수 없다. 비영리 수업·시연·튜토리얼에 쓸 수 있다.',
+    url: 'https://www.cambridge-mt.com/ms/mtk-faq/',
     checked: '2026-10-20',
-    caution: '공개 웹사이트에서 소스를 들려주는 것이 허용되는지 FAQ 원문을 확인하지 못했다(확인 필요).',
+  },
+  credit: {
+    thanks: 'Arthur Walwin과 밴드 Actions가 멀티트랙을 제공했다.',
+    listingUrl: 'https://www.cambridge-mt.com/ms/mtk/#Actions',
+    artistUrl: 'https://www.facebook.com/actionsuk',
   },
   changes:
     '102.5~142.9초(32마디)를 잘라 모노로 합치고, 여러 트랙은 한 소스로 더했다(0 dBFS를 넘으면 −3 dBFS 피크로 낮춤). 양 끝 5 ms 페이드, AAC 96 kbps(정답 믹스는 스테레오 160 kbps).',

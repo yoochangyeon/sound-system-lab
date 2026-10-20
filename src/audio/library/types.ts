@@ -62,6 +62,8 @@ export interface Song {
   excerpt: { fromSec: number; toSec: number; bars: number; note: string };
   source: { name: string; url: string };
   terms: { summary: string; url: string; checked: string; caution?: string };
+  /** 출처 페이지에 보일 감사·크레딧. listingUrl은 라이브러리의 그 곡 항목 링크(ZIP 주소가 아니라) */
+  credit: { thanks: string; listingUrl: string; artistUrl?: string };
   /** 바꾼 점(출처 표기용) */
   changes: string;
   stems: SongStem[];

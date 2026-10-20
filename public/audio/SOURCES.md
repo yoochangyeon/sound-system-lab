@@ -6,10 +6,11 @@
 
 | 항목 | 내용 |
 |---|---|
-| 출처 | Cambridge-MT 'Mixing Secrets' Free Multitrack Download Library, https://cambridge-mt.com/ms3/mtk/ |
+| 출처 | Cambridge-MT 'Mixing Secrets' Free Multitrack Download Library, 항목 https://www.cambridge-mt.com/ms/mtk/#Actions |
+| 만든 사람 | Actions(밴드 페이지 https://www.facebook.com/actionsuk). Arthur Walwin과 밴드가 멀티트랙을 제공 |
 | 원본 | 27트랙 WAV 24-bit/44.1 kHz, 190 BPM, 원곡 믹스 `DevilsWords_Full_Preview.mp3` |
-| 이용 조건 | 원본 Readme: "provided for educational purposes only", 저작권자의 명시적 허락 없는 상업적 이용 금지. 자세한 조건은 https://cambridge-mt.com/ms3/mtk-faq/ |
-| 확인 | 2026-10-20. FAQ 원문은 사이트 보안 확인 페이지 때문에 열지 못했다. 공개 웹에서 들려주는 것이 허용되는지 **확인 필요** |
+| 이용 조건 | 무료·교육 목적만, 저작권자 허락 없는 상업적 이용 금지(원본 Readme, 라이브러리 안내). FAQ: 수업 과제·오디오 시연 가능, 튜토리얼은 완전히 비영리일 때 가능, 상업 교재로 묶기 금지. https://www.cambridge-mt.com/ms/mtk-faq/ |
+| 확인 | 2026-10-20. 현재 사이트가 보안 확인 페이지라 Internet Archive 사본으로 읽음(라이브러리 2025-01-02, FAQ 2025-07-15). 이 사이트는 무료·광고 없음·비영리 교육용이라 조건 안이다 |
 | 바꾼 점 | 102.5~142.9초(합창 한 마디 앞부터 32마디)를 잘라 모노로 합치고, 여러 트랙은 한 소스로 더함. 양 끝 5 ms 페이드, AAC 96 kbps. 원곡 믹스는 같은 구간(146 ms 보정)을 스테레오 160 kbps로 |
 
 | 파일 | 원본 트랙 |

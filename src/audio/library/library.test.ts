@@ -19,6 +19,7 @@ describe.each(SONGS)('곡 매니페스트: $title', (song) => {
     expect(song.source.url).toMatch(/^https:\/\//);
     expect(song.terms.summary.length).toBeGreaterThan(5);
     expect(song.changes.length).toBeGreaterThan(5);
+    expect(song.credit.listingUrl).not.toMatch(/\.zip$/i);
   });
 
   it('피크·RMS가 그럴듯하다(피크 ≤ 0 dBFS, RMS < 피크)', () => {

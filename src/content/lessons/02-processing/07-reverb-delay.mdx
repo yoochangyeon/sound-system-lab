@@ -9,11 +9,11 @@ draft: false
 
 import Situation from '../../../components/lesson/Situation.astro';
 import Key from '../../../components/lesson/Key.astro';
+import SignalMap from '../../../components/lesson/SignalMap.astro';
 import Term from '../../../components/lesson/Term.astro';
 import StepList from '../../../components/lesson/StepList.astro';
 import Numbers from '../../../components/lesson/Numbers.astro';
 import Compare from '../../../components/lesson/Compare.astro';
-import Flow from '../../../components/lesson/Flow.astro';
 import FxSendWidget from '../../../components/sim/FxSendWidget';
 import Quiz from '../../../components/lesson/Quiz';
 import CaseQuiz from '../../../components/lesson/CaseQuiz';
@@ -37,15 +37,7 @@ import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 ## 원음은 두고, 잔향만 돌려받는다
 
-<Flow
-  nodes={[
-    { icon: 'mic', name: '리드 보컬 채널', desc: '게인 · EQ · 컴프' },
-    { icon: 'fader', name: '채널 페이더' },
-    { icon: 'wave', name: '원음', desc: '그대로 메인으로', branch: [{ icon: 'bus', name: 'FX 버스 → 리버브', desc: '복사본으로 잔향을 만든다' }] },
-    { icon: 'main', name: '메인', desc: '원음 + 돌아온 잔향' },
-  ]}
-  mark={['FX 버스 → 리버브']}
-/>
+<SignalMap at="02-processing/07-reverb-delay" />
 
 보컬 소리를 복사해 리버브로 **보내고**, 나온 잔향만 **돌려받아** 섞는다. 이 구조는 다음 레슨에서 자세히 본다.
 

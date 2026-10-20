@@ -9,7 +9,7 @@ draft: false
 
 import Situation from '../../../components/lesson/Situation.astro';
 import Key from '../../../components/lesson/Key.astro';
-import Flow from '../../../components/lesson/Flow.astro';
+import SignalMap from '../../../components/lesson/SignalMap.astro';
 import LevelZones from '../../../components/lesson/LevelZones.astro';
 import StepList from '../../../components/lesson/StepList.astro';
 import Compare from '../../../components/lesson/Compare.astro';
@@ -29,15 +29,7 @@ import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 마이크나 악기의 작은 신호를 콘솔이 다루기 좋은 크기로 키우는 단계다. **게인**은 그 키우는 양이다.
 
-<Flow
-  mark={['프리엠프(게인)']}
-  nodes={[
-    { icon: 'mic', name: '마이크' },
-    { icon: 'gain', name: '프리엠프(게인)', desc: '여기서 기본 크기를 잡는다' },
-    { icon: 'eq', name: '처리기' },
-    { icon: 'fader', name: '페이더', desc: '믹스 속 크기는 그다음' },
-  ]}
-/>
+<SignalMap at="02-processing/01-preamp" />
 
 ---
 

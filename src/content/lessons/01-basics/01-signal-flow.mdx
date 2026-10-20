@@ -10,6 +10,7 @@ draft: false
 import Situation from '../../../components/lesson/Situation.astro';
 import Key from '../../../components/lesson/Key.astro';
 import Flow from '../../../components/lesson/Flow.astro';
+import SignalMap from '../../../components/lesson/SignalMap.astro';
 import Term from '../../../components/lesson/Term.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import Quiz from '../../../components/lesson/Quiz';
@@ -27,15 +28,7 @@ import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 이 길을 **신호 흐름**이라고 한다. 소리가 마이크에서 출발해 스피커에 닿기까지 거치는 순서다.
 
-<Flow
-  nodes={[
-    { icon: 'mic', name: '마이크', desc: '공기의 떨림을 전기 신호로' },
-    { icon: 'gain', name: '프리앰프(게인)', desc: '작은 신호를 다루기 좋은 크기로 키운다' },
-    { icon: 'eq', name: '처리기', desc: 'HPF · 게이트 · EQ · 컴프레서' },
-    { icon: 'fader', name: '페이더', desc: '최종으로 얼마나 내보낼지' },
-    { icon: 'main', name: '메인', desc: '회중석 스피커', branch: [{ icon: 'monitor', name: '모니터(Aux)', desc: '무대 위 스피커' }] },
-  ]}
-/>
+<SignalMap at="01-basics/01-signal-flow" />
 
 ---
 

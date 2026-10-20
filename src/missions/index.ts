@@ -1,4 +1,4 @@
-// 쉬운 믹서 미션 4종(기획서 8장). 판정 수치의 근거는 각 해설에 적는다.
+// 쉬운 믹서 미션(기획서 8장). 4차 미션 4종은 fourth.ts. 판정 수치의 근거는 각 해설에 적는다.
 // 채널은 역할로 찾는다(#45): 곡을 바꿔도 같은 미션을 쓰고, 필요한 역할이 없는 곡에서는 그 미션을 뺀다.
 import { nearestGeqBand } from '../audio/dsp/geq';
 import { DEFAULT_SONG, stemsFor, type Song, type StemRole } from '../audio/library';
@@ -12,6 +12,7 @@ import {
   monitorLevelDb,
 } from '../stores/derived';
 import type { MixerState } from '../stores/mixer-model';
+import { buildFourthMissions } from './fourth';
 import type { Mission } from './types';
 
 const inputOf = (s: MixerState, id: string) => s.inputs.findIndex((i) => i.stemId === id);
@@ -281,6 +282,7 @@ const needs: [Mission, number[]][] = [
   [sermon, [SERMON]],
   [gain, GAIN_TARGETS],
   [noSound, [GUITAR]],
+  ...buildFourthMissions(song),
 ];
 return needs.filter(([, chs]) => chs.every((c) => c >= 0)).map(([m]) => m);
 }

@@ -29,8 +29,8 @@ describe.each(SONGS)('곡 매니페스트: $title', (song) => {
     }
   });
 
-  it('미션 4종에 필요한 역할이 모두 있다', () => {
-    expect(buildMissions(song).map((m) => m.id)).toEqual(['howl', 'sermon', 'gain', 'no-sound']);
+  it('미션 8종(4차 포함)에 필요한 역할이 모두 있다', () => {
+    expect(buildMissions(song).map((m) => m.id)).toEqual(['howl', 'sermon', 'gain', 'no-sound', 'dry-vocal', 'dca-band', 'find-noise', 'scene-sermon']);
   });
 
   it('역할로 고르면 역할 순서대로 나온다', () => {

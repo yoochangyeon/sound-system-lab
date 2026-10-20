@@ -3,7 +3,7 @@ title: 실습실에서 주일 예배 문제를 미리 풀어 보기
 chapter: consoles
 order: 2
 summary: 쉬운 믹서의 자유 모드와 미션, 미션 4종의 상황과 볼 곳, 힌트 쓰는 법을 안내한다.
-topics: ["미션 4종", "힌트", "자유 모드"]
+topics: ["미션", "힌트"]
 draft: false
 ---
 
@@ -12,6 +12,7 @@ import Key from '../../../components/lesson/Key.astro';
 import MissionCards from '../../../components/lesson/MissionCards.astro';
 import StepList from '../../../components/lesson/StepList.astro';
 import Compare from '../../../components/lesson/Compare.astro';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="주일 아침, 처음 겪는 문제">
   하울링, 웅웅거리는 설교, 깨지는 드럼, 안 나오는 기타. 처음 겪으면 손이 굳는다.
@@ -73,3 +74,27 @@ import Compare from '../../../components/lesson/Compare.astro';
 <Key>실습실에서 푼 순서를 메모해 방송실 콘솔 옆에 둔다. 실제 기기의 메뉴 이름과 범위는 그 기종 매뉴얼로 다시 확인한다.</Key>
 
 이제 [실습실](/lab/)로 가서 첫 미션부터 시작한다.
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="lab-howl-trap" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="lab-gain-mission" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="lab-escape-sermon-plan" />

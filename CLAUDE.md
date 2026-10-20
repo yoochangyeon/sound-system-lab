@@ -40,6 +40,7 @@
 | `src/components/sim/` | 처리기 하나씩 만지는 React 위젯(PEQ, GEQ, Comp, Gate…). MDX에서 `client:only="react"`로 불러 쓴다 |
 | `src/mixer/` | 실습실 쉬운 믹서(8채널, 모니터 2, 메인)와 미션 카드. `audio/` 엔진과 `stores/` 저장소를 쓴다 |
 | `src/missions/` | 미션 데이터(시작 상태, 판정, 힌트, 해설) |
+| `src/quizzes/` | 레슨별 실전 시나리오 퀴즈 데이터(쉬움·보통·어려움 방탈출형). 원고에서 `<CaseQuiz client:load id="..." />`로 부른다. 레슨 원고의 사실·수치를 벗어나지 않는다 |
 | `public/audio/` | 실습용 음원(드럼·보컬 스템 등) |
 
 파일·폴더 이름은 영문 소문자와 하이픈(kebab-case)으로 짓는다. 한글 파일명은 쓰지 않는다. 내용(본문·제목)은 한국어로 쓴다.

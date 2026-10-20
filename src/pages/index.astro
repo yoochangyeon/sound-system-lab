@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CHAPTERS, lessonHref, sortedLessons } from '../lib/lessons';
+import { QUIZZES } from '../quizzes';
 
 const lessons = await sortedLessons();
 const first = lessons[0];
@@ -13,7 +14,7 @@ const first = lessons[0];
     <p class="lead">하울링이 나거나 설교가 웅웅거릴 때 무엇을 만질지, 카드를 넘기며 그림으로 보고 소리로 확인해요.</p>
     <div class="hero-stats">
       <div><strong>{lessons.length}</strong><span>레슨</span></div>
-      <div><strong>5</strong><span>소리 실험</span></div>
+      <div><strong>{QUIZZES.length}</strong><span>실전 퀴즈</span></div>
       <div><strong>4</strong><span>실전 미션</span></div>
     </div>
     <a class="btn hero-cta" href={lessonHref(first)}>1장부터 시작하기</a>
@@ -40,10 +41,8 @@ const first = lessons[0];
                     <strong>{l.data.title}</strong>
                     <small>{l.data.summary}</small>
                     {l.data.topics.length > 0 && (
-                      <span class="tags" aria-label="다루는 요소">
-                        {l.data.topics.map((t) => (
-                          <span class={`tag is-${ch.no}`}>{t}</span>
-                        ))}
+                      <span class={`keys is-${ch.no}`}>
+                        <b>핵심</b> {l.data.topics.join(' · ')}
                       </span>
                     )}
                   </span>
@@ -219,33 +218,24 @@ const first = lessons[0];
     line-height: 1.45;
     margin-top: 2px;
   }
-.tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 8px;
-  }
-  .tag {
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #fff;
-    border: 1px solid var(--line);
+  .keys {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
     color: var(--muted);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.6;
   }
-  .tag.is-1 {
+  .keys b {
+    margin-right: 2px;
+    font-weight: 800;
+  }
+  .keys.is-1 b {
     color: var(--accent);
-    border-color: #cfe2ff;
   }
-  .tag.is-2 {
+  .keys.is-2 b {
     color: #d97400;
-    border-color: #ffe0b8;
   }
-  .tag.is-3 {
+  .keys.is-3 b {
     color: var(--green);
-    border-color: #c4ecd6;
   }
   .chev {
     color: var(--faint);

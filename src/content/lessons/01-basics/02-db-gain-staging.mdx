@@ -3,7 +3,7 @@ title: 소리가 찢어지거나 너무 작을 때
 chapter: basics
 order: 2
 summary: dB가 무엇인지 알고, 찢어지지도 묻히지도 않게 게인을 잡는 순서를 익힌다.
-topics: ["dB", "dBFS", "클리핑", "헤드룸"]
+topics: ["dBFS", "헤드룸"]
 draft: false
 ---
 
@@ -15,6 +15,7 @@ import StepList from '../../../components/lesson/StepList.astro';
 import Compare from '../../../components/lesson/Compare.astro';
 import ClipDemo from '../../../components/lesson/ClipDemo';
 import Quiz from '../../../components/lesson/Quiz';
+import CaseQuiz from '../../../components/lesson/CaseQuiz';
 
 <Situation scene="본 예배, 찬양 후렴" quote="지지직—" who="인도자 마이크">
   급하게 페이더를 내려도 소리는 작아질 뿐 여전히 찢어진다. 다른 채널은 페이더를 끝까지 올려도 "쉬익" 잡음만 커진다.
@@ -113,3 +114,27 @@ import Quiz from '../../../components/lesson/Quiz';
 />
 
 <Quiz client:load q="찢어지는 소리는 메인 페이더를 내리면 깨끗해진다." answer={false} explain="잘린 소리는 뒤에서 줄여도 깨진 채로 작아질 뿐이다. 앞에서 게인을 내려야 한다." />
+
+---
+
+## 실전 퀴즈 ① 쉬움
+
+상황 하나, 답 하나. 가볍게 풀어 본다.
+
+<CaseQuiz client:load id="gain-red-drum" />
+
+---
+
+## 실전 퀴즈 ② 보통
+
+앞 단계의 답이 다음 단계의 단서가 된다.
+
+<CaseQuiz client:load id="gain-hiss-keys" />
+
+---
+
+## 실전 퀴즈 ③ 어려움 · 방탈출
+
+확인할 곳을 하나씩 눌러 단서를 모은 뒤 답을 고른다. 틀려도 다시 고를 수 있다.
+
+<CaseQuiz client:load id="gain-escape-chorus" />

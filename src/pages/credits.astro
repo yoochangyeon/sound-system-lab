@@ -1,77 +1,53 @@
 ---
-// 음원 출처(기획서 S09). public/audio/SOURCES.md와 같은 내용을 유지한다.
+// 음원 출처(기획서 S09). 곡 매니페스트에서 만든다(#45). public/audio/SOURCES.md와 같은 내용을 유지한다.
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { STEMS } from '../audio/stems';
-
-const band = STEMS.filter((s) => !s.speech);
+import { SONGS } from '../audio/library';
 ---
 
-    <BaseLayout title="음원 출처">
-      <h1>음원 출처</h1>
-      <p>이 사이트의 실습 음원은 저작권이 확인된 것만 씁니다.</p>
+<BaseLayout title="음원 출처">
+  <h1>음원 출처</h1>
+  <p>이 사이트의 실습 음원은 이용 조건을 확인한 멀티트랙만 씁니다. 교육 목적의 무료 사이트이며 상업적으로 쓰지 않습니다.</p>
 
-      <h2>밴드 음원</h2>
-      <table>
-        <tbody>
-          <tr>
-            <th>곡명</th>
-            <td>Forget It - Demo</td>
-          </tr>
-          <tr>
-            <th>만든 사람</th>
-            <td>Tom Ray (ccMixter: tmray)</td>
-          </tr>
-          <tr>
-            <th>출처</th>
-            <td>
-              <a href="https://ccmixter.org/files/tmray/40208">ccmixter.org/files/tmray/40208</a>
-            </td>
-          </tr>
-          <tr>
-            <th>라이선스</th>
-            <td>
-              <a href="https://creativecommons.org/licenses/by/3.0/">Creative Commons 저작자표시 3.0 (CC BY 3.0)</a>
-            </td>
-          </tr>
-          <tr>
-            <th>바꾼 점</th>
-            <td>60~108초 구간을 잘라 모노로 합치고 웹용(AAC)으로 변환했습니다.</td>
-          </tr>
-        </tbody>
-      </table>
-      <p>사이트에서 쓰는 악기 트랙: {band.map((s) => s.label).join(', ')}</p>
-
-      <h2>설교 음원</h2>
-      <table>
-        <tbody>
-          <tr>
-            <th>내용</th>
-            <td>John Wesley, "Salvation by Faith" (Sermons on Several Occasions, First Series 1편)</td>
-          </tr>
-          <tr>
-            <th>낭독</th>
-            <td>Robert G. Smith (LibriVox)</td>
-          </tr>
-          <tr>
-            <th>출처</th>
-            <td>
-              <a href="https://librivox.org/sermons-on-several-occasions-first-series-by-john-wesley/">librivox.org</a> ·{' '}
-              <a href="https://archive.org/details/sermonsfirstseries_1307_librivox">archive.org</a>
-            </td>
-          </tr>
-          <tr>
-            <th>라이선스</th>
-            <td>
-              <a href="https://librivox.org/pages/public-domain/">퍼블릭 도메인(LibriVox 녹음)</a>
-            </td>
-          </tr>
-          <tr>
-            <th>바꾼 점</th>
-            <td>2:00~2:48 구간을 잘라 모노로 합치고 웹용(AAC)으로 변환했습니다. 영어 낭독이며, 한국어 설교 녹음으로 바꿀 예정입니다.</td>
-          </tr>
-        </tbody>
-      </table>
-    </BaseLayout>
+  {
+    SONGS.map((song) => (
+      <section>
+        <h2>
+          {song.artist} — "{song.title}"
+        </h2>
+        <table>
+          <tbody>
+            <tr>
+              <th>출처</th>
+              <td>
+                <a href={song.source.url}>{song.source.name}</a>
+              </td>
+            </tr>
+            <tr>
+              <th>이용 조건</th>
+              <td>
+                {song.terms.summary} <a href={song.terms.url}>자세히</a>
+              </td>
+            </tr>
+            <tr>
+              <th>바꾼 점</th>
+              <td>{song.changes}</td>
+            </tr>
+            <tr>
+              <th>소스</th>
+              <td>{song.stems.map((s) => `${s.label}(${s.from})`).join(', ')}</td>
+            </tr>
+            {song.reference && (
+              <tr>
+                <th>정답 믹스</th>
+                <td>{song.reference.note}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
+    ))
+  }
+</BaseLayout>
 
 <style>
   h1 {

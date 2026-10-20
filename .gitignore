@@ -24,3 +24,6 @@ pnpm-debug.log*
 .idea/
 .vercel
 .env*
+
+# Claude Code 작업 트리
+.claude/worktrees/

@@ -1,7 +1,9 @@
 // 쉬운 믹서(기획서 S05, 2차 개편 #36). 실제 기종을 본뜨지 않은 학습용 8채널 믹서.
 // 소리 엔진·저장소·미션은 위젯과 같은 것을 쓴다. 휴대폰에서는 채널 줄만 가로로 스크롤한다.
+// 곡을 고르면(#45) 그 곡의 채널 배치로 믹서를 새로 만든다. '정답 믹스'로 원곡 믹스와 번갈아 듣는다.
 import { useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
+import { DEFAULT_SONG, SONGS, songById, type Song } from '../audio/library';
 import { compTransferDb } from '../audio/dsp/dynamics';
 import { geqResponseDb } from '../audio/dsp/geq';
 import type { MixerEngine } from '../audio/engine';
@@ -17,6 +19,7 @@ import { VolumeNotice } from '../components/ui/VolumeNotice';
 import { channelEqResponseDb, inputPeakDb } from '../stores/derived';
 import { createMixerStore, type BusRef, type MixerStoreApi } from '../stores/mixer';
 import { GENERIC_PROFILE } from '../stores/profile';
+import { buildMissions } from '../missions';
 import { MissionCard } from './MissionCard';
 import { mixerDefaultState } from './mixer-state';
 import '../components/sim/sim.css';
@@ -28,9 +31,35 @@ interface Ctx {
   playing: boolean;
 }
 
+/** 원곡 믹스는 마스터링되어 커서, 내 믹스(기본 믹스)와 비슷한 크기로 줄여 튼다(dB).
+ *  2026-10-20 측정: 기본 믹스 메인 RMS 약 −26 dBFS, 원곡 믹스 구간 RMS −8.8 dBFS. */
+const REFERENCE_TRIM_DB = -17;
+
 export default function MixerApp() {
-  const store = useMemo(() => createMixerStore(mixerDefaultState(), GENERIC_PROFILE), []);
+  const [songId, setSongId] = useState(DEFAULT_SONG.id);
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get('song');
+    if (id && songById(id)) setSongId(id);
+  }, []);
+  const song = songById(songId) ?? DEFAULT_SONG;
+  const pickSong = (id: string) => {
+    setSongId(id);
+    const url = new URL(location.href);
+    url.searchParams.set('song', id);
+    url.searchParams.delete('mission');
+    history.replaceState(null, '', url);
+  };
+  // 곡이 바뀌면 저장소·엔진을 새로 만든다.
+  return <MixerForSong key={song.id} song={song} onPickSong={pickSong} />;
+}
+
+function MixerForSong({ song, onPickSong }: { song: Song; onPickSong: (id: string) => void }) {
+  const store = useMemo(() => createMixerStore(mixerDefaultState(song), GENERIC_PROFILE), [song]);
+  const missions = useMemo(() => buildMissions(song), [song]);
   const { engine, status, toggle, needNotice, acceptNotice, cancelNotice } = usePlayback(store);
+  useEffect(() => {
+    if (engine) void engine.setReference(song.reference?.file ?? null, REFERENCE_TRIM_DB);
+  }, [engine, song]);
   const playing = status === 'playing';
   const [selected, setSelected] = useState(0);
   const [missionId, setMissionId] = useState<string | null>(null);
@@ -42,7 +71,7 @@ export default function MixerApp() {
   // 레슨의 미션 링크(?mission=howl)로 바로 연다.
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('mission');
-    if (id) setMissionId(id);
+    if (id && missions.some((m) => m.id === id)) setMissionId(id);
   }, []);
   const changeMission = (id: string | null) => {
     setMissionId(id);
@@ -62,12 +91,36 @@ export default function MixerApp() {
           <span className="sim-stat">이어폰으로 듣기</span>
           <Tabs
             label="듣기"
-            items={[{ id: 'main' as const, label: '메인' }, ...auxes.map((b, i) => ({ id: i, label: b.name.replace(/ (보컬|밴드)$/, '') }))]}
+            items={[
+              { id: 'main' as const, label: '메인' },
+              ...auxes.map((b, i) => ({ id: i, label: b.name.replace(/ (보컬|밴드)$/, '') })),
+              ...(song.reference ? [{ id: 'reference' as const, label: '정답 믹스' }] : []),
+            ]}
             value={listen}
             onChange={(v) => a.setListen(v)}
           />
         </div>
         {status === 'error' && <span className="sim-error">소리를 불러오지 못했습니다. 새로고침해 주세요.</span>}
+        <div className="mx-song">
+          <span className="sim-stat">곡</span>
+          {SONGS.length > 1 ? (
+            <select value={song.id} onChange={(e) => onPickSong(e.target.value)} aria-label="곡 고르기">
+              {SONGS.map((sg) => (
+                <option key={sg.id} value={sg.id}>
+                  {sg.artist} · {sg.title}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <strong>
+              {song.artist} · {song.title}
+            </strong>
+          )}
+          <span className="sim-stat">
+            {song.genre} · {song.bpm} BPM · {song.excerpt.bars}마디 반복
+          </span>
+          {listen === 'reference' && <span className="mx-ref-note">지금 원곡 믹스를 듣는 중. 내 믹스 조작은 들리지 않는다</span>}
+        </div>
       </div>
 
       <div className="mx-grid">
@@ -81,7 +134,7 @@ export default function MixerApp() {
         </div>
         <div className="mx-col is-right">
           <div className="mx-area-mission">
-            <MissionCard store={store} missionId={missionId} onChange={changeMission} onFocusChannel={setSelected} />
+            <MissionCard store={store} missions={missions} missionId={missionId} onChange={changeMission} onFocusChannel={setSelected} />
           </div>
           <div className="mx-area-out">
             <Outputs {...ctx} />

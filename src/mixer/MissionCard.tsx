@@ -2,20 +2,21 @@
 // 완료 기록은 저장하지 않는다.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { MISSIONS } from '../missions';
 import type { Mission } from '../missions/types';
 import { snapshot, type MixerStoreApi } from '../stores/mixer';
 import type { MixerState } from '../stores/mixer-model';
 
 export interface MissionCardProps {
   store: MixerStoreApi;
+  /** 지금 곡에서 풀 수 있는 미션 */
+  missions: Mission[];
   missionId: string | null;
   onChange: (id: string | null) => void;
   onFocusChannel: (ch: number) => void;
 }
 
-export function MissionCard({ store, missionId, onChange, onFocusChannel }: MissionCardProps) {
-  const mission = useMemo(() => MISSIONS.find((m) => m.id === missionId) ?? null, [missionId]);
+export function MissionCard({ store, missions: MISSIONS, missionId, onChange, onFocusChannel }: MissionCardProps) {
+  const mission = useMemo(() => MISSIONS.find((m) => m.id === missionId) ?? null, [MISSIONS, missionId]);
   const [hintsShown, setHintsShown] = useState(0);
   const [succeeded, setSucceeded] = useState(false);
   const start = useRef<MixerState | null>(null);

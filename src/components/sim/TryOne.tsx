@@ -8,6 +8,7 @@ import { channelEqResponseDb, inputPeakDb } from '../../stores/derived';
 import type { MixerActions } from '../../stores/mixer';
 import type { ChannelState, DeepPartial, MixerState } from '../../stores/mixer-model';
 import type { ParamKey, Range } from '../../stores/profile';
+import type { StemRole } from '../../audio/library';
 import { Slider } from '../ui/controls';
 import { ResponseGraph, TransferGraph } from '../ui/CurveGraph';
 import { Meter } from '../ui/Meter';
@@ -20,7 +21,8 @@ type Graph = 'eq' | 'comp' | 'gate' | 'input';
 interface Preset {
   title: string;
   accent: string;
-  stems: string[];
+  /** 어울리는 소스 역할(첫 역할이 기본) */
+  roles: StemRole[];
   initial: DeepPartial<MixerState>;
   graph: Graph;
   param: ParamKey;
@@ -45,8 +47,8 @@ export const PRESETS = {
   gain: {
     title: '게인 하나만',
     accent: 'var(--fn-preamp)',
-    stems: ['drums', 'keys', 'vocals'],
-    initial: { channels: { 0: { preamp: { gainDb: 0 } } } },
+    roles: ['snare', 'kick', 'lead-vocal'],
+    initial: { channels: { 0: { preamp: { gainDb: -20 } } } },
     graph: 'input',
     param: 'gain',
     label: '게인',
@@ -58,7 +60,7 @@ export const PRESETS = {
   hpf: {
     title: 'HPF 하나만',
     accent: EQ,
-    stems: ['bass', 'drums', 'sermon'],
+    roles: ['bass', 'kick', 'lead-vocal'],
     initial: { channels: { 0: { preamp: { hpfOn: true, hpfFreq: 20 } } } },
     graph: 'eq',
     param: 'hpfFreq',
@@ -73,7 +75,7 @@ export const PRESETS = {
   lpf: {
     title: 'LPF 하나만',
     accent: EQ,
-    stems: ['drums', 'guitar-main', 'vocals'],
+    roles: ['overheads', 'guitar', 'lead-vocal'],
     initial: { channels: { 0: { preamp: { lpfOn: true, lpfFreq: 20000 } } } },
     graph: 'eq',
     param: 'lpfFreq',
@@ -83,12 +85,12 @@ export const PRESETS = {
     set: (a, v) => a.setPreamp(0, { lpfFreq: v }),
     isOn: (c) => c.preamp.lpfOn,
     setOn: (a, on) => a.setPreamp(0, { lpfOn: on }),
-    tip: '왼쪽으로 밀수록 심벌의 "치익"이 사라지고 담요를 덮은 듯 먹먹해진다.',
+    tip: '왼쪽으로 밀수록 오버헤드의 심벌 "치익"이 사라지고 담요를 덮은 듯 먹먹해진다.',
   },
   freq: {
     title: '주파수 옮겨 보기',
     accent: EQ,
-    stems: ['vocals', 'sermon', 'guitar-main'],
+    roles: ['lead-vocal', 'guitar', 'backing-vocal'],
     initial: { channels: { 0: { peq: { bands: { 1: { freq: 250, gainDb: 12, q: 2 } } } } } },
     graph: 'eq',
     param: 'eqFreq',
@@ -102,7 +104,7 @@ export const PRESETS = {
   boost: {
     title: '올리기·내리기',
     accent: EQ,
-    stems: ['vocals', 'sermon', 'guitar-main'],
+    roles: ['lead-vocal', 'guitar', 'backing-vocal'],
     initial: { channels: { 0: { peq: { bands: { 2: { freq: 3000, gainDb: 0, q: 1 } } } } } },
     graph: 'eq',
     param: 'eqGain',
@@ -116,7 +118,7 @@ export const PRESETS = {
   q: {
     title: 'Q(폭) 하나만',
     accent: EQ,
-    stems: ['vocals', 'drums', 'guitar-main'],
+    roles: ['lead-vocal', 'overheads', 'guitar'],
     initial: { channels: { 0: { peq: { bands: { 1: { freq: 1000, gainDb: 12, q: 1 } } } } } },
     graph: 'eq',
     param: 'eqQ',
@@ -131,7 +133,7 @@ export const PRESETS = {
   shelf: {
     title: '셸프 하나만',
     accent: EQ,
-    stems: ['bass', 'drums', 'vocals'],
+    roles: ['bass', 'kick', 'lead-vocal'],
     initial: { channels: { 0: { peq: { bands: { 0: { type: 'lowshelf', freq: 200, gainDb: 0 } } } } } },
     graph: 'eq',
     param: 'eqGain',
@@ -145,7 +147,7 @@ export const PRESETS = {
   threshold: {
     title: '스레숄드 하나만',
     accent: DYN,
-    stems: ['vocals', 'sermon', 'bass'],
+    roles: ['lead-vocal', 'bass', 'snare'],
     initial: { channels: { 0: { comp: { on: true, thresholdDb: 0, ratio: 8, attackMs: 5, releaseMs: 120 } } } },
     graph: 'comp',
     param: 'compThreshold',
@@ -159,7 +161,7 @@ export const PRESETS = {
   ratio: {
     title: '레이시오 하나만',
     accent: DYN,
-    stems: ['vocals', 'sermon', 'bass'],
+    roles: ['lead-vocal', 'bass', 'snare'],
     initial: { channels: { 0: { comp: { on: true, thresholdDb: -30, ratio: 1, attackMs: 5, releaseMs: 120 } } } },
     graph: 'comp',
     param: 'ratio',
@@ -173,7 +175,7 @@ export const PRESETS = {
   attack: {
     title: '어택 하나만',
     accent: DYN,
-    stems: ['drums', 'guitar-main', 'vocals'],
+    roles: ['snare', 'kick', 'guitar'],
     initial: { channels: { 0: { comp: { on: true, thresholdDb: -32, ratio: 10, attackMs: 0.5, releaseMs: 120 } } } },
     graph: 'comp',
     param: 'compAttack',
@@ -187,7 +189,7 @@ export const PRESETS = {
   gateThreshold: {
     title: '게이트 스레숄드 하나만',
     accent: DYN,
-    stems: ['drums', 'percussion'],
+    roles: ['toms', 'snare'],
     initial: { channels: { 0: { gate: { on: true, thresholdDb: -80, rangeDb: 40, attackMs: 1, holdMs: 60, releaseMs: 120 } } } },
     graph: 'gate',
     param: 'gateThreshold',
@@ -196,13 +198,13 @@ export const PRESETS = {
     get: (c) => c.gate.thresholdDb,
     set: (a, v) => a.setGate(0, { thresholdDb: v }),
     ...gateOn,
-    tip: '올릴수록 타격 사이가 조용해지다가, 너무 올리면 작은 타격까지 잘린다.',
+    tip: '탐을 치지 않는 사이에 새어 든 스네어·심벌 소리가 올릴수록 줄어들다가, 너무 올리면 탐 소리까지 잘린다.',
   },
   gateRange: {
     title: '게이트 레인지 하나만',
     accent: DYN,
-    stems: ['drums', 'percussion'],
-    initial: { channels: { 0: { gate: { on: true, thresholdDb: -24, rangeDb: 3, attackMs: 1, holdMs: 60, releaseMs: 120 } } } },
+    roles: ['toms', 'snare'],
+    initial: { channels: { 0: { gate: { on: true, thresholdDb: -18, rangeDb: 3, attackMs: 1, holdMs: 60, releaseMs: 120 } } } },
     graph: 'gate',
     param: 'gateRange',
     label: '레인지',
@@ -268,7 +270,7 @@ function InputVisual({ engine, playing, est }: { engine: MixerEngine | null; pla
 
 export default function TryOne({ kind }: { kind: TryKind }) {
   const p: Preset = PRESETS[kind];
-  const store = useMemo(() => createWidgetStore({ stems: p.stems, defaultStem: p.stems[0], initial: p.initial }), [kind]);
+  const store = useMemo(() => createWidgetStore({ roles: p.roles, initial: p.initial }), [kind]);
   const c = useStore(store, (s) => s.channels[0]);
   const range: Range = useStore(store, (s) => s.profile.ranges[p.param]);
   const a = useStore(store, (s) => s.actions);

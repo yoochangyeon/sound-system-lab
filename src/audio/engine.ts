@@ -1,6 +1,8 @@
 // 믹서 엔진: 저장소 상태를 구독해 Web Audio 그래프로 옮긴다.
 // 입력(스템) → 패치 → 채널 스트립 → 메인/Aux 버스 → 듣기 선택 → 안전 리미터 → 출력.
 // 하울링 톤은 하울링 설정이 켜졌을 때 해당 Aux의 RTA와 최종 출력에 섞인다(듣기 선택과 상관없음).
+// 소스는 채널에 연결된 것만 불러온다(#45). 재생 중에 새로 연결되면 지금 루프 위치에 맞춰 이어서 튼다.
+// 정답 믹스(원곡 믹스)는 따로 불러 같은 시각에 맞춰 돌리고, 듣기를 '정답 믹스'로 고를 때만 들린다.
 
 import { Bus } from './bus';
 import { ChannelStrip } from './channel-strip';
@@ -35,9 +37,14 @@ export class MixerEngine {
   readonly limiter: AudioWorkletNode;
   readonly howlOsc: OscillatorNode;
   readonly howlGain: GainNode;
+  readonly refGain: GainNode;
 
   private buffers = new Map<string, AudioBuffer>();
-  private sources: AudioBufferSourceNode[] = [];
+  private sources = new Map<number, AudioBufferSourceNode>();
+  private startedAt = 0;
+  private refBuffer: AudioBuffer | null = null;
+  private refSource: AudioBufferSourceNode | null = null;
+  private refTrimDb = 0;
   private unsubscribe: () => void;
   private howlTimer: ReturnType<typeof setInterval> | null = null;
   private patchWiring: (number | null)[] = [];
@@ -68,6 +75,7 @@ export class MixerEngine {
     });
     this.howlOsc = new OscillatorNode(ctx, { type: 'sine', frequency: s.howl.freq });
     this.howlGain = new GainNode(ctx, { gain: 0 });
+    this.refGain = new GainNode(ctx, { channelCount: 2, channelCountMode: 'explicit', gain: 0 });
 
     this.strips.forEach((st) => {
       st.mainSend.connect(this.main.input);
@@ -78,6 +86,7 @@ export class MixerEngine {
     this.auxes.forEach((b, a) => b.output.connect(this.listenAux[a]).connect(this.listenMix));
     this.howlOsc.connect(this.howlGain);
     this.howlGain.connect(this.listenMix);
+    this.refGain.connect(this.listenMix);
     this.listenMix.connect(this.limiter).connect(opts.destination ?? ctx.destination);
     this.howlOsc.start();
 
@@ -97,38 +106,79 @@ export class MixerEngine {
     return engine;
   }
 
+  /** 채널에 연결된 입력의 스템 id들. */
+  private neededIds(s: MixerState = this.store.getState()): string[] {
+    const ids = new Set<string>();
+    for (const input of s.patch) {
+      const id = input !== null && input !== undefined ? s.inputs[input]?.stemId : null;
+      if (id) ids.add(id);
+    }
+    return [...ids];
+  }
+
+  /** 연결된 소스만 불러온다(이미 불러온 것은 건너뛴다). */
   private async loadBuffers(): Promise<void> {
     if (this.opts.buffers) {
-      this.buffers = new Map(this.opts.buffers);
+      if (this.buffers.size === 0) this.buffers = new Map(this.opts.buffers);
       return;
     }
-    const ids = new Set(this.store.getState().inputs.map((i) => i.stemId).filter((x): x is string => !!x));
     await Promise.all(
-      [...ids].map(async (id) => {
-        const stem = stemById(id);
-        if (stem) this.buffers.set(id, await loadSample(this.ctx, stem.file));
-      }),
+      this.neededIds()
+        .filter((id) => !this.buffers.has(id))
+        .map(async (id) => {
+          const stem = stemById(id);
+          if (stem) this.buffers.set(id, await loadSample(this.ctx, stem.file));
+        }),
     );
+  }
+
+  /** 지금 루프 안에서의 위치(초). */
+  private loopOffset(buf: AudioBuffer): number {
+    return Math.max(0, this.ctx.currentTime - this.startedAt) % buf.duration;
+  }
+
+  private startInput(i: number, when: number, offset = 0): void {
+    const s = this.store.getState();
+    const id = s.inputs[i]?.stemId;
+    const buf = id ? this.buffers.get(id) : undefined;
+    if (!buf || this.sources.has(i)) return;
+    const src = new AudioBufferSourceNode(this.ctx, { buffer: buf, loop: true });
+    src.connect(this.inputNodes[i]);
+    src.start(when, offset);
+    this.sources.set(i, src);
+  }
+
+  private startReference(when: number, offset = 0): void {
+    if (!this.refBuffer || this.refSource) return;
+    const src = new AudioBufferSourceNode(this.ctx, { buffer: this.refBuffer, loop: true });
+    src.connect(this.refGain);
+    src.start(when, offset);
+    this.refSource = src;
+  }
+
+  /** 재생 중에 새로 불러온 소스를 지금 위치에 맞춰 튼다. */
+  private syncSources(): void {
+    if (!this.playing) return;
+    const now = this.ctx.currentTime;
+    this.store.getState().inputs.forEach((input, i) => {
+      const buf = input.stemId ? this.buffers.get(input.stemId) : undefined;
+      if (buf && !this.sources.has(i)) this.startInput(i, now, this.loopOffset(buf));
+    });
+    if (this.refBuffer && !this.refSource) this.startReference(now, this.loopOffset(this.refBuffer));
   }
 
   /** 모든 입력을 같은 시각에 루프 재생한다. */
   play(when = this.ctx.currentTime + 0.05): void {
     if (this.playing) return;
-    const s = this.store.getState();
-    this.sources = [];
-    s.inputs.forEach((input, i) => {
-      const buf = input.stemId ? this.buffers.get(input.stemId) : undefined;
-      if (!buf) return;
-      const src = new AudioBufferSourceNode(this.ctx, { buffer: buf, loop: true });
-      src.connect(this.inputNodes[i]);
-      src.start(when);
-      this.sources.push(src);
-    });
+    this.startedAt = when;
+    this.store.getState().inputs.forEach((_, i) => this.startInput(i, when));
+    this.startReference(when);
     this.playing = true;
   }
 
   stop(): void {
-    for (const src of this.sources) {
+    const all = [...this.sources.values(), ...(this.refSource ? [this.refSource] : [])];
+    for (const src of all) {
       try {
         src.stop();
       } catch {
@@ -136,8 +186,26 @@ export class MixerEngine {
       }
       src.disconnect();
     }
-    this.sources = [];
+    this.sources.clear();
+    this.refSource = null;
     this.playing = false;
+  }
+
+  /** 정답 믹스(원곡 믹스)를 정한다. trimDb만큼 줄여서 내 믹스와 크기를 비슷하게 맞춘다. */
+  async setReference(file: string | null, trimDb = 0): Promise<void> {
+    this.refTrimDb = trimDb;
+    if (this.refSource) {
+      try {
+        this.refSource.stop();
+      } catch {
+        /* 이미 멈춤 */
+      }
+      this.refSource.disconnect();
+      this.refSource = null;
+    }
+    this.refBuffer = file ? await loadSample(this.ctx, file) : null;
+    this.syncSources();
+    this.applyListen(this.store.getState());
   }
 
   dispose(): void {
@@ -168,7 +236,11 @@ export class MixerEngine {
     }
     if (next.main !== prev.main) this.main.apply(next.main);
     if (next.auxes !== prev.auxes) next.auxes.forEach((b, i) => b !== prev.auxes[i] && this.auxes[i]?.apply(b));
-    if (next.patch !== prev.patch) this.wirePatch(next);
+    if (next.patch !== prev.patch) {
+      this.wirePatch(next);
+      // 새로 연결된 소스를 불러와 지금 위치에 맞춰 튼다.
+      void this.loadBuffers().then(() => this.syncSources());
+    }
     if (next.inputs !== prev.inputs && this.playing) {
       // 입력에 꽂힌 스템이 바뀌면 다시 재생한다.
       void this.loadBuffers().then(() => {
@@ -194,6 +266,7 @@ export class MixerEngine {
     const t = this.ctx.currentTime;
     this.listenMain.gain.setTargetAtTime(s.listen === 'main' ? 1 : 0, t, RAMP);
     this.listenAux.forEach((g, a) => g.gain.setTargetAtTime(s.listen === a ? 1 : 0, t, RAMP));
+    this.refGain.gain.setTargetAtTime(s.listen === 'reference' && this.refBuffer ? dbToGain(this.refTrimDb) : 0, t, RAMP);
   }
 
   private applyHowlTone(s: MixerState): void {

@@ -1,45 +1,33 @@
 # 음원 출처
 
-사이트 출처 페이지(`/credits/`)와 같은 내용이다. 음원을 바꾸면 두 곳을 같이 고친다.
+사이트 출처 페이지(`/credits/`)는 곡 매니페스트(`src/audio/library/songs/`)에서 만든다. 곡을 바꾸면 두 곳을 같이 고친다. 곡 추가 방법은 `docs/audio-pipeline.md`.
 
-## 밴드 스템
-
-| 항목 | 내용 |
-|---|---|
-| 곡명 | Forget It - Demo |
-| 만든 사람 | Tom Ray (ccMixter 사용자 tmray) |
-| 출처 | https://ccmixter.org/files/tmray/40208 |
-| 라이선스 | Creative Commons Attribution 3.0 (CC BY 3.0), https://creativecommons.org/licenses/by/3.0/ |
-| 라이선스 확인 | 2026-10-20, ccMixter API(`/api/query?f=json&ids=40208`)의 `license_name: Attribution (3.0)`와 곡 페이지 표기 |
-| 원본 | FLAC 스템 12개(44.1 kHz, 스테레오, 3분 13초, 80 BPM) |
-| 바꾼 점 | 60~108초(16마디)를 잘라 모노로 합치고, 양 끝에 10 ms 페이드를 넣고, AAC 96 kbps(m4a)로 인코딩했다. 이 구간에서 소리가 없는 sax 스템은 뺐다 |
-
-| 파일 | 원본 스템 이름 | 사이트 표기 |
-|---|---|---|
-| `band/vocals.m4a` | vocals | 보컬 |
-| `band/drums.m4a` | drums | 드럼 |
-| `band/percussion.m4a` | drums-2 | 퍼커션 |
-| `band/shaker.m4a` | shaker | 셰이커 |
-| `band/bass.m4a` | bass | 베이스 |
-| `band/guitar-main.m4a` | guitar-main | 일렉 기타 |
-| `band/guitar-verse.m4a` | guitar-verse | 기타(벌스) |
-| `band/guitar-plucks.m4a` | guitar-plucks | 기타(피킹) |
-| `band/sax-guitar.m4a` | sax/guitar | 색소폰·기타 |
-| `band/organ.m4a` | organ | 오르간 |
-| `band/keys.m4a` | car-keys | 건반 |
-
-형식 메모: AAC(m4a)는 Chrome·Edge·Safari와 macOS·Windows의 Firefox에서 `decodeAudioData`로 디코딩된다. 리눅스 Firefox는 시스템 코덱에 따라 안 될 수 있다(확인 필요).
-
-## 설교
+## Actions — "Devil's Words"
 
 | 항목 | 내용 |
 |---|---|
-| 파일 | `sermon.m4a` |
-| 내용 | John Wesley, "Salvation by Faith" (Sermons on Several Occasions, First Series 01) |
-| 낭독 | Robert G. Smith (LibriVox) |
-| 출처 | https://librivox.org/sermons-on-several-occasions-first-series-by-john-wesley/ , 원본 https://www.archive.org/download/sermonsfirstseries_1307_librivox/sermonsfirstseries_01_wesley_64kb.mp3 |
-| 라이선스 | 퍼블릭 도메인. LibriVox 저작권 안내: "you may do whatever you like with our recordings" (https://librivox.org/pages/public-domain/). LibriVox는 미국 기준이며 다른 나라는 각국 저작권을 확인하라고 권한다 |
-| 확인 | 2026-10-20 |
-| 바꾼 점 | 120~168초(48초)를 잘라 모노로 합치고, 양 끝 10 ms 페이드, AAC 96 kbps(m4a) |
+| 출처 | Cambridge-MT 'Mixing Secrets' Free Multitrack Download Library, https://cambridge-mt.com/ms3/mtk/ |
+| 원본 | 27트랙 WAV 24-bit/44.1 kHz, 190 BPM, 원곡 믹스 `DevilsWords_Full_Preview.mp3` |
+| 이용 조건 | 원본 Readme: "provided for educational purposes only", 저작권자의 명시적 허락 없는 상업적 이용 금지. 자세한 조건은 https://cambridge-mt.com/ms3/mtk-faq/ |
+| 확인 | 2026-10-20. FAQ 원문은 사이트 보안 확인 페이지 때문에 열지 못했다. 공개 웹에서 들려주는 것이 허용되는지 **확인 필요** |
+| 바꾼 점 | 102.5~142.9초(합창 한 마디 앞부터 32마디)를 잘라 모노로 합치고, 여러 트랙은 한 소스로 더함. 양 끝 5 ms 페이드, AAC 96 kbps. 원곡 믹스는 같은 구간(146 ms 보정)을 스테레오 160 kbps로 |
 
-영어 낭독이다(기획서는 한국어 설교). 운영자의 한국어 녹음(#5)이 들어오면 이 파일을 바꾼다.
+| 파일 | 원본 트랙 |
+|---|---|
+| `songs/actions-devils-words/lead-vocal.m4a` | 18_LeadVox |
+| `.../lead-double.m4a` | 19_LeadVoxDT |
+| `.../backing-vocals.m4a` | 20~27 BackingVox 1~8 합침(−6.1 dB) |
+| `.../kick.m4a` | 01_KickTrigger |
+| `.../snare.m4a` | 02_Snare |
+| `.../toms.m4a` | 04_Tom1 + 05_Tom2 |
+| `.../overheads.m4a` | 03_Overheads(스테레오→모노) |
+| `.../tambourine.m4a` | 06_Tambourine(스테레오→모노, −3.0 dB) |
+| `.../bass.m4a` | 10_Bass |
+| `.../guitar.m4a` | 13~17 ElecGtr 합침(−3.3 dB) |
+| `.../reference.m4a` | 원곡 믹스 같은 구간 |
+
+쓰지 않은 원본: 07_Loop, 08_DrumsReverb, 09_ReverseCymbal(이 구간에서 소리가 없거나 효과음), 11·12 ElecGtr(이 구간에서 소리 없음).
+
+## 이전 음원(삭제, 2026-10-20)
+
+ccMixter tmray "Forget It - Demo"(CC BY 3.0) 스템과 LibriVox 설교 낭독(퍼블릭 도메인)은 3차 개편에서 뺐다.

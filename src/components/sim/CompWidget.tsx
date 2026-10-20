@@ -9,15 +9,14 @@ import { Meter } from '../ui/Meter';
 import { WidgetShell } from './WidgetShell';
 import { createWidgetStore } from './widget-store';
 
-export default function CompWidget({ defaultStem = 'vocals' }: { defaultStem?: string }) {
+export default function CompWidget() {
   const store = useMemo(
     () =>
       createWidgetStore({
-        stems: ['vocals', 'sermon', 'bass', 'guitar-main', 'drums'],
-        defaultStem,
+        roles: ['lead-vocal', 'bass', 'snare', 'guitar'],
         initial: { channels: { 0: { comp: { on: true, thresholdDb: -28, ratio: 4, attackMs: 10, releaseMs: 150, makeupDb: 4 } } } },
       }),
-    [defaultStem],
+    [],
   );
   const c = useStore(store, (s) => s.channels[0].comp);
   const ranges = useStore(store, (s) => s.profile.ranges);

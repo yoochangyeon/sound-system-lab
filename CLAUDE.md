@@ -66,3 +66,12 @@ npm test         # Vitest
 개발 서버는 `npx astro dev --background`로 띄우고 `npx astro dev stop`으로 끈다. 화면 확인은 Aside에서 `http://localhost:4321`을 바로 연다.
 
 - Astro 문서: https://docs.astro.build
+
+## 배포
+
+- 공개 주소: https://sound-system-lab.vercel.app
+- Vercel 프로젝트: https://vercel.com/changyeon1/sound-system-lab (팀 changyeon1). Git 연동 없이 CLI로 직접 배포한다. 빌드 설정은 `vercel.json`(Astro, `dist`)이 정한다.
+- 배포 명령(저장소 루트에서):
+  `/Users/a-/Repository/claude-course/tools/env/node_modules/.bin/vercel deploy --prod --yes --scope changyeon1`
+- `vercel link`가 만드는 `.env.local`(단기 토큰)은 지운다. 로그인이 풀렸으면 사용자에게 `cd /Users/a-/Repository/claude-course/tools/env && npx vercel login`을 부탁한다.
+- 배포 뒤 공개 주소에서 페이지가 200으로 열리는지, `/.env.local`·`/CLAUDE.md`가 404인지 확인한다.

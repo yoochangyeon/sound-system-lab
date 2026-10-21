@@ -84,6 +84,8 @@ npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts).
 
 레슨 파일을 새로 만들었는데 퀴즈 테스트가 레슨 수를 하나 적게 세면 Vitest 변환 캐시(`node_modules/.vitest-cache`)를 지우고 다시 돌린다.
 
+Astro 문서: https://docs.astro.build
+
 ## QA
 
 점검 서브에이전트 셋(`.claude/agents/`). 모두 코드·원고를 고치지 않는다. 증거(화면·조작 기록·측정값)는 `qa-reports/<실행 ID>[-종류]/`에 남기고, 보고서 전문은 마지막 답으로 돌려준다. 서브에이전트는 보고서 파일을 쓰지 못하므로 **호출한 쪽이 답의 첫 줄 `RUN:` 폴더에 `report.md`로 저장한다**. `qa-reports/`는 Git·배포에서 뺀다.
@@ -99,8 +101,6 @@ npm run test:browser  # Chromium·WebKit 엔진 테스트만(*.browser.test.ts).
   - `crawl.mjs`: 전체 순회 · `quizzes.mjs`: 퀴즈 전부 풀기 · `quiz-stats.mjs`: 정답 위치·길이 쏠림 통계
   - `walk.mjs`: 레슨을 카드 순서대로 화면·글로 저장 · `play.mjs`: 조작 목록을 재생하며 화면·글·소리 기록
 - 조작 요소의 접근성 이름(`aria-label` 또는 글자)이 없으면 QA가 결함으로 잡는다. 새 버튼·스위치에는 이름을 붙인다.
-
-- Astro 문서: https://docs.astro.build
 
 ## 배포
 
@@ -125,7 +125,7 @@ GitHub Issues(`yoochangyeon/sound-system-lab`)에 둔다. `docs/agents/issue-tra
 
 ### Domain docs
 
-single-context: 루트 `GLOSSARY.md` 하나, ADR은 첫 결정이 생기면 `docs/adr/`에 둔다. `docs/agents/domain.md` 참고.
+single-context: 루트 `GLOSSARY.md` 하나(아직 없음, 첫 용어 정리 때 만든다), ADR은 첫 결정이 생기면 `docs/adr/`에 둔다. `docs/agents/domain.md` 참고.
 
 ### External peers
 
